@@ -1,5 +1,8 @@
+'use client';
+
 import { useEffect, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Menu, X, Phone, Mail, Clock, ArrowRight, Calendar, Facebook, Instagram, Linkedin } from 'lucide-react';
 import { useScrollProgress } from '@/lib/hooks';
 import { navLinks, business } from '@/data/content';
@@ -9,7 +12,7 @@ import { cn } from '@/lib/utils';
 
 export function Navbar() {
   const { scrolled } = useScrollProgress();
-  const { pathname } = useLocation();
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -21,11 +24,11 @@ export function Navbar() {
     link.href.startsWith('/') && pathname === link.href;
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50">
+    <header className="fixed top-0 left-0 right-0 z-[80]">
       {/* Top utility bar */}
       <div
         className={cn(
-          'overflow-hidden transition-[max-height,opacity,transform] duration-300 ease-out',
+          'overflow-hidden transition-all duration-300 ease-out',
           scrolled ? 'max-h-0 opacity-0 -translate-y-2' : 'max-h-14 opacity-100 translate-y-0'
         )}
       >
@@ -58,7 +61,7 @@ export function Navbar() {
       {/* Main nav bar */}
       <div
         className={cn(
-          'border-b transition-[background-color,box-shadow,border-color] duration-300 ease-out',
+          'border-b transition-all duration-300 ease-out',
           scrolled
             ? 'border-border bg-accent/95 dark:bg-background/95 shadow-soft-md'
             : 'border-transparent bg-background/95 dark:bg-background/95'
@@ -67,11 +70,11 @@ export function Navbar() {
         <div className="container-lux">
           <nav className={cn('flex items-center justify-between gap-2 transition-[padding] duration-300 ease-out', scrolled ? 'py-2' : 'py-4')}>
             {/* Logo — enlarged, elegant, fixed size never shrinks */}
-            <Link to="/" className="flex flex-col items-center gap-1 group flex-shrink-0">
-              <div className={cn('flex flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-400 via-brand to-brand-700 shadow-brand-sm transition-[transform,box-shadow] duration-300 ease-out group-hover:scale-105 group-hover:shadow-brand-glow', scrolled ? 'px-3.5 py-1.5' : 'px-4 py-2.5 sm:px-5 sm:py-3')}>
-                <img src={business.logo} alt="Deni Sawa" className={cn('w-auto object-contain brightness-0 invert transition-[height,opacity,transform] duration-300 ease-out', scrolled ? 'h-10' : 'h-14 sm:h-16')} />
+            <Link href="/" className="flex flex-col items-center gap-1 group flex-shrink-0">
+              <div className={cn('flex flex-shrink-0 items-center justify-center  bg-gradient-to-br bg-brand shadow-brand-sm transition-all duration-300 ease-out group-hover:scale-105 group-hover:shadow-brand-glow', scrolled ? 'px-3.5 py-1.5' : 'px-4 py-2.5 sm:px-5 sm:py-3')}>
+                <img src={business.logo} alt="Deni Sawa" className={cn('w-auto object-contain brightness-0 invert transition-all duration-300 ease-out', scrolled ? 'h-10' : 'h-16 sm:h-16')} decoding="async" />
               </div>
-              <span className={cn('hidden overflow-hidden whitespace-nowrap text-[11px] font-semibold uppercase tracking-[0.2em] text-brand transition-[opacity,transform] duration-300 ease-out sm:block', scrolled ? 'max-h-0 opacity-0 scale-90' : 'max-h-5 opacity-100')}>Debt Management</span>
+              <span className={cn('hidden overflow-hidden whitespace-nowrap text-[11px] font-semibold uppercase tracking-[0.2em] text-brand transition-all duration-300 ease-out sm:block', scrolled ? 'max-h-0 opacity-0 scale-90' : 'max-h-5 opacity-100')}>Debt Management</span>
             </Link>
 
             {/* Desktop nav */}
@@ -82,8 +85,8 @@ export function Navbar() {
                   'relative rounded-full px-3.5 py-2 text-sm font-medium transition-all duration-300',
                   link.active
                     ? isActive
-                      ? 'text-brand bg-brand/10'
-                      : 'text-foreground/80 hover:text-brand hover:bg-brand/5'
+                      ? 'text-white bg-brand shadow-brand-sm'
+                      : 'text-foreground/80 hover:text-brand hover:bg-brand/10'
                     : 'text-muted-foreground/50 cursor-not-allowed'
                 );
                 const linkInner = (
@@ -93,7 +96,7 @@ export function Navbar() {
                   </span>
                 );
                 return link.href.startsWith('/') ? (
-                  <Link key={link.label} to={link.href} className={linkClasses}>
+                  <Link key={link.label} href={link.href} className={linkClasses}>
                     {linkInner}
                   </Link>
                 ) : (
@@ -103,9 +106,6 @@ export function Navbar() {
                     className={linkClasses}
                   >
                     {linkInner}
-                    {isActive && (
-                      <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 h-1 w-1 rounded-full bg-brand" />
-                    )}
                   </a>
                 );
               })}
@@ -139,11 +139,11 @@ export function Navbar() {
       {/* Mobile menu */}
       <div
         className={cn(
-          'lg:hidden fixed inset-0 top-0 z-40 transition-all duration-500',
+          'lg:hidden fixed inset-0 top-0 z-[60] transition-all duration-500',
           open ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         )}
       >
-        <div className="absolute inset-0 bg-background/60 backdrop-blur-xl" onClick={() => setOpen(false)} />
+        <div className="absolute inset-0 bg-background/85" onClick={() => setOpen(false)} />
         <div
           className={cn(
             'absolute top-20 left-4 right-4 rounded-4xl border border-border bg-card shadow-soft-xl transition-all duration-500',
@@ -151,6 +151,16 @@ export function Navbar() {
           )}
         >
           <div className="p-5">
+            <div className="mb-3 flex items-center justify-between">
+              <span className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">Menu</span>
+              <button
+                onClick={() => setOpen(false)}
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-muted text-foreground transition-all duration-300 hover:bg-brand hover:text-white active:scale-90"
+                aria-label="Close menu"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
             <div className="flex flex-col gap-1">
               {navLinks.map((link, i) => {
                 const isActive = link.active && isNavActive(link);
@@ -158,27 +168,27 @@ export function Navbar() {
                   'flex items-center justify-between rounded-2xl px-4 py-3.5 text-sm font-medium transition-all duration-300',
                   link.active
                     ? isActive
-                      ? 'text-brand bg-brand/10'
+                      ? 'text-white bg-brand shadow-brand-sm'
                       : 'text-foreground bg-muted/50 hover:bg-brand/10 hover:text-brand'
                     : 'text-muted-foreground cursor-not-allowed'
                 );
                 const linkInner = (
                   <>
                     <span className="flex items-center gap-2.5">
-                      <span className={cn('flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold', isActive ? 'bg-brand text-white' : link.active ? 'bg-brand/10 text-brand' : 'bg-muted text-muted-foreground')}>
+                      <span className={cn('flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold', isActive ? 'bg-white/25 text-white' : link.active ? 'bg-brand/10 text-brand' : 'bg-muted text-muted-foreground')}>
                         {i + 1}
                       </span>
                       {link.label}
                       {!link.active && <Badge variant="soon" className="px-1.5 py-0 text-[8px]">Soon</Badge>}
                     </span>
-                    {isActive && <span className="h-2 w-2 rounded-full bg-brand" />}
+                    {isActive && <span className="h-2 w-2 rounded-full bg-white" />}
                     {link.active && !isActive && <ArrowRight className="h-4 w-4 text-brand" />}
                   </>
                 );
                 return link.href.startsWith('/') ? (
                   <Link
                     key={link.label}
-                    to={link.href}
+                    href={link.href}
                     onClick={() => link.active && setOpen(false)}
                     className={linkClasses}
                     style={{ transitionDelay: open ? `${i * 40}ms` : '0ms' }}

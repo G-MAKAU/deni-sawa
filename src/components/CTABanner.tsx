@@ -1,3 +1,5 @@
+'use client';
+
 import { Calendar, BookOpen, Sparkles } from 'lucide-react';
 import { Reveal } from '@/components/Reveal';
 

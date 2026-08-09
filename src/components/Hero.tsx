@@ -1,3 +1,5 @@
+'use client';
+
 import { useState } from 'react';
 import { ArrowRight, Check, ShieldCheck, Sparkles } from 'lucide-react';
 import { Counter } from '@/components/Counter';
@@ -31,7 +33,7 @@ export function Hero() {
             </Reveal>
 
             <Reveal delay={300}>
-              <div className="mt-9 max-w-[540px] rounded-3xl border border-white/80 bg-white/70 p-5 shadow-soft backdrop-blur-sm sm:p-6 dark:border-white/10 dark:bg-white/5">
+              <div className="mt-9 max-w-[540px] rounded-3xl border border-white/80 bg-white/85 p-5 shadow-soft sm:p-6 dark:border-white/10 dark:bg-white/10">
                 <div className="flex items-center justify-between gap-4">
                   <label htmlFor="debt-amount" className="font-heading text-xl font-bold text-[#193d5b] sm:text-2xl dark:text-white">
                     What is your total debt?
@@ -81,9 +83,9 @@ export function Hero() {
                 src={heroImages.main}
                 alt="Financial advisor helping a client plan a debt-free future"
                 className="relative z-10 h-full w-full object-cover object-center [mask-image:linear-gradient(to_bottom,transparent_0%,black_9%,black_100%)] sm:w-[94%] lg:w-full"
-                loading="eager"
+                loading="eager" decoding="async"
               />
-              <div className="absolute bottom-7 left-4 z-20 rounded-2xl border border-white/60 bg-white/90 p-4 shadow-soft backdrop-blur-md sm:bottom-10 sm:left-0 sm:p-5 dark:border-white/10 dark:bg-[#102331]/90">
+              <div className="absolute bottom-7 left-4 z-20 rounded-2xl border border-white/60 bg-white/95 p-4 shadow-soft sm:bottom-10 sm:left-0 sm:p-5 dark:border-white/10 dark:bg-[#102331]/95">
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-green text-white"><ShieldCheck className="h-5 w-5" /></div>
                   <div>
@@ -92,7 +94,7 @@ export function Hero() {
                   </div>
                 </div>
               </div>
-              <div className="absolute bottom-8 right-2 z-20 hidden rounded-2xl border border-white/70 bg-white/90 px-4 py-3 shadow-soft backdrop-blur-md sm:block dark:border-white/10 dark:bg-[#102331]/90">
+              <div className="absolute bottom-8 right-2 z-20 hidden rounded-2xl border border-white/70 bg-white/95 px-4 py-3 shadow-soft sm:block dark:border-white/10 dark:bg-[#102331]/95">
                 <p className="font-heading text-2xl font-bold text-brand"><Counter target={20} suffix="+" /></p>
                 <p className="text-xs text-[#668096] dark:text-white/60">years of experience</p>
               </div>

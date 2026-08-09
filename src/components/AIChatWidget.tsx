@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useRef, useEffect } from 'react';
 import { MessageCircle, X, Send, Sparkles, Loader2, Lightbulb, MessagesSquare, ArrowUpRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -101,24 +103,19 @@ export function AIChatWidget() {
   const sendMessage = async (text: string) => {
     if (!text.trim() || loading) return;
 
-    const userMessage: Message = { role: 'user', content: text };
+    const content = text.trim();
+    const userMessage: Message = { role: 'user', content };
+    const history = messages.slice(-8).map((m) => ({ role: m.role, content: m.content }));
     setMessages((prev) => [...prev, userMessage]);
     setInput('');
     setTab('chat');
     setLoading(true);
 
     try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-      const apiUrl = `${supabaseUrl}/functions/v1/ai-chat`;
-
-      const response = await fetch(apiUrl, {
+      const response = await fetch('/api/chat', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${supabaseKey}`,
-        },
-        body: JSON.stringify({ message: text, systemPrompt: aiSystemPrompt }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: content, systemPrompt: aiSystemPrompt, history }),
       });
 
       if (!response.ok) throw new Error(`Request failed (${response.status})`);
@@ -170,7 +167,7 @@ export function AIChatWidget() {
         onClick={() => (open ? setOpen(false) : openChat('suggestions'))}
         className={cn(
           'fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full shadow-brand-glow transition-all duration-300 active:scale-90',
-          open ? 'bg-ink-800 text-white' : 'bg-brand text-white'
+          open ? 'bg-ink-800 text-white' : 'bg-green text-white'
         )}
         aria-label="Toggle AI chat"
       >
@@ -186,8 +183,8 @@ export function AIChatWidget() {
       >
         <div className="flex flex-col overflow-hidden rounded-4xl border border-border bg-card shadow-soft-xl">
           {/* Header */}
-          <div className="flex items-center gap-3 border-b border-border bg-gradient-to-r from-brand to-brand-600 p-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 backdrop-blur-md">
+          <div className="flex items-center gap-3 border-b border-border bg-gradient-to-r from-green to-green-600 p-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/25">
               <Sparkles className="h-5 w-5 text-white" />
             </div>
             <div>

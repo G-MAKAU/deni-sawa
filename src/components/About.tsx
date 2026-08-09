@@ -1,3 +1,5 @@
+'use client';
+
 import {
   Target, Eye, Quote, HeartHandshake, Users, ShieldCheck, TrendingDown, Sparkles, Compass, ArrowRight, BadgeCheck,
 } from 'lucide-react';
@@ -26,6 +28,7 @@ export function About() {
                     alt="Deni Sawa advisory team at work"
                     className="absolute inset-0 h-full w-full object-cover"
                     loading="lazy"
+                    decoding="async"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-ink-950/75 via-ink-950/10 to-transparent" />
                   <div className="absolute inset-x-0 bottom-0 p-6">
@@ -109,40 +112,45 @@ export function About() {
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Full-width sections */}
-        <div className="mt-16 lg:mt-24 space-y-16 lg:space-y-20">
-            {/* Story image band */}
-            <Reveal>
-              <div className="relative overflow-hidden rounded-5xl shadow-soft-lg">
-                <img
-                  src={aboutImages.story}
-                  alt="Guiding clients toward financial freedom"
-                  className="w-full h-64 md:h-80 object-cover"
-                  loading="lazy"
-                />
-                <div className="absolute inset-0 bg-ink-950/60" />
-                <div className="absolute inset-0 bg-gradient-to-r from-ink-950/80 via-ink-950/40 to-transparent" />
-                <div className="absolute inset-0 flex items-center p-8 md:p-12">
-                  <div className="max-w-xl">
-                    <div className="eyebrow-dark mb-4 inline-flex">Our Story</div>
-                    <p className="font-heading text-2xl md:text-3xl font-bold text-white leading-snug">
-                      Seasoned bankers with far-reaching experience in banking, debt management,
-                      finance, risk, and capital raising — here for you.
-                    </p>
-                    <p className="mt-4 text-white/70 text-sm md:text-base leading-relaxed">
-                      {business.partners}
-                    </p>
-                  </div>
-                </div>
+      {/* Full-width story image band */}
+      <div className="relative mt-16 lg:mt-24 overflow-hidden">
+        <Reveal>
+          <div className="relative">
+            <img
+              src={aboutImages.story}
+              alt="Guiding clients toward financial freedom"
+              className="w-full h-64 md:h-80 object-cover"
+              loading="lazy"
+              decoding="async"
+            />
+            <div className="absolute inset-0 bg-ink-950/60" />
+            <div className="absolute inset-0 bg-gradient-to-r from-ink-950/80 via-ink-950/40 to-transparent" />
+            <div className="absolute inset-0 flex items-center px-5 sm:px-6 lg:px-8 py-10">
+              <div className="max-w-xl">
+                <div className="eyebrow-dark mb-4 inline-flex">Our Story</div>
+                <p className="font-heading text-2xl md:text-3xl font-bold text-white leading-snug">
+                  Seasoned bankers with far-reaching experience in banking, debt management,
+                  finance, risk, and capital raising — here for you.
+                </p>
+                <p className="mt-4 text-white/70 text-sm md:text-base leading-relaxed">
+                  {business.partners}
+                </p>
               </div>
-            </Reveal>
+            </div>
+          </div>
+        </Reveal>
+      </div>
+
+      <div className="container-lux">
+        <div className="mt-16 lg:mt-24 space-y-16 lg:space-y-20">
 
             {/* Stats band */}
             <Reveal>
               <div className="relative overflow-hidden rounded-4xl border border-border bg-card p-8 shadow-soft">
-                <div className="absolute -top-16 -right-16 h-48 w-48 rounded-full bg-brand/10 blur-3xl" />
-                <div className="absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-green/10 blur-3xl" />
+                <div className="absolute -top-16 -right-16 h-48 w-48 rounded-full bg-[radial-gradient(circle_at_center,rgba(45,157,120,0.12),transparent_72%)]" />
+                <div className="absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-[radial-gradient(circle_at_center,rgba(255,116,1,0.12),transparent_72%)]" />
                 <div className="relative grid grid-cols-2 md:grid-cols-4 gap-6">
                   {stats.map((stat, i) => (
                     <div key={stat.label} className="text-center">
@@ -214,8 +222,8 @@ export function About() {
             <Reveal>
               <div className="relative overflow-hidden rounded-sm border border-green/25 bg-gradient-to-br from-green via-green-600 to-green-800 p-10 lg:p-14 text-center shadow-soft-lg">
                 <div className="absolute inset-0">
-                  <div className="absolute -top-20 -left-20 h-64 w-64 rounded-full bg-white/15 blur-3xl" />
-                  <div className="absolute -bottom-24 -right-16 h-72 w-72 rounded-full bg-black/10 blur-3xl" />
+                  <div className="absolute -top-20 -left-20 h-64 w-64 rounded-full bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.16),transparent_72%)]" />
+                  <div className="absolute -bottom-24 -right-16 h-72 w-72 rounded-full bg-[radial-gradient(circle_at_center,rgba(0,0,0,0.12),transparent_72%)]" />
                 </div>
                 <div className="relative">
                   <h3 className="font-heading text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white leading-tight mb-3">

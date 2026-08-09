@@ -1,3 +1,5 @@
+'use client';
+
 import { useState } from 'react';
 import {
   ArrowRight, Calendar, CheckCircle2, Landmark, GraduationCap, BookOpen, Building2, Briefcase, Brain,
@@ -74,16 +76,17 @@ export function Services() {
           <div className="grid lg:grid-cols-[0.9fr_1.15fr] gap-8 lg:gap-14 items-center">
             {/* Left — image */}
             <div className="relative">
-              <div className="absolute -inset-2 rounded-[2rem] bg-gradient-to-br from-brand/15 via-transparent to-green/15 blur-2xl" />
+              <div className="absolute -inset-2 rounded-[2rem] bg-gradient-to-br from-brand/15 via-transparent to-green/15" />
               <div className="relative overflow-hidden rounded-[2rem] shadow-soft-lg border border-border">
                 <img
                   src={service.image}
                   alt={service.title}
                   loading="lazy"
                   className="h-60 sm:h-80 lg:h-[400px] w-full object-cover"
+                  decoding="async"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
-                <div className="absolute bottom-3 left-3 flex items-center gap-2 rounded-full bg-black/40 backdrop-blur-md px-3 py-1.5 text-xs font-semibold text-white">
+                <div className="absolute bottom-3 left-3 flex items-center gap-2 rounded-full bg-black/50 px-3 py-1.5 text-xs font-semibold text-white">
                   <span className={cn('h-2 w-2 rounded-full', accentBg)} />
                   {activeIndex + 1} of {services.length} divisions
                 </div>

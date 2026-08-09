@@ -1,5 +1,7 @@
+'use client';
+
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 import { Mail, Phone, MapPin, Facebook, Instagram, Linkedin, ArrowRight, Send, CheckCircle2 } from 'lucide-react';
 import { Reveal } from '@/components/Reveal';
 import { business, services } from '@/data/content';
@@ -73,7 +75,7 @@ export function Footer() {
             </div>
 
             <Reveal direction="right">
-              <div className="rounded-4xl border border-white/10 bg-white/5 p-8 backdrop-blur-md">
+              <div className="rounded-4xl border border-white/10 bg-white/10 p-8">
                 <h3 className="font-heading text-xl font-bold text-white mb-6">Send us a message</h3>
                 <form className="space-y-4" onSubmit={handleSubscribe}>
                   <Input type="text" placeholder="Your name" className="border-white/10 bg-white/5 text-white placeholder:text-white/30 focus:border-brand" />
@@ -93,7 +95,7 @@ export function Footer() {
       <div className="container-lux py-16">
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8 lg:gap-10">
           <div className="col-span-2 lg:col-span-2">
-            <img src={business.logo} alt="Deni Sawa" className="h-16 w-auto mb-5 brightness-0 invert" />
+            <img src={business.logo} alt="Deni Sawa" className="h-16 w-auto mb-5 brightness-0 invert" decoding="async" />
             <p className="text-sm text-white/40 leading-relaxed mb-6 max-w-xs">{business.description}</p>
             <div className="flex items-center gap-3">
               <a href={business.facebook} target="_blank" rel="noopener noreferrer" className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white/60 transition-all duration-300 hover:bg-brand hover:text-white hover:border-brand"><Facebook className="h-4 w-4" /></a>
@@ -108,7 +110,7 @@ export function Footer() {
               {quickLinks.map((link) => (
                 <li key={link.label}>
                   {link.href.startsWith('/') ? (
-                    <Link to={link.href} className="text-sm inline-flex items-center gap-1.5 group text-white/60 hover:text-brand transition-colors">
+                    <Link href={link.href} className="text-sm inline-flex items-center gap-1.5 group text-white/60 hover:text-brand transition-colors">
                       <ArrowRight className="h-3 w-3 opacity-0 -ml-4 transition-all duration-300 group-hover:opacity-100 group-hover:ml-0" />
                       {link.label}
                     </Link>

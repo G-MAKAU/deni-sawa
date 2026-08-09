@@ -1,3 +1,5 @@
+'use client';
+
 import { useState } from 'react';
 import { ArrowRight, Clock, BookOpen, FileText, Download } from 'lucide-react';
 import { Reveal } from '@/components/Reveal';
@@ -44,9 +46,9 @@ export function Resources() {
               <div className="relative aspect-[16/10] lg:aspect-auto bg-gradient-to-br from-brand to-brand-700 overflow-hidden">
                 <div className="absolute inset-0 flex flex-col items-center justify-center p-10 text-center">
                   <FileText className="h-16 w-16 text-white/80 mb-4" strokeWidth={1.5} />
-                  <span className="rounded-full bg-white/15 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-white backdrop-blur-md">Featured Article</span>
+                  <span className="rounded-full bg-white/20 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-white">Featured Article</span>
                 </div>
-                <div className="absolute -top-10 -right-10 h-40 w-40 rounded-full bg-white/10 blur-3xl" />
+                <div className="absolute -top-10 -right-10 h-40 w-40 rounded-full bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.12),transparent_72%)]" />
               </div>
               <div className="p-8 lg:p-12 flex flex-col justify-center">
                 <div className="flex items-center gap-3 mb-4">

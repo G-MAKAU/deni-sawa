@@ -1,3 +1,5 @@
+'use client';
+
 import { About } from '@/components/About';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { aboutImages } from '@/data/content';

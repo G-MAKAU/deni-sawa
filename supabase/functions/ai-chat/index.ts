@@ -30,10 +30,17 @@ Deno.serve(async (req: Request) => {
     return new Response(null, { status: 200, headers: corsHeaders });
   }
 
+  if (req.method !== "POST") {
+    return new Response(
+      JSON.stringify({ error: "Method not allowed" }),
+      { status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+
   try {
     const { message, systemPrompt, history } = (await req.json()) as ChatRequest;
 
-    if (!message || typeof message !== "string") {
+    if (!message || typeof message !== "string" || !message.trim()) {
       return new Response(
         JSON.stringify({ error: "Message is required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -43,7 +50,9 @@ Deno.serve(async (req: Request) => {
     const prompt = systemPrompt || DEFAULT_SYSTEM_PROMPT;
 
     // Build conversation context
-    const conversationHistory = history || [];
+    const conversationHistory = (history || []).filter(
+      (h) => h && (h.role === "user" || h.role === "assistant") && typeof h.content === "string"
+    );
     const messages = [
       { role: "system", content: prompt },
       ...conversationHistory.map((h) => ({ role: h.role, content: h.content })),
@@ -71,12 +80,15 @@ Deno.serve(async (req: Request) => {
         }),
       });
 
-      if (!openaiResponse.ok) {
+      if (openaiResponse.ok) {
+        const openaiData = await openaiResponse.json();
+        reply = openaiData.choices?.[0]?.message?.content || "I apologize, I couldn't generate a response. Please try again.";
+      } else if (openaiResponse.status === 401 || openaiResponse.status === 403) {
+        // Invalid or revoked API key — fall back to rule-based replies so the chat keeps working
+        reply = generateFallbackResponse(message);
+      } else {
         throw new Error(`OpenAI API error: ${openaiResponse.status}`);
       }
-
-      const openaiData = await openaiResponse.json();
-      reply = openaiData.choices?.[0]?.message?.content || "I apologize, I couldn't generate a response. Please try again.";
     } else {
       // Fallback: rule-based responses when no API key is configured
       reply = generateFallbackResponse(message);

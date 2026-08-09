@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect, useCallback } from 'react';
 import { Quote, ChevronLeft, ChevronRight, Star } from 'lucide-react';
 import { Reveal } from '@/components/Reveal';

@@ -1,5 +1,7 @@
+'use client';
+
 import * as React from 'react';
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 import { ArrowRight, Home } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -60,7 +62,7 @@ export function Breadcrumbs({
             {crumb.label}
           </span>
         ) : crumb.to ? (
-          <Link to={crumb.to} className={base}>
+          <Link href={crumb.to} className={base}>
             {i === 0 && showHome && <Home className="h-3.5 w-3.5" />}
             {crumb.label}
           </Link>
@@ -90,6 +92,7 @@ export function Breadcrumbs({
           aria-hidden
           className="absolute inset-0 h-full w-full object-cover"
           loading="eager"
+          decoding="async"
         />
         <div className="absolute inset-0 bg-ink-950/65" />
         <div className="absolute inset-0 bg-gradient-to-t from-ink-950/80 via-transparent to-ink-950/40" />

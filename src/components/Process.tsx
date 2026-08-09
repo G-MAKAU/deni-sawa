@@ -1,3 +1,5 @@
+'use client';
+
 import { PhoneCall, MessagesSquare, ClipboardList, TrendingUp, ArrowRight, type LucideIcon } from 'lucide-react';
 import { Reveal } from '@/components/Reveal';
 import { processSteps } from '@/data/content';

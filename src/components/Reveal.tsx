@@ -1,5 +1,7 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { useInView } from '@/lib/hooks';
+'use client';
+
+import { motion } from 'motion/react';
+import type { ReactNode } from 'react';
 
 type Direction = 'up' | 'left' | 'right' | 'scale';
 
@@ -11,35 +13,25 @@ interface RevealProps {
   as?: 'div' | 'section' | 'li' | 'span';
 }
 
-const variants: Record<Direction, string> = {
-  up: 'opacity-0 translate-y-8',
-  left: 'opacity-0 -translate-x-10',
-  right: 'opacity-0 translate-x-10',
-  scale: 'opacity-0 scale-95',
+const OFFSET: Record<Direction, { x?: number; y?: number; scale?: number }> = {
+  up: { y: 24 },
+  left: { x: -32 },
+  right: { x: 32 },
+  scale: { scale: 0.96 },
 };
 
 export function Reveal({ children, direction = 'up', delay = 0, className = '', as = 'div' }: RevealProps) {
-  const { ref, inView } = useInView();
-  const [visible, setVisible] = useState(false);
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    if (inView && !visible) {
-      timer.current = setTimeout(() => setVisible(true), delay);
-    }
-    return () => {
-      if (timer.current) clearTimeout(timer.current);
-    };
-  }, [inView, delay, visible]);
-
-  const Tag = as;
+  const MotionTag = motion.create(as);
 
   return (
-    <Tag
-      ref={ref as never}
-      className={`transition-all duration-700 ease-out ${visible ? 'opacity-100 translate-x-0 translate-y-0 scale-100' : variants[direction]} ${className}`}
+    <MotionTag
+      className={className}
+      initial={{ opacity: 0, ...OFFSET[direction] }}
+      whileInView={{ opacity: 1, x: 0, y: 0, scale: 1 }}
+      viewport={{ once: true, amount: 0.15, margin: '0px 0px -60px 0px' }}
+      transition={{ duration: 0.7, ease: 'easeOut', delay: delay / 1000 }}
     >
       {children}
-    </Tag>
+    </MotionTag>
   );
 }

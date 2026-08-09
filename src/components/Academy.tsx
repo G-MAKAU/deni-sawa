@@ -1,3 +1,5 @@
+'use client';
+
 import { Clock, Tag, Monitor, ArrowRight, GraduationCap, BookOpen, Users, Building2, PlayCircle, Sparkles, type LucideIcon } from 'lucide-react';
 import { Reveal } from '@/components/Reveal';
 import { academyCourses, lms } from '@/data/content';
@@ -29,7 +31,7 @@ export function Academy() {
             </Reveal>
           </div>
           <Reveal delay={300}>
-            <a href="#contact" className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-6 py-3 text-sm font-semibold text-white backdrop-blur-md transition-all duration-300 hover:bg-white/10 hover:border-brand/40">
+            <a href="#contact" className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-6 py-3 text-sm font-semibold text-white transition-all duration-300 hover:bg-white/15 hover:border-brand/40">
               Explore All Programmes<ArrowRight className="h-4 w-4" />
             </a>
           </Reveal>
@@ -38,8 +40,8 @@ export function Academy() {
         {/* LMS promo */}
         <Reveal delay={250}>
           <div className="relative overflow-hidden rounded-4xl border border-white/10 bg-gradient-to-br from-brand/20 via-white/5 to-green/10 p-8 sm:p-10 mb-10">
-            <div className="absolute -top-20 -right-20 h-56 w-56 rounded-full bg-brand/20 blur-3xl" />
-            <div className="absolute -bottom-20 -left-20 h-56 w-56 rounded-full bg-green/20 blur-3xl" />
+            <div className="absolute -top-20 -right-20 h-56 w-56 rounded-full bg-[radial-gradient(circle_at_center,rgba(45,157,120,0.22),transparent_72%)]" />
+            <div className="absolute -bottom-20 -left-20 h-56 w-56 rounded-full bg-[radial-gradient(circle_at_center,rgba(255,116,1,0.22),transparent_72%)]" />
             <div className="relative grid lg:grid-cols-[auto_1fr_auto] gap-8 items-center">
               <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-brand text-white shadow-brand-glow">
                 <PlayCircle className="h-10 w-10" />
@@ -77,7 +79,7 @@ export function Academy() {
             return (
               <Reveal key={course.title} delay={(i % 2) * 120} direction={i % 2 === 0 ? 'left' : 'right'}>
                 <div className="group relative h-full card-dark overflow-hidden">
-                  <div className={`absolute -top-20 -right-20 h-40 w-40 rounded-full blur-3xl opacity-0 transition-opacity duration-500 group-hover:opacity-100 ${isGreen ? 'bg-green/10' : 'bg-brand/10'}`} />
+                  <div className={`absolute -top-20 -right-20 h-40 w-40 rounded-full opacity-0 transition-opacity duration-500 group-hover:opacity-100 ${isGreen ? 'bg-[radial-gradient(circle_at_center,rgba(255,116,1,0.14),transparent_72%)]' : 'bg-[radial-gradient(circle_at_center,rgba(45,157,120,0.14),transparent_72%)]'}`} />
                   <div className="flex items-center justify-between mb-6">
                     <div className={`flex h-12 w-12 items-center justify-center rounded-2xl transition-all duration-500 group-hover:scale-110 ${isGreen ? 'bg-green/15 text-green group-hover:bg-green group-hover:text-white' : 'bg-brand/15 text-brand group-hover:bg-brand group-hover:text-white'}`}>
                       <FormatIcon className="h-6 w-6" strokeWidth={1.8} />

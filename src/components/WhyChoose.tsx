@@ -1,3 +1,5 @@
+'use client';
+
 import { ShieldCheck, Users, TrendingDown, HeartHandshake, Target, Sparkles, type LucideIcon } from 'lucide-react';
 import { Reveal } from '@/components/Reveal';
 import { whyChoose } from '@/data/content';

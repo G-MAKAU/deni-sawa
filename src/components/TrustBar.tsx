@@ -1,3 +1,5 @@
+'use client';
+
 import { Reveal } from '@/components/Reveal';
 import { partners } from '@/data/content';
 

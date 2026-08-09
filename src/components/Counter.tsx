@@ -1,3 +1,5 @@
+'use client';
+
 import { useCountUp, useInView } from '@/lib/hooks';
 
 interface CounterProps {

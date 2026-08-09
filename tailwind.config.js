@@ -6,7 +6,7 @@ export default {
     extend: {
       colors: {
         // Brand
-        brand: {
+        green: {
           DEFAULT: '#2D9D78',
           50:  '#EBF7F2',
           100: '#D2EDE0',
@@ -21,7 +21,7 @@ export default {
           950: '#08201A',
         },
         // Orange accent
-        green: {
+        brand: {
           DEFAULT: '#FF7401',
           50:  '#FFF3E8',
           100: '#FFE4C4',
