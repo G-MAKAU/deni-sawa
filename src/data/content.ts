@@ -29,7 +29,7 @@ export const navLinks = [
   { label: 'About', href: '/about', active: true },
   { label: 'Services', href: '#services', active: false },
   { label: 'Academy', href: '#academy', active: false },
-  { label: 'Resources', href: '#resources', active: false },
+  { label: 'Blog', href: '#resources', active: false },
   { label: 'Contact', href: '#contact', active: false },
 ];
 
@@ -196,8 +196,60 @@ Key information:
 - Mission: To work professionally and ethically, delivering quality services for the provision of viable, successful and sustainable financial solutions
 - We are Christian-based, with principles in line with Biblical teachings of service to God and humankind
 - Strategic partners: well-seasoned bankers with experience in banking, debt management, finance, management, risk management, trade finance, capital raising
+- First consultation is free; programme pricing is transparent and shared during the consultation
+- All client information is strictly confidential and never shared without consent
+- Structured programmes run 12-48 weeks; many clients feel relief from the very first session
+- When a user wants to book a consultation, a booking form opens in the chat — encourage them to fill it in (full name, phone or email, service of interest, preferred date and time), confirm their details, and reassure them a team member will reach out to confirm
 
 Be warm, professional, and encouraging. Keep responses concise (under 150 words). If someone needs detailed personal advice, encourage them to book a consultation. Never give specific financial advice — always recommend speaking with our advisors for personalised guidance.`;
+
+export const faqAnswers = [
+  {
+    title: 'Is my information confidential?',
+    keywords: ['confident', 'privacy', 'private', 'discreet', 'secret', 'data'],
+    answer: `Absolutely. Everything you share with Deni Sawa is strictly confidential. We handle your information professionally and ethically, and it is used only to support your journey to financial freedom — never shared without your consent.`,
+  },
+  {
+    title: 'How much does counselling cost?',
+    keywords: ['cost', 'price', 'fee', 'fees', 'charge', 'pricing', 'expensive', 'how much', 'pay', 'afford'],
+    answer: `Your first consultation is free. Programme pricing depends on the package and your personal situation, so our team gives you transparent, no-obligation pricing during your consultation — you'll know exactly what to expect before you commit.`,
+  },
+  {
+    title: 'What do I need to prepare for a session?',
+    keywords: ['prepare', 'bring', 'documents', 'session', 'ready', 'before'],
+    answer: `Just bring an open mind. If you can, have a simple summary of your income, monthly expenses, and your debts (who you owe, roughly how much, and the interest rates). If you don't have everything handy, don't worry — we'll guide you through it.`,
+  },
+  {
+    title: 'How soon can I expect results?',
+    keywords: ['how soon', 'how long', 'results', 'expect', 'timeline', 'timeframe', 'when', 'progress'],
+    answer: `Every situation is different, but our structured programmes run from 12 to 48 weeks. Many clients feel relief from the very first session, and with consistent follow-through you can expect meaningful, lasting progress as your plan is executed.`,
+  },
+  {
+    title: 'Do you serve businesses too?',
+    keywords: ['business', 'sme', 'company', 'corporate', 'organisation', 'organization', 'workforce', 'employees'],
+    answer: `Yes. We offer Corporate Financial Wellness programmes to empower your workforce, and Business Advisory for SMEs and entrepreneurs — covering governance, investor readiness, and business process re-engineering.`,
+  },
+  {
+    title: 'How do I book a consultation?',
+    keywords: ['book', 'appointment', 'schedule', 'reserve', 'sign up', 'consult', 'register'],
+    answer: `You can book right here in the chat — a booking form will open for you to complete. You can also reach us at advisory@denisawa.co.ke or +254 702 448 601. Your first consultation is free.`,
+  },
+  {
+    title: 'What debt management services do you offer?',
+    keywords: ['debt management', 'debt', 'services', 'service', 'reduce', 'overwhelmed', 'loans'],
+    answer: `Our Debt Management Service provides professional one-on-one advisory with structured repayment plans and creditor negotiation support. We offer three programmes — Starter (12 weeks), Standard (24 weeks), and Solid (48 weeks) — guided by seasoned banking experts with a caring, ethical approach.`,
+  },
+  {
+    title: 'What programmes do you offer?',
+    keywords: ['programme', 'program', 'package', 'offer', 'courses', 'options'],
+    answer: `We offer three programmes:\n\n• Starter Package (12 weeks) — dedicated advisory with coaching\n• Standard Package (24 weeks) — enhanced coaching and monitoring\n• Solid Package (48 weeks) — full-spectrum advisory, governance and funding support\n\nYour first consultation is free, and we'll help you choose the right fit.`,
+  },
+  {
+    title: 'What is your approach to financial coaching?',
+    keywords: ['approach', 'coaching', 'coach', 'counselling', 'counseling', 'sessions'],
+    answer: `Our coaching is personal, practical and judgement-free. You're paired one-on-one with experienced advisors who take time to understand your situation, help you build a realistic plan, and stay with you through check-ins and accountability. It's grounded in Biblical principles of service — no pressure, no judgement.`,
+  },
+];
 
 export const processSteps = [
   {

@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server';
+import { faqAnswers } from '@/data/content';
 
 interface ChatRequest {
   message?: string;
@@ -14,8 +15,25 @@ Key info:
 - Contact: advisory@denisawa.co.ke, +254 702 448 601
 - Strategic partners are seasoned bankers with experience in banking, debt management, finance, risk management, trade finance, capital raising
 - We are Christian-based, with principles aligned with Biblical teachings of service
+- First consultation is free; pricing is transparent and shared during the consultation
+- All client information is strictly confidential and never shared without consent
+- When a user wants to book a consultation, a booking form opens in the chat — encourage them to fill it in and confirm their details
 
 Be warm, professional, and encouraging. Keep responses concise (under 150 words). For personal financial advice, encourage booking a consultation. Never give specific financial advice.`;
+
+function faqReply(message: string): string | null {
+  const lower = message.toLowerCase();
+  let best: { answer: string; hits: number } | null = null;
+  for (const entry of faqAnswers) {
+    const hits = entry.keywords.filter((k) => lower.includes(k)).length;
+    if (hits > 0 && (!best || hits > best.hits)) best = { answer: entry.answer, hits };
+  }
+  return best ? best.answer : null;
+}
+
+const FAQ_CONTEXT = `\n\nFrequently asked questions (answer these with the exact details below when asked):\n${faqAnswers
+  .map((f) => `Q: ${f.title}\nA: ${f.answer}`)
+  .join('\n\n')}`;
 
 function fallbackReply(message: string): string {
   const lower = (message || '').toLowerCase();
@@ -50,6 +68,12 @@ export async function POST(req: NextRequest) {
       return Response.json({ reply: fallbackReply('') }, { status: 200 });
     }
 
+    // Answer common questions with exact, professional facts before calling the LLM
+    const faq = faqReply(message);
+    if (faq) {
+      return Response.json({ reply: faq }, { status: 200 });
+    }
+
     const apiKey = process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY;
     const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
 
@@ -57,7 +81,7 @@ export async function POST(req: NextRequest) {
       return Response.json({ reply: fallbackReply(message) }, { status: 200 });
     }
 
-    const system = body.systemPrompt || DEFAULT_SYSTEM_PROMPT;
+    const system = `${body.systemPrompt || DEFAULT_SYSTEM_PROMPT}${FAQ_CONTEXT}`;
 
     // Build Gemini contents: history as user/model turns, then the new user message
     const contents: { role: 'user' | 'model'; parts: { text: string }[] }[] = [];

@@ -68,47 +68,55 @@ export function Navbar() {
         )}
       >
         <div className="container-lux">
-          <nav className={cn('flex items-center justify-between gap-2 transition-[padding] duration-300 ease-out', scrolled ? 'py-2' : 'py-4')}>
+          <nav className={cn('relative flex items-center justify-between gap-2 transition-[padding,height] duration-300 ease-out', scrolled ? 'h-16 py-0' : 'py-4')}>
             {/* Logo — enlarged, elegant, fixed size never shrinks */}
-            <Link href="/" className="flex flex-col items-center gap-1 group flex-shrink-0">
-              <div className={cn('flex flex-shrink-0 items-center justify-center  bg-gradient-to-br bg-brand shadow-brand-sm transition-all duration-300 ease-out group-hover:scale-105 group-hover:shadow-brand-glow', scrolled ? 'px-3.5 py-1.5' : 'px-4 py-2.5 sm:px-5 sm:py-3')}>
-                <img src={business.logo} alt="Deni Sawa" className={cn('w-auto object-contain brightness-0 invert transition-all duration-300 ease-out', scrolled ? 'h-10' : 'h-16 sm:h-16')} decoding="async" />
-              </div>
+            <Link href="/" className={cn('flex flex-col items-center group flex-shrink-0', scrolled ? 'self-stretch gap-0' : 'gap-1')}><div
+              className={cn(
+                'flex flex-shrink-0 items-center justify-center bg-gradient-to-br bg-brand shadow-brand-sm ring-1 ring-inset ring-white/20 transition-all duration-300 ease-out group-hover:scale-105 group-hover:shadow-brand-glow',
+                scrolled
+                  ? 'px-11 h-full'
+                  : 'px-7 py-2.5 sm:px-12 sm:py-3'
+              )}
+            >
+              <img src={business.logo} alt="Deni Sawa" className={cn('w-auto object-contain brightness-0 invert transition-all duration-300 ease-out', scrolled ? 'h-11' : 'h-17 sm:h-16')} decoding="async" />
+            </div>
               <span className={cn('hidden overflow-hidden whitespace-nowrap text-[11px] font-semibold uppercase tracking-[0.2em] text-brand transition-all duration-300 ease-out sm:block', scrolled ? 'max-h-0 opacity-0 scale-90' : 'max-h-5 opacity-100')}>Debt Management</span>
             </Link>
 
-            {/* Desktop nav */}
-            <div className="hidden lg:flex items-center gap-0.5">
-              {navLinks.map((link) => {
-                const isActive = link.active && isNavActive(link);
-                const linkClasses = cn(
-                  'relative rounded-full px-3.5 py-2 text-sm font-medium transition-all duration-300',
-                  link.active
-                    ? isActive
-                      ? 'text-white bg-brand shadow-brand-sm'
-                      : 'text-foreground/80 hover:text-brand hover:bg-brand/10'
-                    : 'text-muted-foreground/50 cursor-not-allowed'
-                );
-                const linkInner = (
-                  <span className="flex items-center gap-1.5">
-                    {link.label}
-                    {!link.active && <Badge variant="soon" className="px-1.5 py-0 text-[8px]">Soon</Badge>}
-                  </span>
-                );
-                return link.href.startsWith('/') ? (
-                  <Link key={link.label} href={link.href} className={linkClasses}>
-                    {linkInner}
-                  </Link>
-                ) : (
-                  <a
-                    key={link.label}
-                    href={link.active ? link.href : undefined}
-                    className={linkClasses}
-                  >
-                    {linkInner}
-                  </a>
-                );
-              })}
+            {/* Desktop nav — absolutely centered so logo width never shifts it */}
+            <div className="hidden lg:flex absolute inset-0 items-center justify-center pointer-events-none">
+              <div className="flex items-center gap-0.5 pointer-events-auto">
+                {navLinks.map((link) => {
+                  const isActive = link.active && isNavActive(link);
+                  const linkClasses = cn(
+                    'relative rounded-full px-3.5 py-2 text-sm font-medium transition-all duration-300',
+                    link.active
+                      ? isActive
+                        ? 'text-white bg-brand shadow-brand-sm'
+                        : 'text-foreground/80 hover:text-brand hover:bg-brand/10'
+                      : 'text-muted-foreground/50 cursor-not-allowed'
+                  );
+                  const linkInner = (
+                    <span className="flex items-center gap-1.5">
+                      {link.label}
+                      {!link.active && <Badge variant="soon" className="px-1.5 py-0 text-[8px]">Soon</Badge>}
+                    </span>
+                  );
+                  return link.href.startsWith('/') ? (
+                    <Link key={link.label} href={link.href} className={linkClasses}>
+                      {linkInner}
+                    </Link>
+                  ) : (
+                    <a
+                      key={link.label}
+                      href={link.active ? link.href : undefined}
+                      className={linkClasses}
+                    >
+                      {linkInner}
+                    </a>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Right side  */}

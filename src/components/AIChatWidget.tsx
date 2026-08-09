@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { MessageCircle, X, Send, Sparkles, Loader2, Lightbulb, MessagesSquare, ArrowUpRight } from 'lucide-react';
+import { MessageCircle, X, Send, Sparkles, Loader2, Lightbulb, MessagesSquare, ArrowUpRight, Calendar, CheckCircle2, Phone, Mail, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { business, aiSystemPrompt } from '@/data/content';
+import { business, aiSystemPrompt, services, programs } from '@/data/content';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -44,6 +44,50 @@ const suggestionGroups = [
   },
 ];
 
+interface BookingResult {
+  reference: string;
+  stored: boolean;
+  whatsapp: string;
+  mailto: string;
+  summary: string;
+}
+
+interface BookingState {
+  active: boolean;
+  name: string;
+  contact: string;
+  service: string;
+  date: string;
+  time: string;
+  message: string;
+  error: string;
+  submitting: boolean;
+  result: BookingResult | null;
+}
+
+const initialBooking: BookingState = {
+  active: false,
+  name: '',
+  contact: '',
+  service: '',
+  date: '',
+  time: '',
+  message: '',
+  error: '',
+  submitting: false,
+  result: null,
+};
+
+const bookingServiceOptions = [
+  ...services.map((s) => s.title),
+  ...programs.map((p) => p.title),
+  'Not sure yet',
+];
+
+const BOOKING_INTENT_RE =
+  /\b(book|booking|booked|appointment|appt|schedule|scheduling|reserve|consultation|consult\b|sign me up|enrol|enroll|register|get started|get help)\b/i;
+const hasBookingIntent = (text: string) => BOOKING_INTENT_RE.test(text);
+
 export function AIChatWidget() {
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<Tab>('suggestions');
@@ -51,6 +95,7 @@ export function AIChatWidget() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [teaserVisible, setTeaserVisible] = useState(false);
+  const [booking, setBooking] = useState<BookingState>(initialBooking);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -111,6 +156,12 @@ export function AIChatWidget() {
     setTab('chat');
     setLoading(true);
 
+    if (hasBookingIntent(content)) {
+      setBooking((b) =>
+        b.result ? { ...initialBooking, active: true } : b.active ? b : { ...initialBooking, active: true }
+      );
+    }
+
     try {
       const response = await fetch('/api/chat', {
         method: 'POST',
@@ -137,6 +188,61 @@ export function AIChatWidget() {
       ]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const setBookingField = (field: keyof Pick<BookingState, 'name' | 'contact' | 'service' | 'date' | 'time' | 'message'>, value: string) => {
+    setBooking((b) => ({ ...b, [field]: value, error: '' }));
+  };
+
+  const resetBooking = () => {
+    setBooking({ ...initialBooking, active: true });
+  };
+
+  const submitBooking = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const name = booking.name.trim();
+    const contact = booking.contact.trim();
+    const service = booking.service.trim();
+
+    if (!name || !contact || !service) {
+      setBooking((b) => ({ ...b, error: 'Please fill in your name, a phone number or email, and your service of interest.' }));
+      return;
+    }
+
+    setBooking((b) => ({ ...b, submitting: true, error: '' }));
+
+    try {
+      const res = await fetch('/api/book', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name,
+          contact,
+          service,
+          preferredDate: booking.date,
+          preferredTime: booking.time,
+          message: booking.message.trim(),
+        }),
+      });
+      const data = await res.json();
+
+      if (!res.ok || !data.ok) {
+        const err = (Array.isArray(data.errors) && data.errors[0]) || "We couldn't complete your booking. Please try again or call us directly.";
+        setBooking((b) => ({ ...b, submitting: false, error: err }));
+        return;
+      }
+
+      setBooking((b) => ({ ...b, submitting: false, result: data as BookingResult }));
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          content: `Thank you, ${name} — your consultation request is confirmed (Reference: ${data.reference}). A member of our team will reach out to confirm your appointment. You can also send the details straight to us using the buttons below.`,
+        },
+      ]);
+    } catch {
+      setBooking((b) => ({ ...b, submitting: false, error: 'Something went wrong. Please try again or reach us directly.' }));
     }
   };
 
@@ -177,11 +283,11 @@ export function AIChatWidget() {
       {/* Chat panel */}
       <div
         className={cn(
-          'fixed bottom-24 right-6 z-50 w-[calc(100vw-3rem)] max-w-[400px] origin-bottom-right transition-all duration-300',
+          'fixed bottom-24 right-6 z-[100] w-[calc(100vw-3rem)] max-w-[400px] origin-bottom-right transition-all duration-300',
           open ? 'scale-100 opacity-100' : 'pointer-events-none scale-90 opacity-0'
         )}
       >
-        <div className="flex flex-col overflow-hidden rounded-4xl border border-border bg-card shadow-soft-xl">
+        <div className="flex max-h-[min(680px,calc(100dvh-8.5rem))] flex-col overflow-hidden rounded-4xl border border-border bg-card shadow-soft-xl">
           {/* Header */}
           <div className="flex items-center gap-3 border-b border-border bg-gradient-to-r from-green to-green-600 p-4">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/25">
@@ -223,7 +329,7 @@ export function AIChatWidget() {
           {tab === 'chat' ? (
             <>
               {/* Messages */}
-              <div ref={scrollRef} className="h-[300px] overflow-y-auto scrollbar-hide p-4 space-y-3 bg-muted/20">
+              <div ref={scrollRef} className="min-h-[180px] max-h-[300px] flex-1 overflow-y-auto scrollbar-hide p-4 space-y-3 bg-muted/20">
                 {messages.map((msg, i) => (
                   <div
                     key={i}
@@ -257,6 +363,130 @@ export function AIChatWidget() {
                   </div>
                 )}
               </div>
+
+              {/* Booking form — opens when the user expresses intent to book */}
+              {booking.active &&
+                (booking.result ? (
+                  <div className="shrink-0 border-t border-border bg-muted/20 p-4">
+                    <div className="flex items-center gap-2 text-sm font-semibold text-green">
+                      <CheckCircle2 className="h-4 w-4" /> Consultation requested
+                    </div>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Reference{' '}
+                      <span className="font-mono font-semibold text-foreground">{booking.result.reference}</span>
+                      {' — '}
+                      {booking.result.stored
+                        ? 'saved to our system.'
+                        : 'our team will confirm your appointment shortly.'}
+                    </p>
+                    <div className="mt-3 grid grid-cols-2 gap-2">
+                      <a
+                        href={booking.result.whatsapp}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center gap-1.5 rounded-full bg-green px-3 py-2 text-xs font-semibold text-white transition-all duration-300 hover:bg-green-600"
+                      >
+                        <Phone className="h-3.5 w-3.5" /> Send via WhatsApp
+                      </a>
+                      <a
+                        href={booking.result.mailto}
+                        className="flex items-center justify-center gap-1.5 rounded-full border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground transition-all duration-300 hover:border-brand hover:text-brand"
+                      >
+                        <Mail className="h-3.5 w-3.5" /> Send via Email
+                      </a>
+                    </div>
+                    <button
+                      onClick={resetBooking}
+                      className="mt-2 flex items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-brand"
+                    >
+                      <RefreshCw className="h-3 w-3" /> Book another consultation
+                    </button>
+                  </div>
+                ) : (
+                  <form
+                    onSubmit={submitBooking}
+                    className="shrink-0 max-h-[300px] overflow-y-auto scrollbar-hide border-t border-border bg-muted/20 p-4"
+                  >
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-bold uppercase tracking-widest text-brand">Book a consultation</p>
+                      <button
+                        type="button"
+                        onClick={() => setBooking((b) => ({ ...b, active: false }))}
+                        className="text-[10px] font-medium text-muted-foreground transition-colors hover:text-brand"
+                      >
+                        Close
+                      </button>
+                    </div>
+                    <div className="mt-3 space-y-2">
+                      <input
+                        value={booking.name}
+                        onChange={(e) => setBookingField('name', e.target.value)}
+                        placeholder="Full name *"
+                        className="w-full rounded-xl border border-input bg-background/50 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-brand focus:outline-none"
+                      />
+                      <input
+                        value={booking.contact}
+                        onChange={(e) => setBookingField('contact', e.target.value)}
+                        placeholder="Phone or email *"
+                        className="w-full rounded-xl border border-input bg-background/50 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-brand focus:outline-none"
+                      />
+                      <select
+                        value={booking.service}
+                        onChange={(e) => setBookingField('service', e.target.value)}
+                        className="w-full rounded-xl border border-input bg-background/50 px-3 py-2 text-sm text-foreground focus:border-brand focus:outline-none"
+                      >
+                        <option value="">Service of interest *</option>
+                        {bookingServiceOptions.map((opt) => (
+                          <option key={opt} value={opt}>
+                            {opt}
+                          </option>
+                        ))}
+                      </select>
+                      <div className="grid grid-cols-2 gap-2">
+                        <input
+                          type="date"
+                          value={booking.date}
+                          onChange={(e) => setBookingField('date', e.target.value)}
+                          className="rounded-xl border border-input bg-background/50 px-3 py-2 text-sm text-foreground focus:border-brand focus:outline-none [color-scheme:light] dark:[color-scheme:dark]"
+                        />
+                        <input
+                          type="time"
+                          value={booking.time}
+                          onChange={(e) => setBookingField('time', e.target.value)}
+                          className="rounded-xl border border-input bg-background/50 px-3 py-2 text-sm text-foreground focus:border-brand focus:outline-none [color-scheme:light] dark:[color-scheme:dark]"
+                        />
+                      </div>
+                      <textarea
+                        value={booking.message}
+                        onChange={(e) => setBookingField('message', e.target.value)}
+                        placeholder="Anything you'd like us to know (optional)"
+                        rows={2}
+                        className="w-full resize-none rounded-xl border border-input bg-background/50 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-brand focus:outline-none"
+                      />
+                      {booking.error && <p className="text-xs font-medium text-red-500">{booking.error}</p>}
+                      <button type="submit" disabled={booking.submitting} className="btn-brand w-full text-sm !py-2.5">
+                        {booking.submitting ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" /> Submitting…
+                          </>
+                        ) : (
+                          <>
+                            <Calendar className="h-4 w-4" /> Confirm consultation request
+                          </>
+                        )}
+                      </button>
+                      <p className="text-center text-[10px] text-muted-foreground">
+                        Prefer to talk? Call{' '}
+                        <a
+                          href={`tel:${business.phone.replace(/\s/g, '')}`}
+                          className="font-medium text-brand hover:underline"
+                        >
+                          {business.phone}
+                        </a>
+                      </p>
+                    </div>
+                  </form>
+                ))}
 
               {/* Input */}
               <div className="border-t border-border p-3 bg-card">
