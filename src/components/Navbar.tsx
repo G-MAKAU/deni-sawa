@@ -89,7 +89,7 @@ export function Navbar() {
                 {navLinks.map((link) => {
                   const isActive = link.active && isNavActive(link);
                   const linkClasses = cn(
-                    'relative rounded-full px-3.5 py-2 text-sm font-medium transition-all duration-300',
+                    'relative rounded-full px-3.5 py-2 text-base font-medium font-bold transition-all duration-300',
                     link.active
                       ? isActive
                         ? 'text-white bg-brand shadow-brand-sm'
@@ -218,7 +218,7 @@ export function Navbar() {
             </div>
             <div className="my-4 h-px bg-border" />
             <div className="flex flex-col gap-3">
-              <a href="#contact" onClick={() => setOpen(false)} className="btn-brand w-full">
+              <a href="#contact" onClick={() => setOpen(false)} className="btn btn-brand rounded-none w-full">
                 <Calendar className="h-4 w-4" />Schedule Consultation
               </a>
               <a href={`tel:${business.phone.replace(/\s/g, '')}`} className="btn-ghost-light w-full">

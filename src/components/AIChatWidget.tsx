@@ -4,6 +4,10 @@ import { useState, useRef, useEffect } from 'react';
 import { MessageCircle, X, Send, Sparkles, Loader2, Lightbulb, MessagesSquare, ArrowUpRight, Calendar, CheckCircle2, Phone, Mail, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { business, aiSystemPrompt, services, programs } from '@/data/content';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { DatePicker } from '@/components/ui/date-picker';
+import { TimePicker } from '@/components/ui/time-picker';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -99,6 +103,26 @@ export function AIChatWidget() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const sendMessageRef = useRef<typeof sendMessage>(async () => {});
+
+  useEffect(() => {
+    sendMessageRef.current = sendMessage;
+  });
+
+  // Allow any page button to open the chat (see src/lib/chat.ts) — e.g. the hero
+  // "Get a free consultation" / "Explore your options" buttons send their context here.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (!detail || typeof detail.message !== 'string') return;
+      setOpen(true);
+      setTab('chat');
+      setTeaserVisible(false);
+      setTimeout(() => sendMessageRef.current(detail.message), 60);
+    };
+    window.addEventListener('denisawa:chat', handler);
+    return () => window.removeEventListener('denisawa:chat', handler);
+  }, []);
 
   // Show a teaser prompt after the user has stayed on the page for a while
   useEffect(() => {
@@ -329,7 +353,7 @@ export function AIChatWidget() {
           {tab === 'chat' ? (
             <>
               {/* Messages */}
-              <div ref={scrollRef} className="min-h-[180px] max-h-[300px] flex-1 overflow-y-auto scrollbar-hide p-4 space-y-3 bg-muted/20">
+              <div ref={scrollRef} className={cn('overflow-y-auto scrollbar-hide p-4 space-y-3 bg-muted/20', booking.active ? 'h-[100px] flex-none' : 'min-h-[180px] max-h-[300px] flex-1')}>
                 {messages.map((msg, i) => (
                   <div
                     key={i}
@@ -405,85 +429,81 @@ export function AIChatWidget() {
                 ) : (
                   <form
                     onSubmit={submitBooking}
-                    className="shrink-0 max-h-[300px] overflow-y-auto scrollbar-hide border-t border-border bg-muted/20 p-4"
+                    className="flex min-h-0 flex-1 flex-col overflow-hidden border-t border-border bg-muted/20"
                   >
-                    <div className="flex items-center justify-between">
-                      <p className="text-xs font-bold uppercase tracking-widest text-brand">Book a consultation</p>
-                      <button
-                        type="button"
-                        onClick={() => setBooking((b) => ({ ...b, active: false }))}
-                        className="text-[10px] font-medium text-muted-foreground transition-colors hover:text-brand"
-                      >
-                        Close
-                      </button>
-                    </div>
-                    <div className="mt-3 space-y-2">
-                      <input
-                        value={booking.name}
-                        onChange={(e) => setBookingField('name', e.target.value)}
-                        placeholder="Full name *"
-                        className="w-full rounded-xl border border-input bg-background/50 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-brand focus:outline-none"
-                      />
-                      <input
-                        value={booking.contact}
-                        onChange={(e) => setBookingField('contact', e.target.value)}
-                        placeholder="Phone or email *"
-                        className="w-full rounded-xl border border-input bg-background/50 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-brand focus:outline-none"
-                      />
-                      <select
-                        value={booking.service}
-                        onChange={(e) => setBookingField('service', e.target.value)}
-                        className="w-full rounded-xl border border-input bg-background/50 px-3 py-2 text-sm text-foreground focus:border-brand focus:outline-none"
-                      >
-                        <option value="">Service of interest *</option>
-                        {bookingServiceOptions.map((opt) => (
-                          <option key={opt} value={opt}>
-                            {opt}
-                          </option>
-                        ))}
-                      </select>
-                      <div className="grid grid-cols-2 gap-2">
-                        <input
-                          type="date"
-                          value={booking.date}
-                          onChange={(e) => setBookingField('date', e.target.value)}
-                          className="rounded-xl border border-input bg-background/50 px-3 py-2 text-sm text-foreground focus:border-brand focus:outline-none [color-scheme:light] dark:[color-scheme:dark]"
-                        />
-                        <input
-                          type="time"
-                          value={booking.time}
-                          onChange={(e) => setBookingField('time', e.target.value)}
-                          className="rounded-xl border border-input bg-background/50 px-3 py-2 text-sm text-foreground focus:border-brand focus:outline-none [color-scheme:light] dark:[color-scheme:dark]"
-                        />
-                      </div>
-                      <textarea
-                        value={booking.message}
-                        onChange={(e) => setBookingField('message', e.target.value)}
-                        placeholder="Anything you'd like us to know (optional)"
-                        rows={2}
-                        className="w-full resize-none rounded-xl border border-input bg-background/50 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-brand focus:outline-none"
-                      />
-                      {booking.error && <p className="text-xs font-medium text-red-500">{booking.error}</p>}
-                      <button type="submit" disabled={booking.submitting} className="btn-brand w-full text-sm !py-2.5">
-                        {booking.submitting ? (
-                          <>
-                            <Loader2 className="h-4 w-4 animate-spin" /> Submitting…
-                          </>
-                        ) : (
-                          <>
-                            <Calendar className="h-4 w-4" /> Confirm consultation request
-                          </>
-                        )}
-                      </button>
-                      <p className="text-center text-[10px] text-muted-foreground">
-                        Prefer to talk? Call{' '}
-                        <a
-                          href={`tel:${business.phone.replace(/\s/g, '')}`}
-                          className="font-medium text-brand hover:underline"
+                    <div className="flex-1 min-h-0 overflow-y-auto scrollbar-hide">
+                      <div className="flex items-center justify-between px-4 pt-4">
+                        <p className="text-xs font-bold uppercase tracking-widest text-brand">Book a consultation</p>
+                        <button
+                          type="button"
+                          onClick={() => setBooking((b) => ({ ...b, active: false }))}
+                          className="text-[10px] font-medium text-muted-foreground transition-colors hover:text-brand"
                         >
-                          {business.phone}
-                        </a>
-                      </p>
+                          Close
+                        </button>
+                      </div>
+                      <div className="space-y-2 p-4">
+                        <Input
+                          value={booking.name}
+                          onChange={(e) => setBookingField('name', e.target.value)}
+                          placeholder="Full name *"
+                        />
+                        <Input
+                          value={booking.contact}
+                          onChange={(e) => setBookingField('contact', e.target.value)}
+                          placeholder="Phone or email *"
+                        />
+                        <select
+                          value={booking.service}
+                          onChange={(e) => setBookingField('service', e.target.value)}
+                          className="h-12 w-full rounded-2xl border border-input bg-background/50 px-4 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        >
+                          <option value="">Service of interest *</option>
+                          {bookingServiceOptions.map((opt) => (
+                            <option key={opt} value={opt}>
+                              {opt}
+                            </option>
+                          ))}
+                        </select>
+                        <div className="grid grid-cols-2 gap-2">
+                          <DatePicker
+                            value={booking.date}
+                            onSelect={(iso) => setBookingField('date', iso)}
+                          />
+                          <TimePicker
+                            value={booking.time}
+                            onChange={(time) => setBookingField('time', time)}
+                          />
+                        </div>
+                        <Textarea
+                          value={booking.message}
+                          onChange={(e) => setBookingField('message', e.target.value)}
+                          placeholder="Anything you'd like us to know (optional)"
+                          rows={2}
+                          className="min-h-[64px] py-2"
+                        />
+                        {booking.error && <p className="text-xs font-medium text-red-500">{booking.error}</p>}
+                        <button type="submit" disabled={booking.submitting} className="btn-brand w-full text-sm !py-2.5">
+                          {booking.submitting ? (
+                            <>
+                              <Loader2 className="h-4 w-4 animate-spin" /> Submitting…
+                            </>
+                          ) : (
+                            <>
+                              <Calendar className="h-4 w-4" /> Confirm consultation request
+                            </>
+                          )}
+                        </button>
+                        <p className="text-center text-[10px] text-muted-foreground">
+                          Prefer to talk? Call{' '}
+                          <a
+                            href={`tel:${business.phone.replace(/\s/g, '')}`}
+                            className="font-medium text-brand hover:underline"
+                          >
+                            {business.phone}
+                          </a>
+                        </p>
+                      </div>
                     </div>
                   </form>
                 ))}

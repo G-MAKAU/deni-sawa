@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'motion/react';
-import type { ReactNode } from 'react';
+import type { ReactNode, ElementType } from 'react';
 
 type Direction = 'up' | 'left' | 'right' | 'scale';
 
@@ -20,8 +20,18 @@ const OFFSET: Record<Direction, { x?: number; y?: number; scale?: number }> = {
   scale: { scale: 0.96 },
 };
 
+const motionTags = new Map<string, ElementType>();
+function getMotionTag(as: string): ElementType {
+  let tag = motionTags.get(as);
+  if (!tag) {
+    tag = motion.create(as as ElementType);
+    motionTags.set(as, tag);
+  }
+  return tag;
+}
+
 export function Reveal({ children, direction = 'up', delay = 0, className = '', as = 'div' }: RevealProps) {
-  const MotionTag = motion.create(as);
+  const MotionTag = getMotionTag(as);
 
   return (
     <MotionTag

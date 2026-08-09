@@ -73,16 +73,16 @@ export function Services() {
 
         {/* Active service content */}
         <Reveal key={service.title} direction="up">
-          <div className="grid lg:grid-cols-[0.9fr_1.15fr] gap-8 lg:gap-14 items-center">
+          <div className="grid lg:grid-cols-[0.9fr_1.15fr] gap-8 lg:gap-14">
             {/* Left — image */}
-            <div className="relative">
-              <div className="absolute -inset-2 rounded-[2rem] bg-gradient-to-br from-brand/15 via-transparent to-green/15" />
-              <div className="relative overflow-hidden rounded-[2rem] shadow-soft-lg border border-border">
+            <div className="relative h-full">
+              <div className="absolute -inset-2 bg-gradient-to-br from-brand/15 via-transparent to-green/15" />
+              <div className="relative h-full overflow-hidden shadow-soft-lg border border-border -ml-2 md:-ml-2 lg:-ml-8">
                 <img
                   src={service.image}
                   alt={service.title}
                   loading="lazy"
-                  className="h-60 sm:h-80 lg:h-[400px] w-full object-cover"
+                  className="h-full w-full object-cover"
                   decoding="async"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />

@@ -87,7 +87,7 @@
 
   /* Buttons */
   .btn-brand {
-    @apply relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-full bg-brand px-7 py-3.5 text-sm font-bold text-white shadow-brand-sm transition-all duration-300 hover:bg-brand-600 hover:shadow-brand-glow active:scale-[0.97];
+    @apply relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-none bg-brand px-7 py-3.5 text-sm font-bold text-white shadow-brand-sm transition-all duration-300 hover:bg-brand-600 hover:shadow-brand-glow active:scale-[0.97];
   }
   .btn-brand-outline {
     @apply relative inline-flex items-center justify-center gap-2 rounded-full border-2 border-brand/40 bg-transparent px-7 py-3.5 text-sm font-bold text-brand transition-all duration-300 hover:border-brand hover:bg-brand/5 active:scale-[0.97];
@@ -183,5 +183,3 @@
 ::-webkit-scrollbar-track { @apply bg-muted; }
 ::-webkit-scrollbar-thumb { @apply bg-brand/40 rounded; }
 ::-webkit-scrollbar-thumb:hover { @apply bg-brand/70; }
-
-

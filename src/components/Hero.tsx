@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { ArrowRight, Check, ShieldCheck, Sparkles } from 'lucide-react';
 import { Counter } from '@/components/Counter';
 import { Reveal } from '@/components/Reveal';
+import { openChat } from '@/lib/chat';
 import { business, heroImages } from '@/data/content';
 
 export function Hero() {
@@ -58,10 +59,20 @@ export function Hero() {
                   <span>KSh 2.5M+</span>
                 </div>
                 <div className="mt-6 flex flex-wrap gap-3">
-                  <a href="#contact" className="btn-brand">
+                  <button
+                    type="button"
+                    onClick={() => openChat(`I'd like to book a free consultation. My total debt is KSh ${formattedAmount}.`)}
+                    className="btn-brand"
+                  >
                     Get a free consultation <ArrowRight className="h-4 w-4" />
-                  </a>
-                  <a href="#services" className="btn-ghost-light">Explore your options</a>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => openChat(`I'd like to explore my options. My total debt is KSh ${formattedAmount}.`)}
+                    className="btn-ghost-light"
+                  >
+                    Explore your options
+                  </button>
                 </div>
               </div>
             </Reveal>
