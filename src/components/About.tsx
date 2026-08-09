@@ -121,20 +121,20 @@ export function About() {
             <img
               src={aboutImages.story}
               alt="Guiding clients toward financial freedom"
-              className="w-full h-64 md:h-120 object-cover"
+              className="w-full h-[32rem] sm:h-[36rem] md:h-[42rem] lg:h-[48rem] object-cover"
               loading="lazy"
               decoding="async"
             />
             <div className="absolute inset-0 bg-ink-950/60" />
             <div className="absolute inset-0 bg-gradient-to-r from-ink-950/80 via-ink-950/40 to-transparent" />
-            <div className="absolute inset-0 flex items-center px-5 sm:px-6 lg:px-8 py-10">
-              <div className="max-w-xl">
+            <div className="absolute inset-0 flex items-center px-5 sm:px-6 lg:px-8 py-12 sm:py-14 lg:py-16">
+              <div className="max-w-xl lg:max-w-2xl">
                 <div className="eyebrow-dark mb-4 inline-flex">Our Story</div>
-                <p className="font-heading text-2xl md:text-3xl font-bold text-white leading-snug">
+                <p className="font-heading text-2xl sm:text-3xl lg:text-4xl font-bold text-white leading-snug">
                   Seasoned bankers with far-reaching experience in banking, debt management,
                   finance, risk, and capital raising — here for you.
                 </p>
-                <p className="mt-4 text-white/70 text-sm md:text-base leading-relaxed">
+                <p className="mt-4 max-w-xl text-white/80 text-sm sm:text-base lg:text-lg leading-relaxed">
                   {business.partners}
                 </p>
               </div>
