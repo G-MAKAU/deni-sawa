@@ -121,7 +121,7 @@ export function About() {
             <img
               src={aboutImages.story}
               alt="Guiding clients toward financial freedom"
-              className="w-full h-64 md:h-80 object-cover"
+              className="w-full h-64 md:h-120 object-cover"
               loading="lazy"
               decoding="async"
             />
