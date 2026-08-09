@@ -75,7 +75,7 @@ export function Navbar() {
                 'flex flex-shrink-0 items-center justify-center bg-gradient-to-br bg-brand shadow-brand-sm ring-1 ring-inset ring-white/20 transition-all duration-300 ease-out group-hover:scale-105 group-hover:shadow-brand-glow',
                 scrolled
                   ? 'px-11 h-full'
-                  : 'px-7 py-2.5 sm:px-12 sm:py-3'
+                  : 'sm:px-7 py-2.5 md:px-12 sm:py-3'
               )}
             >
               <img src={business.logo} alt="Deni Sawa" className={cn('w-auto object-contain brightness-0 invert transition-all duration-300 ease-out', scrolled ? 'h-11' : 'h-17 sm:h-16')} decoding="async" />
