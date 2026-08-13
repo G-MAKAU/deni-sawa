@@ -3,10 +3,11 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, X, Phone, Mail, Clock, ArrowRight, Calendar, Facebook, Instagram, Linkedin } from 'lucide-react';
+import { Menu, X, Phone, Mail, Clock, ArrowRight, Calendar, Facebook, Instagram, Linkedin, ChevronDown, ChevronRight, Landmark } from 'lucide-react';
 import { useScrollProgress } from '@/lib/hooks';
-import { navLinks, business } from '@/data/content';
+import { navLinks, business, services } from '@/data/content';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
+import { ServicesNavItem, serviceIconMap } from '@/components/ServicesNavItem';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
@@ -14,6 +15,7 @@ export function Navbar() {
   const { scrolled } = useScrollProgress();
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [mobileServicesOpen, setMobileServicesOpen] = useState(false);
 
   useEffect(() => {
     document.body.style.overflow = open ? 'hidden' : '';
@@ -22,6 +24,9 @@ export function Navbar() {
 
   const isNavActive = (link: { href: string }) =>
     link.href.startsWith('/') && pathname === link.href;
+
+  const isServicesActive = pathname === '/services' || pathname.startsWith('/services/');
+  const currentServiceSlug = pathname.startsWith('/services/') ? pathname.split('/')[2] : undefined;
 
   return (
     <header className="fixed top-0 left-0 right-0 z-[80]">
@@ -92,10 +97,13 @@ export function Navbar() {
                     'relative rounded-full px-3.5 py-2 text-base font-medium font-bold transition-all duration-300',
                     link.active
                       ? isActive
-                        ? 'text-white bg-brand shadow-brand-sm'
+                        ? 'text-white bg-brand shadow-brand-sm rounded-none'
                         : 'text-foreground/80 hover:text-brand hover:bg-brand/10'
                       : 'text-muted-foreground/50 cursor-not-allowed'
                   );
+                  if (link.label === 'Services') {
+                    return <ServicesNavItem key={link.label} active={isServicesActive} currentSlug={currentServiceSlug} />;
+                  }
                   const linkInner = (
                     <span className="flex items-center gap-1.5">
                       {link.label}
@@ -122,11 +130,11 @@ export function Navbar() {
             {/* Right side  */}
             <div className="hidden lg:flex items-center gap-2 flex-shrink-0">
               <ThemeToggle className="h-9 w-9" />
-              <a href="#contact" className="btn-brand text-sm whitespace-nowrap !px-5 !py-2.5">
+              <Link href="/contact" className="btn-brand text-sm whitespace-nowrap !px-5 !py-2.5">
                 <Calendar className="h-4 w-4" />
                 <span className="hidden xl:inline">Schedule Consultation</span>
                 <span className="xl:hidden">Schedule Now</span>
-              </a>
+              </Link>
             </div>
 
             {/* Mobile toggle */}
@@ -154,7 +162,7 @@ export function Navbar() {
         <div className="absolute inset-0 bg-background/85" onClick={() => setOpen(false)} />
         <div
           className={cn(
-            'absolute top-20 left-4 right-4 rounded-4xl border border-border bg-card shadow-soft-xl transition-all duration-500',
+            'absolute top-20 left-4 right-4 max-h-[calc(100vh-6rem)] overflow-y-auto rounded-4xl border border-border bg-card shadow-soft-xl transition-all duration-500',
             open ? 'translate-y-0 opacity-100' : '-translate-y-4 opacity-0'
           )}
         >
@@ -176,7 +184,7 @@ export function Navbar() {
                   'flex items-center justify-between rounded-2xl px-4 py-3.5 text-sm font-medium transition-all duration-300',
                   link.active
                     ? isActive
-                      ? 'text-white bg-brand shadow-brand-sm'
+                      ? 'text-white bg-brand shadow-brand-sm rounded-none'
                       : 'text-foreground bg-muted/50 hover:bg-brand/10 hover:text-brand'
                     : 'text-muted-foreground cursor-not-allowed'
                 );
@@ -193,6 +201,74 @@ export function Navbar() {
                     {link.active && !isActive && <ArrowRight className="h-4 w-4 text-brand" />}
                   </>
                 );
+                if (link.label === 'Services') {
+                  return (
+                    <div key={link.label} className="overflow-hidden rounded-2xl" style={{ transitionDelay: open ? `${i * 40}ms` : '0ms' }}>
+                      <button
+                        onClick={() => setMobileServicesOpen(!mobileServicesOpen)}
+                        className={cn(
+                          'flex w-full items-center justify-between rounded-2xl px-4 py-3.5 text-sm font-medium transition-all duration-300',
+                          isServicesActive
+                            ? 'text-brand bg-brand/10'
+                            : 'text-foreground bg-muted/50 hover:bg-brand/10 hover:text-brand'
+                        )}
+                      >
+                        <span className="flex items-center gap-2.5">
+                          <span className={cn('flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold', isServicesActive ? 'bg-brand/10 text-brand' : 'bg-muted text-muted-foreground')}>
+                            {i + 1}
+                          </span>
+                          Services
+                        </span>
+                        <ChevronDown className={cn('h-4 w-4 text-muted-foreground transition-transform duration-300', mobileServicesOpen && 'rotate-180')} />
+                      </button>
+                      <div className={cn('grid transition-all duration-300', mobileServicesOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]')}>
+                        <div className="overflow-hidden">
+                          <div className="mt-1 flex flex-col gap-1 px-2 pb-2 pt-1">
+                            <Link
+                              href="/services"
+                              onClick={() => setOpen(false)}
+                              className="mb-1 flex items-center justify-between rounded-2xl bg-ink-25 px-4 py-3 transition-colors hover:bg-brand/10 dark:bg-ink-800/50"
+                            >
+                              <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-muted-foreground">All Services</span>
+                              <ArrowRight className="h-4 w-4 text-brand" />
+                            </Link>
+                            {services.map((s) => {
+                              const Icon = serviceIconMap[s.icon] ?? Landmark;
+                              const isGreen = s.tab === 'Coaching' || s.tab === 'Wellness';
+                              const isCurrent = s.slug === currentServiceSlug;
+                              return (
+                                <Link
+                                  key={s.slug}
+                                  href={`/services/${s.slug}`}
+                                  onClick={() => setOpen(false)}
+                                  aria-current={isCurrent ? 'page' : undefined}
+                                  className={cn(
+                                    'group flex items-center gap-3 rounded-2xl px-3 py-2.5 transition-colors hover:bg-brand/10',
+                                    isCurrent && 'bg-brand/10 ring-1 ring-inset ring-brand/20'
+                                  )}
+                                >
+                                  <span
+                                    className={cn(
+                                      'flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl',
+                                      isGreen ? 'bg-green/10 text-green' : 'bg-brand/10 text-brand',
+                                      isCurrent && (isGreen ? 'bg-green text-white' : 'bg-brand text-white')
+                                    )}
+                                  >
+                                    <Icon className="h-4 w-4" strokeWidth={1.8} />
+                                  </span>
+                                  <span className={cn('flex-1 text-sm font-bold transition-colors group-hover:text-brand', isCurrent ? 'text-brand' : 'text-foreground')}>
+                                    {s.tab}
+                                  </span>
+                                  <ChevronRight className={cn('h-4 w-4 text-muted-foreground transition-transform duration-300 group-hover:translate-x-0.5', isCurrent && 'text-brand')} />
+                                </Link>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
                 return link.href.startsWith('/') ? (
                   <Link
                     key={link.label}
@@ -218,9 +294,9 @@ export function Navbar() {
             </div>
             <div className="my-4 h-px bg-border" />
             <div className="flex flex-col gap-3">
-              <a href="#contact" onClick={() => setOpen(false)} className="btn btn-brand rounded-none w-full">
+              <Link href="/contact" onClick={() => setOpen(false)} className="btn btn-brand rounded-none w-full">
                 <Calendar className="h-4 w-4" />Schedule Consultation
-              </a>
+              </Link>
               <a href={`tel:${business.phone.replace(/\s/g, '')}`} className="btn-ghost-light w-full">
                 <Phone className="h-4 w-4" />{business.phone}
               </a>

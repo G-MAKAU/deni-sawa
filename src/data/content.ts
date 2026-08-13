@@ -27,25 +27,25 @@ export const business = {
 
 export const navLinks = [
   { label: 'About', href: '/about', active: true },
-  { label: 'Services', href: '#services', active: false },
-  { label: 'Academy', href: '#academy', active: false },
-  { label: 'Blog', href: '#resources', active: false },
-  { label: 'Contact', href: '#contact', active: false },
+  { label: 'Services', href: '/services', active: true },
+  { label: 'Academy', href: '/academy', active: true },
+  { label: 'Blog', href: '/blog', active: true },
+  { label: 'Contact', href: '/contact', active: true },
 ];
 
 export const heroImages = {
-  main: 'Slider1-denisawa.png',
-  small1: 'https://images.pexels.com/photos/5060570/pexels-photo-5060570.jpeg?auto=compress&cs=tinysrgb&w=600',
-  small2: 'https://images.pexels.com/photos/5439438/pexels-photo-5439438.jpeg?auto=compress&cs=tinysrgb&w=600',
-  small3: 'https://images.pexels.com/photos/7414026/pexels-photo-7414026.jpeg?auto=compress&cs=tinysrgb&w=600',
-  small4: 'https://images.pexels.com/photos/6285072/pexels-photo-6285072.jpeg?auto=compress&cs=tinysrgb&w=600',
+  main: '/Slider1-denisawa.png',
+  small1: '/images/hero-1.jpg',
+  small2: '/images/hero-2.jpg',
+  small3: '/images/hero-3.jpg',
+  small4: '/images/hero-4.jpg',
 };
 
 export const aboutImages = {
-  header: 'https://images.pexels.com/photos/5060570/pexels-photo-5060570.jpeg?auto=compress&cs=tinysrgb&w=1920',
-  visual: 'https://images.pexels.com/photos/6285072/pexels-photo-6285072.jpeg?auto=compress&cs=tinysrgb&w=1200',
-  story: 'https://images.pexels.com/photos/7414026/pexels-photo-7414026.jpeg?auto=compress&cs=tinysrgb&w=1920',
-  team: 'https://images.pexels.com/photos/5439438/pexels-photo-5439438.jpeg?auto=compress&cs=tinysrgb&w=1920',
+  header: '/images/hero-1.jpg',
+  visual: '/images/hero-4.jpg',
+  story: '/images/hero-3.jpg',
+  team: '/images/hero-2.jpg',
 };
 
 export const quickFeatures = [
@@ -70,58 +70,160 @@ export const partners = [
 
 export const services = [
   {
+    slug: 'debt-management',
     icon: 'Landmark',
     title: 'Debt Management Service',
     tab: 'Debt Management',
-    image: 'https://images.pexels.com/photos/5849563/pexels-photo-5849563.jpeg?auto=compress&cs=tinysrgb&w=1600&h=1200',
+    image: '/images/service-debt-management.jpg',
+    detailImage: '/images/page-debt-crisis.jpg',
     summary: 'Professional debt management services that help you achieve a debt-free future through a holistic, structured approach to debt reduction.',
     points: ['One-on-one advisory', 'Structured repayment plans', 'Creditor negotiation support'],
     cta: 'schedule',
+    overview:
+      'Debt rarely resolves itself — it compounds. Our Debt Management Service pairs you with a seasoned advisor who helps you see the full picture of what you owe, build a realistic repayment plan, and negotiate with creditors so you stop bleeding charges, penalties and auction fees.',
+    features: [
+      { title: 'Complete debt audit', description: 'A confidential review of every obligation — principal, interest, penalties and legal exposure — so nothing surprises you later.' },
+      { title: 'Structured repayment plan', description: 'A realistic, income-based plan that protects your essentials while steadily reducing what you owe.' },
+      { title: 'Creditor negotiation', description: 'We engage lenders on your behalf to restructure terms, waive penalties and stop escalation to auctions or legal action.' },
+      { title: 'Ongoing accountability', description: 'Regular check-ins keep your plan on track and adjust it as your income or circumstances change.' },
+    ],
+    deliverables: ['Confidential debt assessment', 'Written repayment roadmap', 'Creditor communication on your behalf', 'Progress reviews every month'],
+    idealFor: ['Individuals overwhelmed by bank or digital loans', 'Families facing auction or legal threats', 'SME owners with business debt distress', 'Anyone who wants a clear, judgement-free path out'],
+    faqs: [
+      { q: 'Is my information confidential?', a: 'Absolutely. Everything you share is strictly confidential and never shared without your consent — that is the foundation of our work.' },
+      { q: 'How long does the programme take?', a: 'Our structured programmes run 12 to 48 weeks. Many clients feel relief from the very first session as soon as a plan is in place.' },
+      { q: 'Can you help with auctions and legal charges?', a: 'Yes. Our advisors are experienced in negotiating to avoid auction fees, penalties and legal costs whenever the situation still allows.' },
+    ],
   },
   {
+    slug: 'financial-coaching',
     icon: 'GraduationCap',
     title: 'Financial Coaching',
     tab: 'Coaching',
-    image: 'https://images.pexels.com/photos/8292882/pexels-photo-8292882.jpeg?auto=compress&cs=tinysrgb&w=1600&h=1200',
+    image: '/images/service-financial-coaching.jpg',
+    detailImage: '/images/page-budget.jpg',
     summary: 'Transform your financial situation with personalised one-on-one coaching and ongoing support from the Deni Sawa team.',
     points: ['Personal money management', 'Budgeting & saving habits', 'Accountability partnerships'],
     cta: 'schedule',
+    overview:
+      'Knowledge alone rarely changes behaviour — accountability does. Financial Coaching pairs you one-on-one with a certified coach who understands your goals, builds a practical money system around your life, and stays with you through check-ins so the new habits actually stick.',
+    features: [
+      { title: 'Personal money map', description: 'We build a budget that fits your real income and expenses — not a generic template.' },
+      { title: 'Saving & emergency habits', description: 'Practical systems to build a buffer and save consistently, even on a tight income.' },
+      { title: 'Debt-avoidance coaching', description: 'Learn to spot and resist the traps — payday loans, high-interest credit — before they compound.' },
+      { title: 'Accountability partnership', description: 'Regular sessions keep you honest, motivated, and moving toward measurable money goals.' },
+    ],
+    deliverables: ['Personalised budget & money plan', 'Emergency fund framework', 'Monthly accountability sessions', 'Progress dashboard & milestones'],
+    idealFor: ['Young professionals starting out', 'Families rebuilding after financial strain', 'Anyone who struggles to stick to budgets', 'People who want a personal money coach'],
+    faqs: [
+      { q: 'How is coaching different from advice?', a: 'Advice tells you what to do; coaching walks with you while you do it. You get a plan, tools, and a person who checks in until the habits become yours.' },
+      { q: 'Do sessions happen online or in person?', a: 'We offer both — whatever is most comfortable for you. Many clients prefer virtual sessions for privacy and convenience.' },
+      { q: 'What should I prepare?', a: 'Just bring an open mind and a rough idea of your income, expenses and debts. We guide you through the rest — no judgement.' },
+    ],
   },
   {
+    slug: 'financial-literacy',
     icon: 'BookOpen',
     title: 'Financial Literacy',
     tab: 'Literacy',
-    image: 'https://images.pexels.com/photos/5632400/pexels-photo-5632400.jpeg?auto=compress&cs=tinysrgb&w=1600&h=1200',
+    image: '/images/service-financial-literacy.jpg',
+    detailImage: '/images/page-cashflow.jpg',
     summary: 'Build the knowledge and confidence to make sound financial decisions through practical, accessible financial education.',
     points: ['Money fundamentals', 'Credit & debt literacy', 'Wealth-building principles'],
     cta: 'learn',
+    overview:
+      'The best way to stay debt-free is to understand money. Financial Literacy gives you the practical foundations — budgeting, credit, saving, and wealth-building — in plain language, so you can make confident decisions for life.',
+    features: [
+      { title: 'Money fundamentals', description: 'Income, expenses, budgeting and cash flow explained simply and applied to your life.' },
+      { title: 'Credit & debt literacy', description: 'Understand interest rates, loan terms, credit scores and how to use credit without being used by it.' },
+      { title: 'Wealth-building principles', description: 'Saving, investing and compounding basics that put your money to work.' },
+      { title: 'Real-world application', description: 'Every lesson ends with a practical action you can take immediately.' },
+    ],
+    deliverables: ['Foundational money curriculum', 'Interactive workshops & worksheets', 'Credit health checklist', 'Access to our free online learning portal'],
+    idealFor: ['Students and young adults', 'First-time earners', 'Employees wanting workplace literacy', 'Anyone rebuilding from financial mistakes'],
+    faqs: [
+      { q: 'Is financial literacy a course or a service?', a: 'Both. We run structured learning programmes and also embed literacy modules into coaching and corporate wellness engagements.' },
+      { q: 'Do you offer certificates?', a: 'Yes — participants who complete our structured programmes receive a Deni Sawa Academy certificate of completion.' },
+      { q: 'Where does learning happen?', a: 'Workshops, webinars, on-site training, or through our free online learning portal at your own pace.' },
+    ],
   },
   {
+    slug: 'corporate-financial-wellness',
     icon: 'Building2',
-title: 'Corporate Financial Wellness',
+    title: 'Corporate Financial Wellness',
     tab: 'Wellness',
-    image: 'https://images.pexels.com/photos/4173356/pexels-photo-4173356.jpeg?auto=compress&cs=tinysrgb&w=1600&h=1200',
+    image: '/images/service-corporate-wellness.jpg',
+    detailImage: '/images/page-wellness.jpg',
     summary: 'Empower your workforce with financial wellness programmes designed to reduce stress and boost productivity across your organisation.',
     points: ['Employee wellness workshops', 'Group coaching sessions', 'Organisational financial health'],
     cta: 'schedule',
+    overview:
+      'Financial stress follows employees to work — it lowers focus, raises absence, and quietly costs organisations far more than a wellness programme does. We design confidential, judgement-free financial wellness initiatives that protect your people and lift your productivity.',
+    features: [
+      { title: 'Confidential coaching windows', description: 'Employees access private one-on-one sessions without stigma or disclosure to the employer.' },
+      { title: 'Workplace workshops', description: 'Budgeting, debt awareness, savings and investment basics delivered on-site or virtually.' },
+      { title: 'Manager guidance', description: 'Practical training on responding to financial stress with dignity and appropriate referral.' },
+      { title: 'Measurable impact', description: 'Confidential surveys and reporting that show engagement and progress — without exposing individuals.' },
+    ],
+    deliverables: ['Corporate wellness assessment', 'Customised training calendar', 'Confidential employee support hours', 'Progress & engagement reporting'],
+    idealFor: ['HR and people leaders', 'SMEs and corporates in Kenya', 'Organisations with high attrition', 'Employers who value staff wellbeing'],
+    faqs: [
+      { q: 'Is employee data confidential?', a: 'Completely. We never share individual details with employers — only aggregate, anonymised programme insights.' },
+      { q: 'How do you start?', a: 'We begin with a short confidential survey and a two-hour workshop. The data then tells us what your workforce needs next.' },
+      { q: 'Can you support remote teams?', a: 'Yes. All workshops and coaching can be delivered virtually for distributed workforces.' },
+    ],
   },
   {
+    slug: 'business-advisory',
     icon: 'Briefcase',
     title: 'Business Advisory',
     tab: 'Advisory',
-    image: 'https://images.pexels.com/photos/7792841/pexels-photo-7792841.jpeg?auto=compress&cs=tinysrgb&w=1600&h=1200',
+    image: '/images/service-business-advisory.jpg',
+    detailImage: '/images/page-negotiation.jpg',
     summary: 'Strategic advisory for SMEs and entrepreneurs covering governance, investor readiness, business process re-engineering and growth solutions.',
     points: ['Corporate governance support', 'Investor readiness', 'Business process re-engineering'],
     cta: 'schedule',
+    overview:
+      'Growing a business is different from running one. Our advisory team — seasoned bankers with hands-on experience in finance, risk and capital raising — helps you build the governance, processes and investor story your business needs to scale.',
+    features: [
+      { title: 'Corporate governance', description: 'Structures, policies and reporting that make your business credible to partners and investors.' },
+      { title: 'Investor readiness', description: 'A polished financial story, due-diligence preparation and pitch support for funding.' },
+      { title: 'Process re-engineering', description: 'We streamline operations and cash-flow systems to improve margins and resilience.' },
+      { title: 'Capital-raising strategy', description: 'Guidance on the right funding mix — debt, equity and grants — for your stage of growth.' },
+    ],
+    deliverables: ['Governance diagnostic', 'Investor readiness pack', 'Process improvement roadmap', 'Funding strategy & pitch support'],
+    idealFor: ['SME owners scaling up', 'Founders preparing to raise capital', 'Family businesses formalising governance', 'Companies in financial distress needing a turnaround'],
+    faqs: [
+      { q: 'Do you work with early-stage startups?', a: 'Yes. We meet founders at their stage and build the financial and governance foundations needed for growth.' },
+      { q: 'What does investor readiness involve?', a: 'Clean financials, strong reporting, clear governance and a compelling pitch — we prepare all of it with you.' },
+      { q: 'Can you help a struggling business recover?', a: 'Yes — our advisors specialise in restructuring, cash-flow repair and negotiation to help distressed businesses stabilise.' },
+    ],
   },
   {
+    slug: 'money-mindset',
     icon: 'Brain',
     title: 'Money Mindset',
     tab: 'Mindset',
-    image: 'https://images.pexels.com/photos/33117383/pexels-photo-33117383.jpeg?auto=compress&cs=tinysrgb&w=1600&h=1200',
+    image: '/images/service-money-mindset.jpg',
+    detailImage: '/images/page-mindset.jpg',
     summary: 'Address the psychological and emotional dimensions of money. Develop a healthy relationship with finances rooted in Biblical principles of service.',
     points: ['Behavioural finance coaching', 'Stress & debt psychology', 'Values-based money habits'],
     cta: 'learn',
+    overview:
+      'Debt is often a symptom of how we think and feel about money. Money Mindset addresses the psychology underneath — the shame, the impulse, the scarcity — and rebuilds your relationship with money on values, stewardship and hope.',
+    features: [
+      { title: 'Behavioural finance coaching', description: 'Understand the biases that drive overspending and avoidance, and learn practical counter-habits.' },
+      { title: 'Debt stress recovery', description: 'Process the guilt and shame of debt so you can face your finances without fear.' },
+      { title: 'Values-based money habits', description: 'Align your spending and saving with your values and faith — not guilt-driven restriction.' },
+      { title: 'Stewardship framework', description: 'See money as a resource to manage responsibly, rooted in Biblical principles of service to God and humankind.' },
+    ],
+    deliverables: ['Money psychology assessment', 'Personal mindset coaching plan', 'Guilt-free money habit toolkit', 'Faith-aligned stewardship guide'],
+    idealFor: ['People avoiding their finances', 'Those trapped by spending habits', 'Clients who have tried plans and relapsed', 'Anyone seeking peace with money'],
+    faqs: [
+      { q: 'Is this faith-based counselling?', a: 'It is values-based and rooted in Biblical principles of service, stewardship and integrity — but it is always respectful of your own beliefs.' },
+      { q: 'How is this different from financial coaching?', a: 'Coaching focuses on systems and habits; Money Mindset focuses on the beliefs and emotions driving your behaviour. They work beautifully together.' },
+      { q: 'How many sessions do I need?', a: 'Many clients feel a shift in the first session. A typical engagement runs 4–8 sessions, depending on your goals.' },
+    ],
   },
 ];
 

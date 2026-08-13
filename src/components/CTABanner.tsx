@@ -25,8 +25,8 @@ export function CTABanner() {
                 Reach out today and start your journey to financial freedom. Our team is ready to walk with you — every step of the way.
               </p>
               <div className="flex flex-wrap items-center justify-center gap-4">
-                <a href="#contact" className="btn-brand"><Calendar className="h-4 w-4" />Book Consultation</a>
-                <a href="#academy" className="btn-ghost-dark"><BookOpen className="h-4 w-4" />Explore Learning Resources</a>
+                <a href="/contact" className="btn-brand"><Calendar className="h-4 w-4" />Book Consultation</a>
+                <a href="/academy" className="btn-ghost-dark"><BookOpen className="h-4 w-4" />Explore Learning Resources</a>
               </div>
             </div>
           </div>

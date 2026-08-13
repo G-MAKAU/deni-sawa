@@ -19,18 +19,17 @@ export function Footer() {
   };
 
   const quickLinks = [
-    { label: 'Home', href: '#home', active: true },
+    { label: 'Home', href: '/', active: true },
     { label: 'About', href: '/about', active: true },
-    { label: 'Services', href: '#services', active: false },
-    { label: 'Academy', href: '#academy', active: false },
-    { label: 'Resources', href: '#resources', active: false },
+    { label: 'Services', href: '/services', active: true },
+    { label: 'Academy', href: '/academy', active: true },
+    { label: 'Blog', href: '/blog', active: true },
   ];
 
   const helpLinks = [
-    { label: 'Book Consultation', href: '#contact', active: true },
-    { label: 'FAQs', href: '#resources', active: false },
-    { label: 'Blog', href: '#resources', active: false },
-    { label: 'Contact', href: '#contact', active: true },
+    { label: 'Book Consultation', href: '/contact', active: true },
+    { label: 'Contact', href: '/contact', active: true },
+    { label: 'FAQs', href: '/contact', active: true },
   ];
 
   return (
@@ -131,9 +130,10 @@ export function Footer() {
             <ul className="space-y-3">
               {services.slice(0, 5).map((s) => (
                 <li key={s.title}>
-                  <span className="text-sm text-white/30 cursor-not-allowed inline-flex items-center gap-1.5">
-                    {s.title}<Badge variant="soon" className="px-1.5 py-0 text-[8px]">Soon</Badge>
-                  </span>
+                  <Link href={`/services/${s.slug}`} className="text-sm text-white/60 hover:text-brand transition-colors inline-flex items-center gap-1.5 group">
+                    <ArrowRight className="h-3 w-3 opacity-0 -ml-4 transition-all duration-300 group-hover:opacity-100 group-hover:ml-0" />
+                    {s.title}
+                  </Link>
                 </li>
               ))}
             </ul>

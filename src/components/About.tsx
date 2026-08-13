@@ -233,7 +233,7 @@ export function About() {
                     Book a consultation and begin your journey to financial freedom.
                   </p>
                   <a
-                    href="#contact"
+                    href="/contact"
                     className="inline-flex w-full sm:w-auto items-center justify-center gap-3 rounded-sm bg-white text-brand px-10 py-4 text-base sm:text-lg font-bold shadow-soft-lg transition-all duration-300 hover:bg-ink-50 hover:scale-[1.02] active:scale-95"
                   >
                     Get Started <ArrowRight className="h-5 w-5" />

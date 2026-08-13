@@ -31,7 +31,7 @@ export function Academy() {
             </Reveal>
           </div>
           <Reveal delay={300}>
-            <a href="#contact" className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-6 py-3 text-sm font-semibold text-white transition-all duration-300 hover:bg-white/15 hover:border-brand/40">
+            <a href="/contact" className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-6 py-3 text-sm font-semibold text-white transition-all duration-300 hover:bg-white/15 hover:border-brand/40">
               Explore All Programmes<ArrowRight className="h-4 w-4" />
             </a>
           </Reveal>
@@ -93,7 +93,7 @@ export function Academy() {
                     <div className="flex items-center gap-1.5 text-xs text-white/40"><Tag className="h-3.5 w-3.5" />{course.category}</div>
                     <div className="flex items-center gap-1.5 text-xs text-white/40"><FormatIcon className="h-3.5 w-3.5" />{course.format}</div>
                   </div>
-                  <a href="#contact" className={`inline-flex items-center gap-2 text-sm font-semibold transition-all duration-300 hover:gap-3 ${isGreen ? 'text-green' : 'text-brand'}`}>
+                  <a href="/contact" className={`inline-flex items-center gap-2 text-sm font-semibold transition-all duration-300 hover:gap-3 ${isGreen ? 'text-green' : 'text-brand'}`}>
                     Enrol Now<ArrowRight className="h-4 w-4" />
                   </a>
                 </div>

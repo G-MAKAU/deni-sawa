@@ -16,14 +16,17 @@ function ScrollToTop() {
 }
 
 export function AppShell({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const isAdmin = pathname.startsWith('/admin');
+
   return (
     <ThemeProvider>
       <div className="min-h-screen bg-background">
         <ScrollToTop />
-        <Navbar />
-        <main className="pt-40 lg:pt-[212px]">{children}</main>
-        <Footer />
-        <AIChatWidget />
+        {!isAdmin && <Navbar />}
+        <main className={isAdmin ? '' : 'pt-40 lg:pt-[212px]'}>{children}</main>
+        {!isAdmin && <Footer />}
+        {!isAdmin && <AIChatWidget />}
       </div>
     </ThemeProvider>
   );

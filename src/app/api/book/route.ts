@@ -77,7 +77,10 @@ export async function POST(req: NextRequest) {
   // Best-effort persistence — works the moment the consultation_bookings table exists.
   // If it doesn't (or Supabase is unreachable), we still return a receipt + hand-off links.
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const supabaseKey =
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY;
   let stored = false;
   if (supabaseUrl && supabaseKey) {
     try {

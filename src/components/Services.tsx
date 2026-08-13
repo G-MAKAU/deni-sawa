@@ -6,6 +6,7 @@ import {
   Phone, ArrowUpRight, type LucideIcon,
 } from 'lucide-react';
 import { Reveal } from '@/components/Reveal';
+import { ServiceNavigator } from '@/components/ServiceNavigator';
 import { services, business } from '@/data/content';
 import { cn } from '@/lib/utils';
 
@@ -37,6 +38,14 @@ export function Services() {
             <p className="text-lg text-muted-foreground leading-relaxed">
               Choose a division below to explore how we help individuals and businesses move forward with confidence.
             </p>
+          </Reveal>
+          <Reveal delay={250}>
+            <div className="mt-6 flex items-center justify-center gap-3">
+              <span className="hidden text-xs font-semibold uppercase tracking-widest text-muted-foreground sm:inline">
+                Jump to a service page
+              </span>
+              <ServiceNavigator activeSlug={service.slug} />
+            </div>
           </Reveal>
         </div>
 
@@ -119,14 +128,21 @@ export function Services() {
               </ul>
 
               <div className="flex flex-wrap items-center gap-3">
+                <a
+                  href={`/services/${service.slug}`}
+                  className="btn-brand-outline text-sm whitespace-nowrap"
+                >
+                  Explore This Division
+                  <ArrowRight className="h-4 w-4" />
+                </a>
                 {isSchedule ? (
-                  <a href="#contact" className="btn-brand text-sm whitespace-nowrap">
+                  <a href="/contact" className="btn-brand text-sm whitespace-nowrap">
                     <Calendar className="h-4 w-4" />
                     Schedule Consultation
                     <ArrowRight className="h-4 w-4" />
                   </a>
                 ) : (
-                  <a href="#academy" className="btn-brand-outline text-sm whitespace-nowrap">
+                  <a href="/academy" className="btn-brand-outline text-sm whitespace-nowrap">
                     <BookOpen className="h-4 w-4" />
                     Learn About This Service
                     <ArrowRight className="h-4 w-4" />

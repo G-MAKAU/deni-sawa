@@ -55,7 +55,7 @@ export function Process() {
 
         <Reveal delay={200}>
           <div className="mt-12 text-center">
-            <a href="#contact" className="btn-brand text-sm">
+            <a href="/contact" className="btn-brand text-sm">
               Start Your Journey<ArrowRight className="h-4 w-4" />
             </a>
           </div>
