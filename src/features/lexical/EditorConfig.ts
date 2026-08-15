@@ -43,6 +43,23 @@ export interface BuildConfigOptions {
   editable?: boolean;
 }
 
+/** True when the state contains at least one root child (Lexical forbids an empty root). */
+function hasContent(state: Record<string, unknown> | string | undefined): boolean {
+  if (!state) return false;
+  let parsed: unknown = state;
+  if (typeof state === 'string') {
+    if (!state.trim()) return false;
+    try {
+      parsed = JSON.parse(state);
+    } catch {
+      // Invalid JSON — let Lexical attempt the parse so onError can report it.
+      return true;
+    }
+  }
+  const root = (parsed as { root?: { children?: unknown[] } } | null)?.root;
+  return Array.isArray(root?.children) && root.children.length > 0;
+}
+
 /**
  * Shared initial config factory. `state` may be a serialized Lexical
  * EditorState JSON object (as produced by Claude) or a JSON string.
@@ -56,9 +73,11 @@ export function buildEditorConfig({
     theme: LexicalTheme,
     editable,
     nodes: EDITOR_NODES,
-    editorState: state
-      ? () => (typeof state === 'string' ? state : JSON.stringify(state))
-      : undefined,
+    // Pass the serialized state as a STRING. Lexical's composer parses strings via
+    // parseEditorState; the function form calls back with the editor and discards
+    // the returned value, so it would leave the editor empty. Empty states are
+    // omitted so Lexical boots a default editor instead of throwing on setEditorState.
+    editorState: hasContent(state) ? (typeof state === 'string' ? state : JSON.stringify(state)) : undefined,
     onError(error: unknown) {
       // Do not crash the page on malformed states — surface quietly.
       console.error('Lexical editor error:', error);

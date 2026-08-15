@@ -1,5 +1,5 @@
 import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer';
-import type { ExportModel } from './lexical-to-model';
+import type { ExportModel, ReportTextRun } from './lexical-to-model';
 import { healthChecks } from '@/data/site';
 
 const ORANGE = '#E8510A';
@@ -138,6 +138,17 @@ function ReportFooter() {
   );
 }
 
+/** Inline styles for a text run (bold/italic/underline/strike + colour). */
+function runStyle(run: ReportTextRun): Record<string, string> {
+  const style: Record<string, string> = {};
+  if (run.bold) style.fontWeight = '700';
+  if (run.italic) style.fontStyle = 'italic';
+  if (run.underline && !run.strike) style.textDecoration = 'underline';
+  if (run.strike) style.textDecoration = 'line-through';
+  if (run.color) style.color = run.color;
+  return style;
+}
+
 /** Branded PDF document built from the lexical report model. */
 export function HealthReportDocument({ model }: { model: ExportModel }) {
   return (
@@ -153,25 +164,40 @@ export function HealthReportDocument({ model }: { model: ExportModel }) {
 
         {model.blocks.map((block, i) => {
           switch (block.kind) {
-            case 'heading':
-              return block.level === 1 ? (
-                <Text key={i} style={styles.h1}>
-                  {block.text}
-                </Text>
-              ) : block.level === 2 ? (
-                <Text key={i} style={styles.h2}>
-                  {block.text}
-                </Text>
-              ) : (
-                <Text key={i} style={styles.h3}>
-                  {block.text}
+            case 'heading': {
+              const headingStyle =
+                block.level === 1 ? styles.h1 : block.level === 2 ? styles.h2 : styles.h3;
+              return (
+                <Text
+                  key={i}
+                  style={[
+                    headingStyle,
+                    block.backgroundColor
+                      ? { backgroundColor: block.backgroundColor, paddingHorizontal: 4, paddingVertical: 2 }
+                      : undefined,
+                  ]}
+                >
+                  {block.runs?.map((run, j) => (
+                    <Text key={j} style={runStyle(run)}>
+                      {run.text}
+                    </Text>
+                  ))}
                 </Text>
               );
+            }
             case 'paragraph':
               return (
-                <Text key={i} style={styles.paragraph}>
+                <Text
+                  key={i}
+                  style={[
+                    styles.paragraph,
+                    block.backgroundColor
+                      ? { backgroundColor: block.backgroundColor, paddingHorizontal: 4 }
+                      : undefined,
+                  ]}
+                >
                   {block.runs?.map((run, j) => (
-                    <Text key={j} style={run.bold ? { fontWeight: 700 } : undefined}>
+                    <Text key={j} style={runStyle(run)}>
                       {run.text}
                     </Text>
                   ))}

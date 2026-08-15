@@ -131,8 +131,10 @@ export function SectionsManager() {
   // Inline edit state
   const [editingSectionId, setEditingSectionId] = React.useState<string | null>(null);
   const [editTitle, setEditTitle] = React.useState('');
+  const [editSectionDescription, setEditSectionDescription] = React.useState('');
   const [editingSubsectionId, setEditingSubsectionId] = React.useState<string | null>(null);
   const [editHeading, setEditHeading] = React.useState('');
+  const [editSubsectionDescription, setEditSubsectionDescription] = React.useState('');
   const [addingSubsectionFor, setAddingSubsectionFor] = React.useState<string | null>(null);
   const [newSubsectionHeading, setNewSubsectionHeading] = React.useState('');
 
@@ -200,7 +202,7 @@ export function SectionsManager() {
     try {
       const { section: updated } = await adminPut<{ section: Section }>(
         `/api/admin/health-checks/${checkId}/sections/${section.id}`,
-        { title: editTitle, description: section.description }
+        { title: editTitle.trim(), description: editSectionDescription.trim() || null }
       );
       setSections((prev) => prev.map((s) => (s.id === section.id ? { ...s, ...updated } : s)));
       setEditingSectionId(null);
@@ -252,7 +254,7 @@ export function SectionsManager() {
     try {
       const { subsection: updated } = await adminPut<{ subsection: Subsection }>(
         `/api/admin/health-checks/${checkId}/sections/${sectionId}/subsections/${subsection.id}`,
-        { heading: editHeading, description: subsection.description }
+        { heading: editHeading.trim(), description: editSubsectionDescription.trim() || null }
       );
       setSections((prev) =>
         prev.map((s) => (s.id === sectionId ? { ...s, subsections: s.subsections.map((sub) => (sub.id === subsection.id ? { ...sub, ...updated } : sub)) } : s))
@@ -348,6 +350,7 @@ export function SectionsManager() {
                   onEdit={() => {
                     setEditingSectionId(section.id);
                     setEditTitle(section.title);
+                    setEditSectionDescription(section.description ?? '');
                   }}
                   onDelete={() => handleDeleteSection(section)}
                 >
@@ -356,8 +359,15 @@ export function SectionsManager() {
                   )}
 
                   {editingSectionId === section.id ? (
-                    <div className="flex gap-2">
+                    <div className="flex flex-col gap-2">
                       <input className={INPUT_CLASS} value={editTitle} onChange={(e) => setEditTitle(e.target.value)} autoFocus />
+                      <textarea
+                        rows={2}
+                        className="w-full rounded-lg border border-[var(--a-border)] bg-[var(--a-card)] px-3 py-2 text-sm focus:border-[#E8510A] focus:outline-none focus:ring-2 focus:ring-[#E8510A]/20"
+                        value={editSectionDescription}
+                        onChange={(e) => setEditSectionDescription(e.target.value)}
+                        placeholder="Section description (optional)"
+                      />
                       <AsyncButton
                         onClick={() => handleSaveSection(section)}
                         loading={busyAction === `section:${section.id}`}
@@ -372,17 +382,26 @@ export function SectionsManager() {
                   {section.subsections.map((subsection, subIndex) => (
                     <div key={subsection.id} className="group flex items-center gap-2 rounded-md border border-[var(--a-border-soft)] bg-[var(--a-subtle)] px-3 py-2">
                       {editingSubsectionId === subsection.id ? (
-                        <>
-                          <input className={INPUT_CLASS} value={editHeading} onChange={(e) => setEditHeading(e.target.value)} autoFocus />
-                          <AsyncButton
-                            onClick={() => handleSaveSubsection(section.id, subsection)}
-                            loading={busyAction === `subsection:${subsection.id}`}
-                            loadingLabel="Saving…"
-                            label="Save"
-                            icon={<Save className="h-3.5 w-3.5" />}
-                            size="sm"
+                        <div className="flex min-w-0 flex-1 flex-col gap-2">
+                          <div className="flex items-center gap-2">
+                            <input className={INPUT_CLASS} value={editHeading} onChange={(e) => setEditHeading(e.target.value)} autoFocus />
+                            <AsyncButton
+                              onClick={() => handleSaveSubsection(section.id, subsection)}
+                              loading={busyAction === `subsection:${subsection.id}`}
+                              loadingLabel="Saving…"
+                              label="Save"
+                              icon={<Save className="h-3.5 w-3.5" />}
+                              size="sm"
+                            />
+                          </div>
+                          <textarea
+                            rows={2}
+                            className="w-full rounded-lg border border-[var(--a-border)] bg-[var(--a-card)] px-3 py-2 text-sm focus:border-[#E8510A] focus:outline-none focus:ring-2 focus:ring-[#E8510A]/20"
+                            value={editSubsectionDescription}
+                            onChange={(e) => setEditSubsectionDescription(e.target.value)}
+                            placeholder="Subsection description (optional)"
                           />
-                        </>
+                        </div>
                       ) : (
                         <>
                           <span className="h-1.5 w-1.5 rounded-full bg-[#E8510A]/50" />
@@ -417,6 +436,7 @@ export function SectionsManager() {
                             onClick={() => {
                               setEditingSubsectionId(subsection.id);
                               setEditHeading(subsection.heading);
+                              setEditSubsectionDescription(subsection.description ?? '');
                             }}
                             aria-label="Edit"
                             className="rounded p-1 text-[var(--a-muted)] hover:bg-[var(--a-hover)] hover:text-[var(--a-ink2)]"

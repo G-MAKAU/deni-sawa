@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
 
   const parsed = bodySchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: 'Validation failed' }, { status: 422 });
+    return NextResponse.json({ error: 'Validation failed', details: parsed.error.flatten() }, { status: 422 });
   }
 
   const supabase = getServiceClient();

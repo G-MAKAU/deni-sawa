@@ -8,9 +8,12 @@ import {
   flexRender,
   type ColumnDef,
 } from '@tanstack/react-table';
-import { Loader2, Search } from 'lucide-react';
-import { adminFetch } from '@/lib/admin-client';
+import { ChevronLeft, ChevronRight, FileText, Loader2, Search, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
+import { adminDelete, adminFetch, adminPost } from '@/lib/admin-client';
+import { useConfirm } from '@/components/admin/confirm';
 import { ErrorBanner, Loading, Modal, PageHeader, StatusPill, Td, Th } from '@/components/admin/ui';
+import { cn } from '@/lib/utils';
 
 interface SessionRow {
   id: string;
@@ -67,11 +70,28 @@ interface SessionReport {
   created_at: string;
 }
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE_DEFAULT = 20;
+
+/** Builds the list of page numbers with ellipsis markers for wide ranges. */
+function getPageList(current: number, total: number): Array<number | '…'> {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  const wanted = new Set([1, 2, total - 1, total, current - 1, current, current + 1]);
+  const sorted = [...wanted].filter((p) => p >= 1 && p <= total).sort((a, b) => a - b);
+  const out: Array<number | '…'> = [];
+  let prev = 0;
+  for (const p of sorted) {
+    if (p - prev > 1) out.push('…');
+    out.push(p);
+    prev = p;
+  }
+  return out;
+}
 
 export function SessionsViewer() {
+  const confirm = useConfirm();
   const [sessions, setSessions] = React.useState<SessionRow[]>([]);
   const [page, setPage] = React.useState(1);
+  const [pageSize, setPageSize] = React.useState(PAGE_SIZE_DEFAULT);
   const [total, setTotal] = React.useState(0);
   const [search, setSearch] = React.useState('');
   const [status, setStatus] = React.useState('all');
@@ -83,11 +103,12 @@ export function SessionsViewer() {
   const [tree, setTree] = React.useState<AnswerGroupSection[]>([]);
   const [reports, setReports] = React.useState<SessionReport[]>([]);
   const [detailLoading, setDetailLoading] = React.useState(false);
+  const [generating, setGenerating] = React.useState(false);
 
-  const load = React.useCallback(async (targetPage: number, searchTerm: string, statusFilter: string) => {
+  const load = React.useCallback(async (targetPage: number, searchTerm: string, statusFilter: string, perPage: number) => {
     setLoading(true);
     try {
-      const params = new URLSearchParams({ page: String(targetPage), pageSize: String(PAGE_SIZE) });
+      const params = new URLSearchParams({ page: String(targetPage), pageSize: String(perPage) });
       if (searchTerm) params.set('search', searchTerm);
       if (statusFilter !== 'all') params.set('status', statusFilter);
       const { sessions: rows, pagination } = await adminFetch<{ sessions: SessionRow[]; pagination: { total: number } }>(
@@ -103,8 +124,8 @@ export function SessionsViewer() {
   }, []);
 
   React.useEffect(() => {
-    void load(page, search, status);
-  }, [load, page, search, status]);
+    void load(page, search, status, pageSize);
+  }, [load, page, search, status, pageSize]);
 
   const openSession = async (sessionId: string) => {
     setSelectedId(sessionId);
@@ -122,6 +143,46 @@ export function SessionsViewer() {
       setError(e instanceof Error ? e.message : 'Failed to load session details.');
     } finally {
       setDetailLoading(false);
+    }
+  };
+
+  const handleGenerateReport = async () => {
+    if (!selectedId) return;
+    try {
+      const ok = await confirm({
+        message: 'Generate a summary report for this session?',
+        danger: false,
+        confirmLabel: 'Generate',
+        action: async () => {
+          setGenerating(true);
+          await adminPost(`/api/admin/health-checks/sessions/${selectedId}/generate`, { report_type: 'summary' });
+        },
+      });
+      if (!ok) return;
+      toast.success('Report generated and delivery re-triggered');
+      await openSession(selectedId);
+      void load(page, search, status, pageSize);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Failed to generate report.');
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handleDeleteSession = async (session: SessionRow) => {
+    try {
+      const ok = await confirm({
+        message: `Delete ${session.is_complete ? '' : 'the incomplete '}session for "${session.full_name}"? This permanently removes its answers and any reports.`,
+        action: async () => {
+          await adminDelete(`/api/admin/health-checks/sessions/${session.id}`);
+        },
+      });
+      if (!ok) return;
+      toast.success('Session deleted');
+      if (selectedId === session.id) setSelectedId(null);
+      void load(page, search, status, pageSize);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Failed to delete session.');
     }
   };
 
@@ -160,8 +221,29 @@ export function SessionsViewer() {
         header: 'Reports',
         cell: ({ getValue }) => <span className="font-semibold">{getValue() as number}</span>,
       },
+      {
+        id: 'actions',
+        header: '',
+        cell: ({ row }) => (
+          <div className="flex items-center justify-end gap-1">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                void handleDeleteSession(row.original);
+              }}
+              title={row.original.is_complete ? 'Delete session' : 'Delete incomplete session'}
+              aria-label="Delete session"
+              className="rounded-md p-1.5 text-[var(--a-muted)] transition-colors hover:bg-red-500/10 hover:text-red-600"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+          </div>
+        ),
+      },
     ],
-    []
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [handleDeleteSession]
   );
 
   const table = useReactTable({
@@ -171,7 +253,7 @@ export function SessionsViewer() {
     manualPagination: true,
   });
 
-  const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const pages = Math.max(1, Math.ceil(total / pageSize));
 
   if (error) return <ErrorBanner message={error} />;
 
@@ -250,26 +332,81 @@ export function SessionsViewer() {
 
         {/* Pagination */}
         <div className="flex items-center justify-between border-t border-[var(--a-border-soft)] px-5 py-3">
-          <p className="text-xs text-[var(--a-muted)]">
-            {total.toLocaleString()} session{total === 1 ? '' : 's'} · page {page} of {pages}
-          </p>
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page <= 1}
-              className="rounded-md border border-[var(--a-border)] px-3 py-1.5 text-xs font-semibold text-[var(--a-text)] hover:border-[#E8510A]/40 disabled:opacity-40"
-            >
-              Previous
-            </button>
-            <button
-              type="button"
-              onClick={() => setPage((p) => Math.min(pages, p + 1))}
-              disabled={page >= pages}
-              className="rounded-md border border-[var(--a-border)] px-3 py-1.5 text-xs font-semibold text-[var(--a-text)] hover:border-[#E8510A]/40 disabled:opacity-40"
-            >
-              Next
-            </button>
+          <div className="grid items-center gap-4 border-t border-[var(--a-border-soft)] px-5 py-4 lg:grid-cols-[1fr_auto_1fr]">
+            <div className="flex flex-wrap items-center gap-3 text-xs text-[var(--a-muted)]">
+              <span>
+                Showing {total === 0 ? 0 : (page - 1) * pageSize + 1}–{Math.min(page * pageSize, total)} of{' '}
+                {total.toLocaleString()} session{total === 1 ? '' : 's'}
+              </span>
+              <label className="flex items-center gap-1.5">
+                Per page
+                <select
+                  value={pageSize}
+                  onChange={(e) => {
+                    setPageSize(Number(e.target.value));
+                    setPage(1);
+                  }}
+                  className="h-8 rounded-lg border border-[var(--a-border)] bg-[var(--a-card)] px-2 text-xs focus:border-[#E8510A] focus:outline-none"
+                >
+                  {[10, 20, 50, 100].map((n) => (
+                    <option key={n} value={n}>
+                      {n}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+
+            <nav aria-label="Pagination" className="flex items-center justify-center gap-1">
+              <button
+                type="button"
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page <= 1}
+                aria-label="Previous page"
+                className="flex h-9 items-center gap-1 rounded-lg border border-[var(--a-border)] px-3 text-xs font-semibold text-[var(--a-text)] transition-colors hover:border-[#E8510A]/40 hover:text-[#E8510A] disabled:opacity-40 disabled:hover:border-[var(--a-border)] disabled:hover:text-[var(--a-text)]"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                <span className="hidden sm:inline">Prev</span>
+              </button>
+
+              {getPageList(page, pages).map((item, i) =>
+                item === '…' ? (
+                  <span key={`ellipsis-${i}`} className="px-1 text-sm text-[var(--a-placeholder)]">
+                    …
+                  </span>
+                ) : (
+                  <button
+                    key={item}
+                    type="button"
+                    onClick={() => setPage(item)}
+                    aria-current={item === page ? 'page' : undefined}
+                    className={cn(
+                      'h-9 min-w-9 rounded-lg border px-2.5 text-xs font-semibold transition-colors',
+                      item === page
+                        ? 'border-[#E8510A] bg-[#E8510A] text-white shadow-sm shadow-[#E8510A]/30'
+                        : 'border-[var(--a-border)] text-[var(--a-text2)] hover:border-[#E8510A]/40 hover:text-[#E8510A]'
+                    )}
+                  >
+                    {item}
+                  </button>
+                )
+              )}
+
+              <button
+                type="button"
+                onClick={() => setPage((p) => Math.min(pages, p + 1))}
+                disabled={page >= pages}
+                aria-label="Next page"
+                className="flex h-9 items-center gap-1 rounded-lg border border-[var(--a-border)] px-3 text-xs font-semibold text-[var(--a-text)] transition-colors hover:border-[#E8510A]/40 hover:text-[#E8510A] disabled:opacity-40 disabled:hover:border-[var(--a-border)] disabled:hover:text-[var(--a-text)]"
+              >
+                <span className="hidden sm:inline">Next</span>
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </nav>
+
+            <div className="hidden text-right text-xs text-[var(--a-muted)] lg:block">
+              Page {page} of {pages}
+            </div>
           </div>
         </div>
       </div>
@@ -330,6 +467,22 @@ export function SessionsViewer() {
                     </StatusPill>
                   </span>
                 ))}
+              </div>
+            )}
+
+            {detail.is_complete && reports.length === 0 && (
+              <div className="rounded-lg border border-amber-500/25 bg-amber-500/5 px-4 py-3 text-sm text-amber-700">
+                <p className="font-semibold">No report was generated for this session.</p>
+                <p className="mt-1 text-xs">You can generate it now from the admin console.</p>
+                <button
+                  type="button"
+                  onClick={handleGenerateReport}
+                  disabled={generating}
+                  className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-[#5A9E28] px-3.5 py-2 text-xs font-bold text-white transition-colors hover:bg-[#4d8820] disabled:opacity-50"
+                >
+                  {generating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-3.5 w-3.5" />}
+                  {generating ? 'Generating…' : 'Generate summary report'}
+                </button>
               </div>
             )}
 

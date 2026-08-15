@@ -22,18 +22,10 @@ interface Question {
   options: Option[];
 }
 
-interface Subsection {
-  id: string;
-  heading: string;
-  description: string | null;
-  questions: Question[];
-}
-
-interface Section {
-  id: string;
+interface SectionGroup {
   title: string;
   description: string | null;
-  subsections: Subsection[];
+  questions: Question[];
 }
 
 interface CheckInfo {
@@ -45,11 +37,6 @@ interface CheckInfo {
   tags: string[];
 }
 
-interface FlatQuestion extends Question {
-  sectionTitle: string;
-  subsectionHeading: string;
-}
-
 type Answer = string | string[];
 
 type Phase = 'loading' | 'details' | 'questions' | 'submitting' | 'generating' | 'done' | 'error';
@@ -57,16 +44,120 @@ type Phase = 'loading' | 'details' | 'questions' | 'submitting' | 'generating' |
 const INPUT_CLASS =
   'h-12 w-full rounded-lg border border-card-border bg-background px-4 text-[15px] text-foreground placeholder:text-muted-foreground/60 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20';
 
+function isAnswered(question: Question, answers: Record<string, Answer>): boolean {
+  const value = answers[question.id];
+  if (question.question_type === 'paragraph') return typeof value === 'string' && value.trim().length > 0;
+  if (question.question_type === 'single_select') return typeof value === 'string' && value.length > 0;
+  return Array.isArray(value) && value.length > 0;
+}
+
+function QuestionField({
+  question,
+  questionNumber,
+  value,
+  onChange,
+}: {
+  question: Question;
+  questionNumber: number;
+  value: Answer | undefined;
+  onChange: (value: Answer) => void;
+}) {
+  return (
+    <div className="rounded-xl border border-card-border bg-card p-5 sm:p-6">
+      <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-brand">QN {questionNumber}.</p>
+      <h3 className="mt-1 text-[17px] font-semibold leading-snug text-foreground">
+        {question.question_text}
+        {question.is_required && <span className="text-brand"> *</span>}
+      </h3>
+      {question.helper_text && <p className="mt-1.5 text-[13px] text-muted-foreground">{question.helper_text}</p>}
+
+      <div className="mt-5">
+        {question.question_type === 'paragraph' && (
+          <textarea
+            rows={4}
+            value={typeof value === 'string' ? value : ''}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder="Type your answer…"
+            className="w-full rounded-lg border border-card-border bg-background px-4 py-3 text-[15px] text-foreground placeholder:text-muted-foreground/60 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
+          />
+        )}
+
+        {question.question_type === 'single_select' && (
+          <div className="grid gap-2.5">
+            {question.options.map((option) => {
+              const selected = value === option.id;
+              return (
+                <button
+                  key={option.id}
+                  type="button"
+                  onClick={() => onChange(option.id)}
+                  className={cn(
+                    'flex items-center gap-3 rounded-lg border px-5 py-3.5 text-left text-[15px] font-medium transition-colors',
+                    selected ? 'border-brand bg-brand/5 text-brand' : 'border-card-border text-foreground hover:border-brand/30'
+                  )}
+                >
+                  <span
+                    className={cn(
+                      'flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition-colors',
+                      selected ? 'border-brand bg-brand' : 'border-muted-foreground/40'
+                    )}
+                  >
+                    {selected && <Check className="h-3 w-3 text-white" />}
+                  </span>
+                  {option.option_text}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {question.question_type === 'multi_select' && (
+          <div className="grid gap-2.5">
+            {question.options.map((option) => {
+              const current = Array.isArray(value) ? value : [];
+              const selected = current.includes(option.id);
+              const toggle = () =>
+                onChange(selected ? current.filter((id) => id !== option.id) : [...current, option.id]);
+              return (
+                <button
+                  key={option.id}
+                  type="button"
+                  onClick={toggle}
+                  className={cn(
+                    'flex items-center gap-3 rounded-lg border px-5 py-3.5 text-left text-[15px] font-medium transition-colors',
+                    selected ? 'border-growth bg-growth/5 text-growth' : 'border-card-border text-foreground hover:border-growth/40'
+                  )}
+                >
+                  <span
+                    className={cn(
+                      'flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition-colors',
+                      selected ? 'border-growth bg-growth' : 'border-muted-foreground/40'
+                    )}
+                  >
+                    {selected && <Check className="h-3 w-3 text-white" />}
+                  </span>
+                  {option.option_text}
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function HealthCheckWizardV2({ slug }: { slug: string }) {
   const router = useRouter();
 
   const [phase, setPhase] = React.useState<Phase>('loading');
   const [check, setCheck] = React.useState<CheckInfo | null>(null);
-  const [flatQuestions, setFlatQuestions] = React.useState<FlatQuestion[]>([]);
+  const [sections, setSections] = React.useState<SectionGroup[]>([]);
+  const [questionCount, setQuestionCount] = React.useState(0);
   const [error, setError] = React.useState<string | null>(null);
 
   const [sessionId, setSessionId] = React.useState<string | null>(null);
-  const [step, setStep] = React.useState(0);
+  const [sectionIndex, setSectionIndex] = React.useState(0);
   const [answers, setAnswers] = React.useState<Record<string, Answer>>({});
 
   // Details
@@ -84,18 +175,21 @@ export function HealthCheckWizardV2({ slug }: { slug: string }) {
         const body = await res.json();
         if (!res.ok) throw new Error(body.error ?? 'Failed to load the assessment.');
 
-        const flat: FlatQuestion[] = [];
-        (body.sections as Section[]).forEach((section) =>
-          section.subsections.forEach((subsection) =>
-            subsection.questions.forEach((question) =>
-              flat.push({ ...question, sectionTitle: section.title, subsectionHeading: subsection.heading })
-            )
-          )
-        );
+        // Group questions by section — all questions in a section are shown together.
+        const grouped: SectionGroup[] = (body.sections as Array<{
+          title: string;
+          description: string | null;
+          subsections: { questions: Question[] }[];
+        }>).map((section) => ({
+          title: section.title,
+          description: section.description,
+          questions: section.subsections.flatMap((sub) => sub.questions),
+        }));
 
         if (!cancelled) {
           setCheck(body.check as CheckInfo);
-          setFlatQuestions(flat);
+          setSections(grouped);
+          setQuestionCount(grouped.reduce((n, s) => n + s.questions.length, 0));
           setPhase('details');
         }
       } catch (e) {
@@ -110,7 +204,20 @@ export function HealthCheckWizardV2({ slug }: { slug: string }) {
     };
   }, [slug]);
 
-  const currentQuestion = flatQuestions[step];
+  const currentSection = sections[sectionIndex];
+  const totalSections = sections.length;
+
+  const questionNumbers = React.useMemo(() => {
+    const map: Record<string, number> = {};
+    let n = 1;
+    for (const section of sections) {
+      for (const q of section.questions) {
+        map[q.id] = n;
+        n += 1;
+      }
+    }
+    return map;
+  }, [sections]);
 
   const handleStart = async () => {
     setError(null);
@@ -154,7 +261,7 @@ export function HealthCheckWizardV2({ slug }: { slug: string }) {
         throw new Error(body.error === 'rate_limit_exceeded' ? 'You have reached the monthly limit for this assessment. Please try again next month.' : (body.error ?? 'Failed to start the assessment.'));
       }
       setSessionId(body.session_id);
-      setStep(0);
+      setSectionIndex(0);
       setPhase('questions');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to start the assessment.');
@@ -166,18 +273,21 @@ export function HealthCheckWizardV2({ slug }: { slug: string }) {
     setAnswers((prev) => ({ ...prev, [questionId]: value }));
   };
 
-  const isCurrentAnswered = (): boolean => {
-    if (!currentQuestion) return false;
-    const value = answers[currentQuestion.id];
-    if (currentQuestion.question_type === 'paragraph') return typeof value === 'string' && value.trim().length > 0;
-    if (currentQuestion.question_type === 'single_select') return typeof value === 'string' && value.length > 0;
-    return Array.isArray(value) && value.length > 0;
+  const missingInSection = (section: SectionGroup): string[] => {
+    if (!section) return [];
+    return section.questions.filter((q) => q.is_required && !isAnswered(q, answers)).map((q) => q.question_text);
   };
 
-  const handleNext = () => {
-    if (!isCurrentAnswered()) return;
-    if (step < flatQuestions.length - 1) {
-      setStep((s) => s + 1);
+  const handleNextSection = () => {
+    if (!currentSection) return;
+    const missing = missingInSection(currentSection);
+    if (missing.length > 0) {
+      setError(`Please answer the required questions before continuing.`);
+      return;
+    }
+    setError(null);
+    if (sectionIndex < totalSections - 1) {
+      setSectionIndex((s) => s + 1);
     } else {
       void submitAnswers();
     }
@@ -187,7 +297,8 @@ export function HealthCheckWizardV2({ slug }: { slug: string }) {
     if (!sessionId) return;
     setPhase('submitting');
     try {
-      const payload = flatQuestions.map((question) => {
+      const allQuestions = sections.flatMap((s) => s.questions);
+      const payload = allQuestions.map((question) => {
         const raw = answers[question.id];
         if (question.question_type === 'paragraph') {
           return { question_id: question.id, answer_text: typeof raw === 'string' ? raw : '', selected_option_ids: [] };
@@ -260,7 +371,8 @@ export function HealthCheckWizardV2({ slug }: { slug: string }) {
           <span className="eyebrow">Start your assessment</span>
           <h2 className="mt-2 font-display text-2xl font-semibold text-foreground">{check?.name}</h2>
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-            {flatQuestions.length} questions · about {check?.estimated_minutes ?? 15} minutes. Tell us where to send your private report.
+            {totalSections} sections · {questionCount} questions · about {check?.estimated_minutes ?? 15} minutes.
+            Tell us where to send your private report.
           </p>
         </div>
 
@@ -342,124 +454,67 @@ export function HealthCheckWizardV2({ slug }: { slug: string }) {
     );
   }
 
-  /* ── Questions ────────────────────────────────────────────────────────── */
-  if (phase === 'questions' && currentQuestion) {
-    const progress = (step / flatQuestions.length) * 100;
-    const value = answers[currentQuestion.id];
+  /* ── Questions (section by section) ───────────────────────────────────── */
+  if (phase === 'questions' && currentSection) {
+    const sectionProgress = ((sectionIndex + 1) / totalSections) * 100;
+    const answeredHere = currentSection.questions.filter((q) => isAnswered(q, answers)).length;
+    const missing = missingInSection(currentSection);
 
     return (
-      <div className="mx-auto max-w-2xl">
-        <div className="sticky top-24 z-20 rounded-lg border border-card-border bg-card/95 shadow-card backdrop-blur-sm">
-          <div className="flex items-center justify-between px-5 pt-4">
-            <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-brand">
-              {currentQuestion.sectionTitle} · {currentQuestion.subsectionHeading}
+      <>
+        {/* Floating section header — full-width bar, sticks to the top while scrolling
+            down and lets the main navbar return on scroll up (same pattern as the
+            Business Support quick-nav). */}
+        <section className="sticky top-0 z-30 w-[100vw] border-b border-card-border bg-background/95 backdrop-blur-md mx-[calc(50%-50vw)]">
+          <div className="mx-auto flex w-full max-w-2xl items-center justify-between gap-4 px-5 py-3.5">
+            <p className="min-w-0 truncate font-mono text-[11px] uppercase tracking-[0.2em] text-brand">
+              Section {sectionIndex + 1} of {totalSections} ·{' '}
+              <span className="normal-case tracking-normal text-muted-foreground">{currentSection.title}</span>
             </p>
-            <p className="font-mono text-xs text-muted-foreground">
-              {step + 1} / {flatQuestions.length}
+            <p className="shrink-0 font-mono text-xs text-muted-foreground">
+              {answeredHere} / {currentSection.questions.length} answered
             </p>
           </div>
-          <div className="mt-3 h-2 rounded-full bg-bgalt">
-            <div className="h-2 rounded-full bg-brand transition-all duration-300" style={{ width: `${progress}%` }} />
+          <div className="h-[3px] w-full bg-bgalt">
+            <div className="h-[3px] bg-brand transition-all duration-300" style={{ width: `${sectionProgress}%` }} />
           </div>
+        </section>
+
+        <div className="mx-auto mt-8 max-w-2xl space-y-6">
+          {currentSection.description && (
+            <p className="text-sm leading-relaxed text-muted-foreground">{currentSection.description}</p>
+          )}
+
+          {currentSection.questions.map((question) => (
+            <QuestionField
+              key={question.id}
+              question={question}
+              questionNumber={questionNumbers[question.id]}
+              value={answers[question.id]}
+              onChange={(value) => setAnswer(question.id, value)}
+            />
+          ))}
         </div>
 
-        <div className="mt-10">
-          <h2 className="text-2xl font-semibold leading-snug text-foreground">
-            {currentQuestion.question_text}
-            {currentQuestion.is_required && <span className="text-brand"> *</span>}
-          </h2>
-          {currentQuestion.helper_text && <p className="mt-2 text-sm text-muted-foreground">{currentQuestion.helper_text}</p>}
+        {error && (
+          <div className="mx-auto mt-6 max-w-2xl rounded-lg border border-red-500/20 bg-red-500/5 px-4 py-3 text-sm text-red-600">{error}</div>
+        )}
 
-          <div className="mt-8">
-            {currentQuestion.question_type === 'paragraph' && (
-              <textarea
-                rows={5}
-                value={typeof value === 'string' ? value : ''}
-                onChange={(e) => setAnswer(currentQuestion.id, e.target.value)}
-                placeholder="Type your answer…"
-                className="w-full rounded-lg border border-card-border bg-background px-4 py-3 text-[15px] text-foreground placeholder:text-muted-foreground/60 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
-              />
+        <div className="mx-auto mt-8 flex max-w-2xl items-center justify-between">
+          <Button variant="ghostLight" onClick={() => setSectionIndex((s) => Math.max(0, s - 1))} disabled={sectionIndex === 0}>
+            <ArrowLeft className="h-4 w-4" /> Previous section
+          </Button>
+          <div className="flex items-center gap-2">
+            {missing.length > 0 && (
+              <span className="text-xs text-muted-foreground">Complete required questions to continue</span>
             )}
-
-            {currentQuestion.question_type === 'single_select' && (
-              <div className="grid gap-2.5">
-                {currentQuestion.options.map((option) => {
-                  const selected = value === option.id;
-                  return (
-                    <button
-                      key={option.id}
-                      type="button"
-                      onClick={() => setAnswer(currentQuestion.id, option.id)}
-                      className={cn(
-                        'flex items-center gap-3 rounded-lg border px-5 py-4 text-left text-[15px] font-medium transition-colors',
-                        selected ? 'border-brand bg-brand/5 text-brand' : 'border-card-border text-foreground hover:border-brand/30'
-                      )}
-                    >
-                      <span
-                        className={cn(
-                          'flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition-colors',
-                          selected ? 'border-brand bg-brand' : 'border-muted-foreground/40'
-                        )}
-                      >
-                        {selected && <Check className="h-3 w-3 text-white" />}
-                      </span>
-                      {option.option_text}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-
-            {currentQuestion.question_type === 'multi_select' && (
-              <div className="grid gap-2.5">
-                {currentQuestion.options.map((option) => {
-                  const selected = Array.isArray(value) && value.includes(option.id);
-                  const toggle = () => {
-                    const current = Array.isArray(value) ? value : [];
-                    setAnswer(
-                      currentQuestion.id,
-                      selected ? current.filter((id) => id !== option.id) : [...current, option.id]
-                    );
-                  };
-                  return (
-                    <button
-                      key={option.id}
-                      type="button"
-                      onClick={toggle}
-                      className={cn(
-                        'flex items-center gap-3 rounded-lg border px-5 py-4 text-left text-[15px] font-medium transition-colors',
-                        selected ? 'border-growth bg-growth/5 text-growth' : 'border-card-border text-foreground hover:border-growth/40'
-                      )}
-                    >
-                      <span
-                        className={cn(
-                          'flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition-colors',
-                          selected ? 'border-growth bg-growth' : 'border-muted-foreground/40'
-                        )}
-                      >
-                        {selected && <Check className="h-3 w-3 text-white" />}
-                      </span>
-                      {option.option_text}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          <div className="mt-8 flex items-center justify-between">
-            <Button variant="ghostLight" onClick={() => setStep((s) => Math.max(0, s - 1))} disabled={step === 0}>
-              <ArrowLeft className="h-4 w-4" /> Back
-            </Button>
-            <Button onClick={handleNext} disabled={!isCurrentAnswered()}>
-              {step === flatQuestions.length - 1 ? 'Generate My Report' : 'Next'}
+            <Button onClick={handleNextSection}>
+              {sectionIndex === totalSections - 1 ? 'Generate My Report' : 'Next section'}
               <ArrowRight className="h-4 w-4" />
             </Button>
           </div>
-
-          {error && <div className="mt-4 rounded-lg border border-red-500/20 bg-red-500/5 px-4 py-3 text-sm text-red-600">{error}</div>}
         </div>
-      </div>
+      </>
     );
   }
 

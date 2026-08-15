@@ -100,6 +100,7 @@ export interface ReportPrompt {
   report_type: 'summary' | 'detailed';
   system_prompt: string;
   system_prompt_lexical: Record<string, unknown> | null;
+  provider: 'anthropic' | 'google';
   model: string;
   max_tokens: number;
   is_active: boolean;

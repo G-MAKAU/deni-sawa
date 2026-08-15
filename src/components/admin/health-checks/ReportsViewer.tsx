@@ -8,8 +8,10 @@ import {
   flexRender,
   type ColumnDef,
 } from '@tanstack/react-table';
-import { Eye } from 'lucide-react';
-import { adminFetch, adminPut } from '@/lib/admin-client';
+import { Eye, Loader2, RefreshCw } from 'lucide-react';
+import { toast } from 'sonner';
+import { adminFetch, adminPost, adminPut } from '@/lib/admin-client';
+import { useConfirm } from '@/components/admin/confirm';
 import { LexicalRenderer } from '@/features/lexical/LexicalRenderer';
 import { ErrorBanner, Loading, Modal, PageHeader, StatusPill, Td, Th, Toggle } from '@/components/admin/ui';
 
@@ -45,6 +47,7 @@ const DELIVERY_TONE: Record<ReportRow['delivery_status'], 'amber' | 'green' | 'r
 };
 
 export function ReportsViewer() {
+  const confirm = useConfirm();
   const [reports, setReports] = React.useState<ReportRow[]>([]);
   const [page, setPage] = React.useState(1);
   const [total, setTotal] = React.useState(0);
@@ -57,6 +60,7 @@ export function ReportsViewer() {
   const [viewId, setViewId] = React.useState<string | null>(null);
   const [detail, setDetail] = React.useState<ReportDetail | null>(null);
   const [detailLoading, setDetailLoading] = React.useState(false);
+  const [regeneratingId, setRegeneratingId] = React.useState<string | null>(null);
 
   const load = React.useCallback(async (targetPage: number, type: string, del: string) => {
     setLoading(true);
@@ -108,6 +112,27 @@ export function ReportsViewer() {
     }
   };
 
+  const handleRegenerate = async (report: ReportRow) => {
+    try {
+      const ok = await confirm({
+        message: `Regenerate the ${report.report_type} report for "${report.session_name}"? This replaces the existing report and re-sends it.`,
+        danger: false,
+        confirmLabel: 'Regenerate',
+        action: async () => {
+          setRegeneratingId(report.id);
+          await adminPost(`/api/admin/health-checks/reports/${report.id}/regenerate`, {});
+        },
+      });
+      if (!ok) return;
+      toast.success('Report regenerated and delivery re-triggered');
+      void load(page, reportType, delivery);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Failed to regenerate report.');
+    } finally {
+      setRegeneratingId(null);
+    }
+  };
+
   const columns = React.useMemo<ColumnDef<ReportRow>[]>(
     () => [
       { accessorKey: 'session_name', header: 'Name' },
@@ -149,9 +174,29 @@ export function ReportsViewer() {
           </button>
         ),
       },
+      {
+        id: 'regenerate',
+        header: '',
+        cell: ({ row }) => (
+          <button
+            type="button"
+            onClick={() => handleRegenerate(row.original)}
+            disabled={regeneratingId === row.original.id}
+            title="Regenerate report"
+            className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[12px] font-semibold text-[var(--a-text2)] transition-colors hover:bg-[#5A9E28]/10 hover:text-[#3f7a1a] disabled:opacity-50"
+          >
+            {regeneratingId === row.original.id ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <RefreshCw className="h-3.5 w-3.5" />
+            )}
+            Regenerate
+          </button>
+        ),
+      },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [canTogglePaid]
+    [canTogglePaid, regeneratingId, handleRegenerate]
   );
 
   const table = useReactTable({

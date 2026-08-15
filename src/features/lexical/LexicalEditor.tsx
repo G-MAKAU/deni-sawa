@@ -18,6 +18,7 @@ import { TRANSFORMERS } from '@lexical/markdown';
 import { buildEditorConfig } from './EditorConfig';
 import { ToolbarPlugin } from './plugins/ToolbarPlugin';
 import { FloatingToolbarPlugin } from './plugins/FloatingToolbarPlugin';
+import { ElementStylePlugin } from './plugins/ElementStylePlugin';
 import { CodeHighlightPlugin } from './plugins/CodeHighlightPlugin';
 import { CheckListPlugin } from './plugins/CheckListPlugin';
 import { PastePlugin } from './plugins/PastePlugin';
@@ -90,6 +91,7 @@ export function LexicalEditor({ state, onChange, placeholder = 'Start writing…
         <LinkPlugin />
         <ListPlugin />
         <TabIndentationPlugin />
+        <ElementStylePlugin />
         <CodeHighlightPlugin />
         <CheckListPlugin />
         <PastePlugin />

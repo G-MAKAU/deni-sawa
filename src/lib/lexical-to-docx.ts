@@ -12,6 +12,7 @@ import {
   TextRun,
   type IRunOptions,
 } from 'docx';
+import { cssColorToHex, parseCssProperty } from '@/lib/css-color';
 
 const ORANGE = 'E8510A';
 const GREEN = '5A9E28';
@@ -31,6 +32,7 @@ interface Node {
   type?: string;
   text?: string;
   format?: number;
+  style?: string;
   tag?: string;
   listType?: string;
   tone?: string;
@@ -42,6 +44,17 @@ function run(text: string, opts: Partial<IRunOptions> = {}): TextRun {
   return new TextRun({ text, font: 'Calibri', size: 22, color: DARK, ...opts });
 }
 
+/** docx fill/color values expect a 6-digit hex without the leading '#'. */
+function docxHex(color: string): string {
+  return color.replace('#', '');
+}
+
+/** Paragraph shading (background colour) derived from an element node's style. */
+function blockShading(node: Node) {
+  const bg = cssColorToHex(parseCssProperty(node.style ?? '', 'background-color') ?? '');
+  return bg ? { type: ShadingType.CLEAR, color: 'auto' as const, fill: docxHex(bg) } : undefined;
+}
+
 /** Builds styled runs from a node's inline children (text / link nodes). */
 function runsFromChildren(children: Node[] | undefined): TextRun[] {
   const runs: TextRun[] = [];
@@ -50,11 +63,13 @@ function runsFromChildren(children: Node[] | undefined): TextRun[] {
       if (child.type === 'text' || child.type === 'link') {
         const format = child.format ?? 0;
         const isLink = child.type === 'link';
+        const color = cssColorToHex(parseCssProperty(child.style ?? '', 'color') ?? '');
         const options: Partial<IRunOptions> = {
           bold: (format & FORMAT_BOLD) !== 0 || undefined,
           italics: (format & FORMAT_ITALIC) !== 0 || undefined,
           underline: (format & FORMAT_UNDERLINE) !== 0 ? {} : undefined,
           strike: (format & FORMAT_STRIKETHROUGH) !== 0 || undefined,
+          ...(color ? { color: docxHex(color) } : {}),
           ...(isLink ? { color: ORANGE } : {}),
         };
         runs.push(run(child.text ?? '', options));
@@ -115,21 +130,36 @@ function buildTitle(title: string): Paragraph {
 function blockParagraph(node: Node): Paragraph {
   const headingTag = node.type === 'heading' ? node.tag : undefined;
   const runs = runsFromChildren(node.children);
+  const shading = blockShading(node);
 
   if (headingTag === 'h1') {
-    return new Paragraph({ spacing: { before: 240, after: 120 }, children: runs.length ? runs : [new TextRun({ text: '', size: 40, bold: true, color: DARK })] , style: 'TitleBig' });
+    return new Paragraph({
+      spacing: { before: 240, after: 120 },
+      ...(shading ? { shading } : {}),
+      children: runs.length ? runs : [new TextRun({ text: '', size: 40, bold: true, color: DARK })],
+      style: 'TitleBig',
+    });
   }
   if (headingTag === 'h2') {
     return new Paragraph({
       spacing: { before: 280, after: 120 },
+      ...(shading ? { shading } : {}),
       border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: 'E0E0E0' } },
       children: runs.length ? runs : [run('')],
     });
   }
   if (headingTag && headingTag !== 'h1' && headingTag !== 'h2') {
-    return new Paragraph({ spacing: { before: 200, after: 80 }, children: runs.length ? runs : [run('')] });
+    return new Paragraph({
+      spacing: { before: 200, after: 80 },
+      ...(shading ? { shading } : {}),
+      children: runs.length ? runs : [run('')],
+    });
   }
-  return new Paragraph({ spacing: { after: 100 }, children: runs.length ? runs : [run('')] });
+  return new Paragraph({
+    spacing: { after: 100 },
+    ...(shading ? { shading } : {}),
+    children: runs.length ? runs : [run('')],
+  });
 }
 
 /**

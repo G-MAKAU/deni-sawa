@@ -15,6 +15,7 @@ interface PromptRow {
   report_type: 'summary' | 'detailed';
   system_prompt: string;
   system_prompt_lexical: Record<string, unknown> | null;
+  provider: 'anthropic' | 'google';
   model: string;
   max_tokens: number;
   is_active: boolean;
@@ -41,7 +42,10 @@ function plainTextToLexicalState(text: string): Record<string, unknown> {
   return { root: { children: paragraphs, direction: 'ltr', format: '', indent: 0, type: 'root', version: 1 } };
 }
 
-const MODELS = ['claude-sonnet-4-6', 'claude-sonnet-4-5', 'claude-opus-4-1', 'claude-haiku-4-5'];
+const FALLBACK_MODELS: Record<'anthropic' | 'google', string[]> = {
+  anthropic: ['claude-sonnet-4-6', 'claude-sonnet-4-5', 'claude-opus-4-1', 'claude-haiku-4-5'],
+  google: ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-pro'],
+};
 
 export function PromptEditor() {
   const params = useParams<{ id: string }>();
@@ -55,11 +59,32 @@ export function PromptEditor() {
 
   const [summaryState, setSummaryState] = React.useState<Record<string, unknown> | null>(null);
   const [detailedState, setDetailedState] = React.useState<Record<string, unknown> | null>(null);
+  const [provider, setProvider] = React.useState<'anthropic' | 'google'>('anthropic');
   const [model, setModel] = React.useState<string>('claude-sonnet-4-6');
   const [maxTokens, setMaxTokens] = React.useState<string>('4000');
   const [saving, setSaving] = React.useState(false);
 
+  const [models, setModels] = React.useState<Record<'anthropic' | 'google', string[]>>(FALLBACK_MODELS);
+
   const activePrompt = prompts.find((p) => p.report_type === activeTab);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    adminFetch<{ anthropic: string[]; google: string[] }>('/api/admin/models')
+      .then((data) => {
+        if (cancelled) return;
+        setModels({
+          anthropic: [...new Set([...FALLBACK_MODELS.anthropic, ...(data.anthropic ?? [])])],
+          google: [...new Set([...FALLBACK_MODELS.google, ...(data.google ?? [])])],
+        });
+      })
+      .catch(() => {
+        // Non-fatal — the fallback lists already cover the common models.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -72,6 +97,7 @@ export function PromptEditor() {
         const detailed = rows.find((p) => p.report_type === 'detailed');
         setSummaryState(summary?.system_prompt_lexical ?? (summary ? plainTextToLexicalState(summary.system_prompt) : null));
         setDetailedState(detailed?.system_prompt_lexical ?? (detailed ? plainTextToLexicalState(detailed.system_prompt) : null));
+        setProvider(activeTab === 'summary' ? (summary?.provider ?? 'anthropic') : (detailed?.provider ?? 'anthropic'));
         setModel(activeTab === 'summary' ? summary?.model ?? 'claude-sonnet-4-6' : detailed?.model ?? 'claude-sonnet-4-6');
         setMaxTokens(
           activeTab === 'summary' ? (summary?.max_tokens ?? 4000).toString() : (detailed?.max_tokens ?? 4000).toString()
@@ -91,6 +117,7 @@ export function PromptEditor() {
   const selectTab = (type: ReportType) => {
     setActiveTab(type);
     const prompt = prompts.find((p) => p.report_type === type);
+    setProvider(prompt?.provider ?? 'anthropic');
     setModel(prompt?.model ?? 'claude-sonnet-4-6');
     setMaxTokens((prompt?.max_tokens ?? 4000).toString());
   };
@@ -106,6 +133,7 @@ export function PromptEditor() {
       const { prompt } = await adminPut<{ prompt: PromptRow }>(`/api/admin/health-checks/${checkId}/prompts`, {
         report_type: activeTab,
         system_prompt_lexical: state,
+        provider,
         model,
         max_tokens: Number(maxTokens),
       });
@@ -152,7 +180,7 @@ export function PromptEditor() {
     <>
       <PageHeader
         title="Report Prompts"
-        subtitle="The system prompts sent to Claude when generating each report type."
+        subtitle="The system prompts sent to Claude or Gemini when generating each report type."
         crumbs={[{ label: 'Health Checks', href: '/admin/health-checks' }, { label: 'Prompts' }]}
         actions={
           <AsyncButton
@@ -188,43 +216,68 @@ export function PromptEditor() {
       ) : (
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2">
-            <AdminCard
-              title="Prompt body"
-              subtitle="Edits are stored as plain text for Claude and as Lexical JSON for editing."
-            >
-              <LexicalEditor
-                state={activeTab === 'summary' ? summaryState ?? undefined : detailedState ?? undefined}
-                onChange={(state) =>
-                  activeTab === 'summary' ? setSummaryState(state as Record<string, unknown>) : setDetailedState(state as Record<string, unknown>)
-                }
-                placeholder="Write the system prompt for Claude…"
-                className="min-h-[420px]"
-              />
-            </AdminCard>
+              <AdminCard
+                title="Prompt body"
+                subtitle="Edits are stored as plain text for the model and as Lexical JSON for editing."
+              >
+                <LexicalEditor
+                  key={activeTab}
+                  state={activeTab === 'summary' ? summaryState ?? undefined : detailedState ?? undefined}
+                  onChange={(state) =>
+                    activeTab === 'summary' ? setSummaryState(state as Record<string, unknown>) : setDetailedState(state as Record<string, unknown>)
+                  }
+                  placeholder="Write the system prompt for the model…"
+                  className="min-h-[420px]"
+                />
+              </AdminCard>
           </div>
 
           <div className="space-y-6">
             <AdminCard title="Model settings">
               <div className="space-y-5">
+                <Field label="Provider">
+                  <div className="inline-flex w-full rounded-lg border border-[var(--a-border)] bg-[var(--a-subtle)] p-1">
+                    {(['anthropic', 'google'] as const).map((value) => (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() => {
+                          setProvider(value);
+                          setModel(FALLBACK_MODELS[value][0]);
+                        }}
+                        className={cn(
+                          'flex-1 rounded-md px-3 py-2 text-[13px] font-semibold capitalize transition-colors',
+                          provider === value ? 'bg-[#E8510A] text-white' : 'text-[var(--a-text2)] hover:text-[var(--a-ink2)]'
+                        )}
+                      >
+                        {value === 'anthropic' ? 'Anthropic (Claude)' : 'Google (Gemini)'}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-xs text-[var(--a-placeholder)]">
+                    New models are fetched automatically; you can also type any model id.
+                  </p>
+                </Field>
                 <Field label="Model">
-                  <select
+                  <input
+                    list="report-model-options"
                     value={model}
                     onChange={(e) => setModel(e.target.value)}
+                    placeholder={FALLBACK_MODELS[provider][0]}
                     className="h-11 w-full rounded-lg border border-[var(--a-border)] bg-[var(--a-subtle)] px-3 text-sm focus:border-[#E8510A] focus:outline-none focus:ring-2 focus:ring-[#E8510A]/20"
-                  >
-                    {MODELS.map((m) => (
-                      <option key={m} value={m}>
-                        {m}
-                      </option>
+                  />
+                  <datalist id="report-model-options">
+                    {models[provider].map((m) => (
+                      <option key={m} value={m} />
                     ))}
-                  </select>
+                  </datalist>
                 </Field>
-                <Field label="Max tokens" hint="Between 500 and 8000.">
+                <Field label="Max tokens" hint="Between 500 and 200,000.">
                   <input
                     className="h-11 w-full rounded-lg border border-[var(--a-border)] bg-[var(--a-subtle)] px-3 text-sm focus:border-[#E8510A] focus:outline-none focus:ring-2 focus:ring-[#E8510A]/20"
                     type="number"
                     min={500}
-                    max={8000}
+                    max={200000}
                     value={maxTokens}
                     onChange={(e) => setMaxTokens(e.target.value)}
                   />

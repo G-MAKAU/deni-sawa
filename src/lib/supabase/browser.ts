@@ -1,6 +1,6 @@
 'use client';
 
-import { createClient } from '@supabase/supabase-js';
+import { createBrowserClient as createSsrBrowserClient } from '@supabase/ssr';
 
 function getSupabaseEnv() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -18,14 +18,14 @@ function getSupabaseEnv() {
   return { url, anonKey };
 }
 
-/** Browser-side Supabase client for admin auth + session management. */
+/**
+ * Browser-side Supabase client for admin auth + session management.
+ * Uses `@supabase/ssr` so the session is also mirrored into a cookie — this is
+ * what lets the middleware (which only has access to cookies) authenticate the
+ * admin after login. Without it the session lived only in localStorage and the
+ * middleware bounced the user back to /admin/login.
+ */
 export function createBrowserClient() {
   const { url, anonKey } = getSupabaseEnv();
-
-  return createClient(url, anonKey, {
-    auth: {
-      persistSession: true,
-      autoRefreshToken: true,
-    },
-  });
+  return createSsrBrowserClient(url, anonKey);
 }

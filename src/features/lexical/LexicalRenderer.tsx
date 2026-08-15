@@ -10,6 +10,7 @@ import { TablePlugin } from '@lexical/react/LexicalTablePlugin';
 import { HorizontalRulePlugin } from '@lexical/react/LexicalHorizontalRulePlugin';
 import { ClickableLinkPlugin } from '@lexical/react/LexicalClickableLinkPlugin';
 import { buildEditorConfig, NAMESPACE } from './EditorConfig';
+import { ElementStylePlugin } from './plugins/ElementStylePlugin';
 import { CodeHighlightPlugin } from './plugins/CodeHighlightPlugin';
 import { LexicalErrorBoundary } from './ErrorBoundary';
 import { cn } from '@/lib/utils';
@@ -48,6 +49,7 @@ export function LexicalRenderer({ state, className }: LexicalRendererProps) {
           <HistoryPlugin />
           <LinkPlugin />
           <ListPlugin />
+          <ElementStylePlugin />
           <CodeHighlightPlugin />
           <TablePlugin />
           <HorizontalRulePlugin />

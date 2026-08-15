@@ -4,8 +4,8 @@ import * as React from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { Loader2, Save } from 'lucide-react';
-import { adminFetch, adminPut } from '@/lib/admin-client';
+import { FileDown, FileText, Loader2, Save } from 'lucide-react';
+import { adminDownload, adminFetch, adminPut } from '@/lib/admin-client';
 import { AdminCard, AsyncButton, ErrorBanner, Field, Loading, PageHeader, Toggle } from '@/components/admin/ui';
 
 interface CheckDetail {
@@ -35,6 +35,7 @@ export function HealthCheckEditorClient() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const id = params.id;
+  const [exporting, setExporting] = React.useState<'pdf' | 'word' | null>(null);
 
   const [check, setCheck] = React.useState<CheckDetail | null>(null);
   const [error, setError] = React.useState<string | null>(null);
@@ -103,6 +104,22 @@ export function HealthCheckEditorClient() {
     }
   };
 
+  const handleExport = async (format: 'pdf' | 'word') => {
+    setExporting(format);
+    try {
+      const safeSlug = slug.trim() || 'health-check';
+      await adminDownload(
+        `/api/admin/health-checks/${id}/export?format=${format}`,
+        `${safeSlug}-questions.${format === 'pdf' ? 'pdf' : 'docx'}`
+      );
+      toast.success(`${format === 'pdf' ? 'PDF' : 'Word'} downloaded`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Export failed.');
+    } finally {
+      setExporting(null);
+    }
+  };
+
   return (
     <>
       <PageHeader
@@ -111,6 +128,28 @@ export function HealthCheckEditorClient() {
         crumbs={[{ label: 'Health Checks', href: '/admin/health-checks' }, { label: check.name }]}
         actions={
           <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => handleExport('pdf')}
+                disabled={exporting !== null}
+                title="Download questions as PDF"
+                className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-[var(--a-border)] bg-[var(--a-card)] px-3 text-[12px] font-semibold text-[var(--a-text)] transition-colors hover:border-[#5A9E28]/40 hover:text-[#3f7a1a] disabled:opacity-50"
+              >
+                {exporting === 'pdf' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-3.5 w-3.5" />}
+                Questions PDF
+              </button>
+              <button
+                type="button"
+                onClick={() => handleExport('word')}
+                disabled={exporting !== null}
+                title="Download questions as Word"
+                className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-[var(--a-border)] bg-[var(--a-card)] px-3 text-[12px] font-semibold text-[var(--a-text)] transition-colors hover:border-[#5A9E28]/40 hover:text-[#3f7a1a] disabled:opacity-50"
+              >
+                {exporting === 'word' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileDown className="h-3.5 w-3.5" />}
+                Questions Word
+              </button>
+            </div>
             <button
               type="button"
               onClick={() => router.push(`/admin/health-checks/${id}/questions`)}

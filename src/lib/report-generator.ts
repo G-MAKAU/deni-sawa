@@ -15,6 +15,8 @@ export interface GeneratedReport {
   generationSeconds: number;
 }
 
+export type ReportProvider = 'anthropic' | 'google';
+
 /** Strip code fences and any surrounding prose, returning the JSON substring. */
 function extractJson(raw: string): string | null {
   let text = raw.trim();
@@ -229,7 +231,9 @@ export async function generateReportWithClaude(options: GenerateReportOptions): 
 
   const startedAt = Date.now();
   const model = options.model ?? process.env.ANTHROPIC_MODEL ?? 'claude-sonnet-4-6';
-  const maxTokens = options.maxTokens ?? 4000;
+  // The stored value can be up to 200,000 (context window), but the API rejects
+  // output tokens beyond the model's practical ceiling — clamp to a safe max.
+  const maxTokens = Math.min(options.maxTokens ?? 4000, 32000);
 
   try {
     const anthropic = new Anthropic({ apiKey });
@@ -259,4 +263,65 @@ export async function generateReportWithClaude(options: GenerateReportOptions): 
     console.error('Claude generation failed:', error);
     return null;
   }
+}
+
+/**
+ * Generates a Lexical-state report via the Google Gemini API. Mirrors the
+ * Claude path — the model must return a valid Lexical EditorState JSON.
+ */
+export async function generateReportWithGemini(options: GenerateReportOptions): Promise<GeneratedReport | null> {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) return null;
+
+  const startedAt = Date.now();
+  const model = options.model ?? process.env.GEMINI_MODEL ?? 'gemini-2.5-pro';
+  // Gemini output caps are lower than the stored max — clamp to a safe ceiling.
+  const maxTokens = Math.min(options.maxTokens ?? 4000, 32768);
+
+  try {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: options.systemPrompt }] },
+          contents: [{ role: 'user', parts: [{ text: options.userContent }] }],
+          generationConfig: { maxOutputTokens: maxTokens, temperature: 0.6 },
+        }),
+      }
+    );
+
+    if (!res.ok) return null;
+
+    const data = (await res.json()) as {
+      candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+    };
+    const text = data.candidates?.[0]?.content?.parts
+      ?.map((p) => p.text || '')
+      .join('')
+      .trim();
+    if (!text) return null;
+
+    const json = extractJson(text);
+    if (!json) return null;
+
+    const state = validateLexicalState(JSON.parse(json));
+    return {
+      state,
+      model,
+      generationSeconds: (Date.now() - startedAt) / 1000,
+    };
+  } catch (error) {
+    console.error('Gemini generation failed:', error);
+    return null;
+  }
+}
+
+/** Dispatches to the configured provider (anthropic | google). */
+export function generateReportForProvider(
+  provider: ReportProvider,
+  options: GenerateReportOptions
+): Promise<GeneratedReport | null> {
+  return provider === 'google' ? generateReportWithGemini(options) : generateReportWithClaude(options);
 }

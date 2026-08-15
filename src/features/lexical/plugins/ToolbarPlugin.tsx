@@ -8,6 +8,7 @@ import {
   $isElementNode,
   $isTextNode,
   $createParagraphNode,
+  $isParagraphNode,
   COMMAND_PRIORITY_CRITICAL,
   FORMAT_ELEMENT_COMMAND,
   FORMAT_TEXT_COMMAND,
@@ -23,7 +24,7 @@ import {
 } from 'lexical';
 import { $createHeadingNode, $createQuoteNode, $isHeadingNode, $isQuoteNode } from '@lexical/rich-text';
 import { $createCodeNode, $isCodeNode } from '@lexical/code';
-import { $setBlocksType } from '@lexical/selection';
+import { $patchStyleText, $setBlocksType } from '@lexical/selection';
 import {
   INSERT_CHECK_LIST_COMMAND,
   INSERT_ORDERED_LIST_COMMAND,
@@ -65,6 +66,8 @@ import {
   Subscript,
   Superscript,
   X,
+  Palette,
+  PaintBucket,
 } from 'lucide-react';
 import { $createCalloutNode, $isCalloutNode } from '../nodes/CalloutNode';
 import { $createDividerNode, $isDividerNode } from '../nodes/DividerNode';
@@ -72,6 +75,7 @@ import { $createImageNode } from '../nodes/ImageNode';
 import { $createVariableNode } from '../nodes/VariableNode';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { cssColorToHex, parseCssProperty, setCssProperty } from '@/lib/css-color';
 
 type BlockFormat =
   | 'paragraph'
@@ -126,6 +130,8 @@ interface ToolbarState {
   subscript: boolean;
   superscript: boolean;
   block: BlockFormat;
+  textColor: string | null;
+  blockBg: string | null;
   canUndo: boolean;
   canRedo: boolean;
 }
@@ -139,6 +145,8 @@ const initialToolbar: ToolbarState = {
   subscript: false,
   superscript: false,
   block: 'paragraph',
+  textColor: null,
+  blockBg: null,
   canUndo: false,
   canRedo: false,
 };
@@ -173,6 +181,44 @@ function getSelectionBlock(selection: ReturnType<typeof $getSelection>): BlockFo
     return 'paragraph';
   }
   return 'paragraph';
+}
+
+/** Reads the colour of the text at the selection anchor, normalised to hex. */
+function getTextColor(selection: ReturnType<typeof $getSelection>): string | null {
+  if (!$isRangeSelection(selection)) return null;
+  try {
+    // Only read from the anchor node — never selection.getNodes(), which walks
+    // the caret range and throws on a selection leaked from a sibling editor.
+    const anchor = selection.anchor.getNode();
+    if ($isTextNode(anchor)) {
+      return cssColorToHex(parseCssProperty(anchor.getStyle(), 'color') ?? '');
+    }
+    if ($isElementNode(anchor)) {
+      const first = anchor.getFirstChild();
+      if (first && $isTextNode(first)) {
+        return cssColorToHex(parseCssProperty(first.getStyle(), 'color') ?? '');
+      }
+    }
+  } catch {
+    // Never let a stale selection from a sibling editor crash the toolbar.
+    return null;
+  }
+  return null;
+}
+
+/** Reads the background-color of the anchor block (paragraph/heading), normalised to hex. */
+function getBlockBackground(selection: ReturnType<typeof $getSelection>): string | null {
+  if (!$isRangeSelection(selection)) return null;
+  try {
+    const node = selection.anchor.getNode();
+    let block: ElementNode | null = null;
+    if ($isElementNode(node)) block = node;
+    else block = node.getParent() ?? null;
+    if (!block || !($isParagraphNode(block) || $isHeadingNode(block))) return null;
+    return cssColorToHex(parseCssProperty(block.getStyle(), 'background-color') ?? '');
+  } catch {
+    return null;
+  }
 }
 
 const ToolbarButton = ({
@@ -210,6 +256,164 @@ const ToolbarButton = ({
 
 const ToolbarSep = () => <div className="mx-1 hidden h-5 w-px bg-card-border sm:block" />;
 
+const COLOR_PRESETS: Array<{ name: string; value: string }> = [
+  { name: 'Brand', value: '#E8510A' },
+  { name: 'Growth', value: '#5A9E28' },
+  { name: 'Ink', value: '#1A1A1A' },
+  { name: 'Muted', value: '#666666' },
+  { name: 'Hint', value: '#7A5A00' },
+  { name: 'Light', value: '#F9F7F5' },
+  { name: 'White', value: '#FFFFFF' },
+  { name: 'Brand/10', value: '#FDF3EC' },
+];
+
+/** Perceived luminance so preset labels stay legible on any swatch. */
+function swatchTextColor(hex: string): string {
+  const clean = hex.replace('#', '');
+  const r = parseInt(clean.slice(0, 2), 16);
+  const g = parseInt(clean.slice(2, 4), 16);
+  const b = parseInt(clean.slice(4, 6), 16);
+  return (r * 299 + g * 587 + b * 114) / 1000 > 150 ? '#111111' : '#FFFFFF';
+}
+
+const ColorControl = ({
+  label,
+  icon,
+  value,
+  onChange,
+  disabled,
+}: {
+  label: string;
+  icon: React.ReactNode;
+  value: string | null;
+  onChange: (color: string | null) => void;
+  disabled?: boolean;
+}) => {
+  const [open, setOpen] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [customColor, setCustomColor] = useState<string>(value ?? '#E8510A');
+
+  // Keep the pending custom colour in sync with the applied colour.
+  useEffect(() => {
+    setCustomColor(value ?? '#E8510A');
+  }, [value]);
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onMouseDown={(e) => {
+          e.preventDefault();
+          if (!disabled) setOpen((o) => !o);
+        }}
+        disabled={disabled}
+        title={label}
+        aria-label={label}
+        className={cn(
+          'relative flex h-9 w-9 items-center justify-center rounded-btn text-foreground/70 transition-colors',
+          disabled && 'cursor-not-allowed opacity-30',
+          open || value ? 'bg-brand/15 text-brand' : 'hover:bg-bgalt hover:text-brand'
+        )}
+      >
+        {icon}
+        {value && (
+          <span
+            className="absolute bottom-1 left-1/2 h-[5px] w-5 -translate-x-1/2 rounded-full border border-card-border"
+            style={{ backgroundColor: value }}
+          />
+        )}
+      </button>
+
+      {open && (
+        <>
+          <div className="fixed inset-0 z-10" onMouseDown={() => setOpen(false)} />
+          <div className="absolute left-0 top-full z-20 mt-1 w-60 rounded-lg border border-card-border bg-card p-2 shadow-card-hover">
+            <p className="mb-2 px-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{label}</p>
+            <div className="grid grid-cols-4 gap-1.5">
+              {COLOR_PRESETS.map((preset) => (
+                <button
+                  key={preset.value}
+                  type="button"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    onChange(preset.value);
+                    setOpen(false);
+                  }}
+                  title={preset.name}
+                  className="flex h-8 items-center justify-center rounded-md border border-card-border text-[10px] font-bold transition-transform hover:scale-105"
+                  style={{ backgroundColor: preset.value, color: swatchTextColor(preset.value) }}
+                >
+                  Aa
+                </button>
+              ))}
+            </div>
+            <div className="mt-2 flex items-center gap-1.5 border-t border-card-border pt-2">
+              <button
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  inputRef.current?.click();
+                }}
+                title="Open colour picker"
+                className="flex h-8 min-w-0 flex-1 items-center gap-2 rounded-md border border-card-border px-2 text-xs font-medium text-foreground transition-colors hover:border-brand/40"
+              >
+                <span
+                  className="h-4 w-4 shrink-0 rounded-sm border border-card-border"
+                  style={{ backgroundColor: customColor }}
+                />
+                <span className="truncate font-mono text-[11px] text-muted-foreground">{customColor}</span>
+              </button>
+              <input
+                ref={inputRef}
+                type="color"
+                value={customColor}
+                onChange={(e) => setCustomColor(e.target.value)}
+                className="sr-only"
+                tabIndex={-1}
+              />
+              <button
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  onChange(customColor);
+                  setOpen(false);
+                }}
+                title="Apply custom colour"
+                aria-label="Apply custom colour"
+                className="h-8 rounded-md bg-brand px-2.5 text-xs font-semibold text-white transition-colors hover:bg-brand-600"
+              >
+                Apply
+              </button>
+              <button
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  onChange(null);
+                  setOpen(false);
+                }}
+                title="Clear colour"
+                aria-label="Clear colour"
+                className="flex h-8 w-8 items-center justify-center rounded-md border border-card-border text-muted-foreground transition-colors hover:border-brand/40 hover:text-brand"
+              >
+                <Eraser className="h-3.5 w-3.5" />
+              </button>
+            </div>
+            {value && (
+              <p className="mt-2 flex items-center gap-1.5 border-t border-card-border pt-2 text-[11px] text-muted-foreground">
+                <span
+                  className="inline-block h-3.5 w-3.5 rounded-sm border border-card-border"
+                  style={{ backgroundColor: value }}
+                />
+                Selected · <span className="font-mono text-foreground">{value}</span>
+              </p>
+            )}
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
 export function ToolbarPlugin({
   variables,
   onUploadImage,
@@ -229,12 +433,16 @@ export function ToolbarPlugin({
   const [linkUrl, setLinkUrl] = useState('');
   const linkInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
+  // Last valid selection, kept so colour applies work even if the toolbar
+  // interaction briefly steals focus (e.g. the native colour picker dialog).
+  const selectionRef = useRef<ReturnType<typeof $getSelection>>(null);
 
   useEffect(() => {
     const updateToolbar = () => {
       editor.getEditorState().read(() => {
         try {
           const selection = $getSelection();
+          if ($isRangeSelection(selection)) selectionRef.current = selection;
           const hasFormat = (type: TextFormatType) =>
             $isRangeSelection(selection) && selection.hasFormat(type);
 
@@ -248,6 +456,8 @@ export function ToolbarPlugin({
             subscript: hasFormat('subscript'),
             superscript: hasFormat('superscript'),
             block: getSelectionBlock(selection),
+            textColor: getTextColor(selection),
+            blockBg: getBlockBackground(selection),
           }));
         } catch {
           // Never let a stale selection from a sibling editor crash the toolbar.
@@ -379,8 +589,46 @@ export function ToolbarPlugin({
           node.setStyle('');
         }
       });
+      const node = selection.anchor.getNode();
+      let block: ElementNode | null = null;
+      if ($isElementNode(node)) block = node;
+      else block = node.getParent() ?? null;
+      if (block && ($isParagraphNode(block) || $isHeadingNode(block))) {
+        block.setStyle(setCssProperty(block.getStyle(), 'background-color', null));
+      }
     });
   }, [editor]);
+
+  const applyTextColor = useCallback(
+    (color: string | null) => {
+      editor.update(() => {
+        const current = $getSelection();
+        const selection =
+          $isRangeSelection(current) ? current : ($isRangeSelection(selectionRef.current) ? selectionRef.current : null);
+        if (!selection) return;
+        $patchStyleText(selection, { color: color ? color : null });
+      });
+    },
+    [editor]
+  );
+
+  const applyBlockBackground = useCallback(
+    (color: string | null) => {
+      editor.update(() => {
+        const current = $getSelection();
+        const selection =
+          $isRangeSelection(current) ? current : ($isRangeSelection(selectionRef.current) ? selectionRef.current : null);
+        if (!selection) return;
+        const node = selection.anchor.getNode();
+        let block: ElementNode | null = null;
+        if ($isElementNode(node)) block = node;
+        else block = node.getParent() ?? null;
+        if (!block || !($isParagraphNode(block) || $isHeadingNode(block))) return;
+        block.setStyle(setCssProperty(block.getStyle(), 'background-color', color));
+      });
+    },
+    [editor]
+  );
 
   const insertVariable = useCallback(
     (name: string) => {
@@ -517,6 +765,25 @@ export function ToolbarPlugin({
       <ToolbarButton onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'code')} active={toolbar.code} title="Inline code">
         <Code className="h-4 w-4" />
       </ToolbarButton>
+
+      <ToolbarSep />
+
+      {/* Text colour */}
+      <ColorControl
+        label="Text colour"
+        icon={<Palette className="h-4 w-4" />}
+        value={toolbar.textColor}
+        onChange={applyTextColor}
+      />
+
+      {/* Block background (paragraphs & headings) */}
+      <ColorControl
+        label="Background colour"
+        icon={<PaintBucket className="h-4 w-4" />}
+        value={toolbar.blockBg}
+        onChange={applyBlockBackground}
+        disabled={!['paragraph', 'h1', 'h2', 'h3'].includes(toolbar.block)}
+      />
 
       <ToolbarSep />
 

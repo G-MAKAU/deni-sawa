@@ -17,6 +17,63 @@ async function getCheckName(supabase: SupabaseClient, checkId: string): Promise<
 }
 
 /**
+ * Best-effort notification sent to a user when their report could not be
+ * generated. Uses the `health_check_report_failed` email/WhatsApp templates.
+ */
+export async function notifyReportFailed(
+  supabase: SupabaseClient,
+  session: { id: string; health_check_id: string; full_name: string; email: string | null; whatsapp: string | null; preferred_delivery: string }
+): Promise<void> {
+  const checkName = await getCheckName(supabase, session.health_check_id);
+  const variables = { recipient_name: session.full_name, check_name: checkName };
+
+  const wantsEmail = session.preferred_delivery === 'email' || session.preferred_delivery === 'both';
+  const wantsWhatsApp = session.preferred_delivery === 'whatsapp' || session.preferred_delivery === 'both';
+
+  if (wantsEmail && session.email) {
+    try {
+      const { data: template } = await supabase
+        .from('email_templates')
+        .select('*')
+        .eq('template_key', 'health_check_report_failed')
+        .maybeSingle();
+      if (template?.is_active) {
+        await sendTemplatedEmail(supabase, {
+          template: template as unknown as EmailTemplateRow,
+          to: session.email,
+          toName: session.full_name,
+          variables,
+          sessionId: session.id,
+        });
+      }
+    } catch (error) {
+      console.error('Failed to send report-failed email:', error);
+    }
+  }
+
+  if (wantsWhatsApp && session.whatsapp) {
+    try {
+      const { data: template } = await supabase
+        .from('whatsapp_templates')
+        .select('*')
+        .eq('template_key', 'health_check_report_failed')
+        .maybeSingle();
+      if (template?.is_active) {
+        await sendTemplatedWhatsApp(supabase, {
+          template: template as unknown as WhatsAppTemplateRow,
+          to: session.whatsapp,
+          toName: session.full_name,
+          variables,
+          sessionId: session.id,
+        });
+      }
+    } catch (error) {
+      console.error('Failed to send report-failed WhatsApp message:', error);
+    }
+  }
+}
+
+/**
  * Delivers a generated report by email. Renders the active template for the
  * report type, sends it, logs to email_log and updates delivery_status.
  */

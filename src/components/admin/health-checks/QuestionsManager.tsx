@@ -478,7 +478,13 @@ export function QuestionsManager() {
 
           <div>
             <label className="mb-1.5 block text-[13px] font-semibold text-[var(--a-ink2)]">Helper text</label>
-            <input className={INPUT_CLASS} value={helperText} onChange={(e) => setHelperText(e.target.value)} placeholder="Optional guidance shown under the question" />
+            <textarea
+              rows={2}
+              className="w-full rounded-lg border border-[var(--a-border)] bg-[var(--a-subtle)] px-3.5 py-2.5 text-sm focus:border-[#E8510A] focus:outline-none focus:ring-2 focus:ring-[#E8510A]/20"
+              value={helperText}
+              onChange={(e) => setHelperText(e.target.value)}
+              placeholder="Optional guidance shown under the question"
+            />
           </div>
 
           <div className="flex items-center justify-between rounded-lg border border-[var(--a-border-soft)] bg-[var(--a-subtle)] px-4 py-3">

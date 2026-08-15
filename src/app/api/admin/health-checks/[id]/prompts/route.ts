@@ -13,8 +13,9 @@ const saveSchema = z
     report_type: z.enum(['summary', 'detailed']),
     system_prompt_lexical: z.record(z.string(), z.unknown()).nullable().optional(),
     system_prompt: z.string().max(20000).optional(),
+    provider: z.enum(['anthropic', 'google']).optional(),
     model: z.string().min(1).max(120).optional(),
-    max_tokens: z.number().int().min(500).max(8000).optional(),
+    max_tokens: z.number().int().min(500).max(200000).optional(),
     is_active: z.boolean().optional(),
     action: z.enum(['save', 'rollback']).default('save'),
   })
@@ -64,7 +65,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: 'Validation failed', details: parsed.error.flatten() }, { status: 422 });
     }
 
-    const { report_type, system_prompt_lexical, system_prompt, model, max_tokens, is_active, action } = parsed.data;
+    const { report_type, system_prompt_lexical, system_prompt, provider, model, max_tokens, is_active, action } = parsed.data;
 
     // Fetch current row so we can compare for rollback.
     const { data: current } = await supabase
@@ -83,6 +84,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
           report_type,
           system_prompt: system_prompt ?? lexicalToPlainText(system_prompt_lexical ?? {}),
           system_prompt_lexical,
+          provider: provider ?? 'anthropic',
           model: model ?? 'claude-sonnet-4-6',
           max_tokens: max_tokens ?? 4000,
           is_active: is_active ?? true,
@@ -115,6 +117,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       payload = {
         system_prompt: resolvedPlain,
         ...(system_prompt_lexical !== undefined ? { system_prompt_lexical } : {}),
+        ...(provider !== undefined ? { provider } : {}),
         ...(model !== undefined ? { model } : {}),
         ...(max_tokens !== undefined ? { max_tokens } : {}),
         ...(is_active !== undefined ? { is_active } : {}),
