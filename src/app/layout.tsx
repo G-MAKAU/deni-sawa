@@ -3,6 +3,7 @@ import '@/index.css';
 import { AppShell } from './AppShell';
 import { Inter, Playfair_Display, JetBrains_Mono } from 'next/font/google';
 import { GoogleAnalytics } from '@/components/GoogleAnalytics';
+import { site } from '@/data/site';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -25,7 +26,7 @@ const jetbrains = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'https://denisawa.co.ke'),
+  metadataBase: new URL(site.url),
   title: {
     default: 'Deni Sawa Partners | Fractional CFO & Business Advisory | Special Situations',
     template: '%s | Deni Sawa Partners',
@@ -46,6 +47,12 @@ export const metadata: Metadata = {
     type: 'website',
     siteName: 'Deni Sawa Partners',
     locale: 'en_KE',
+    url: site.url,
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Deni Sawa Partners | Fractional CFO & Business Advisory',
+    description: site.description,
   },
   icons: {
     icon: '/favicon.svg',
@@ -55,16 +62,16 @@ export const metadata: Metadata = {
       '@context': 'https://schema.org',
       '@type': 'ProfessionalService',
       name: 'Deni Sawa Partners',
-      url: process.env.NEXT_PUBLIC_SITE_URL ?? 'https://denisawa.co.ke',
+      url: site.url,
       description:
         'AI-enabled advisory and fractional business support helping organisations move from Special Situations to Best-in-Class.',
-      telephone: process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '+254 700 000 000',
+      telephone: site.phone,
       address: {
         '@type': 'PostalAddress',
         addressLocality: 'Nairobi',
         addressCountry: 'KE',
       },
-      areaServed: 'KE',
+      areaServed: ['KE', 'Africa'],
       makesOffer: ['Fractional CFO', 'Fractional CEO', 'Governance', 'Health Checks', 'Special Situations'],
     }),
   },

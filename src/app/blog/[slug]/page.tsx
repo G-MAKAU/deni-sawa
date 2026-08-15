@@ -77,6 +77,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         ? [{ url: post.og_image_url ?? post.cover_image_url ?? '' }]
         : undefined,
     },
+    twitter: {
+      card: 'summary_large_image',
+      title: post.og_title ?? post.seo_title ?? post.title,
+      description: post.og_description ?? post.seo_description ?? post.excerpt ?? undefined,
+      images: post.og_image_url ?? post.cover_image_url ? [post.og_image_url ?? post.cover_image_url ?? ''] : undefined,
+    },
   };
 }
 

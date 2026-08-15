@@ -118,29 +118,44 @@ export default async function HomePage() {
                 <div className="absolute inset-0 ring-1 ring-inset ring-white/10" />
               </div>
 
-              {/* Floating stat card */}
-              <div className="absolute -left-10 bottom-10 w-64 rounded-lg border border-white/10 bg-charcoal/85 p-5 shadow-card backdrop-blur-md">
-                <div className="flex items-center gap-3">
-                  <span className="inline-flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-brand/15 text-brand">
-                    <HeartPulse className="h-5 w-5" strokeWidth={1.8} />
+              {/* Floating Health Score card */}
+              <div className="absolute -left-10 bottom-10 w-72 rounded-xl border border-white/10 bg-charcoal/90 p-5 shadow-2xl shadow-black/40 backdrop-blur-md">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-semibold text-white">Business Health Score</p>
+                  <span className="rounded-full bg-brand/15 px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-widest text-brand">
+                    AI
                   </span>
-                  <div>
-                    <p className="text-sm font-semibold text-white">Business Health Score</p>
-                    <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-white/50">AI Diagnostic · Free</p>
-                  </div>
                 </div>
-                <div className="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
-                  <div className="h-full w-[72%] rounded-full bg-brand" />
-                </div>
-                <div className="mt-2 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.18em] text-white/50">
-                  <span>Weak</span>
-                  <span className="text-brand">Resilient</span>
-                </div>
-              </div>
 
-              {/* Floating badge */}
-              <div className="absolute -top-4 right-8 rounded-badge border border-brand/40 bg-brand px-4 py-2 font-mono text-[11px] font-semibold uppercase tracking-[0.18em] text-white shadow-brand">
-                Take It Free
+                <div className="mt-3 flex items-end gap-1.5">
+                  <span className="font-display text-5xl font-bold leading-none text-white">72</span>
+                  <span className="mb-1 text-sm text-white/40">/100</span>
+                  <span className="ml-auto mb-0.5 inline-flex items-center gap-1 rounded-full bg-growth/15 px-2 py-0.5 text-[10px] font-semibold text-growth">
+                    <TrendingUp className="h-3 w-3" /> Improving
+                  </span>
+                </div>
+
+                {/* Gauge */}
+                <div className="relative mt-4 h-2 w-full rounded-full bg-white/10">
+                  <div className="h-full w-[72%] rounded-full bg-gradient-to-r from-brand to-growth" />
+                  <span
+                    className="absolute -top-[3px] h-4 w-1 rounded-full bg-white shadow-[0_0_6px_rgba(255,255,255,0.6)]"
+                    style={{ left: '72%' }}
+                  />
+                </div>
+                <div className="mt-1.5 flex justify-between font-mono text-[9px] uppercase tracking-wider text-white/40">
+                  <span>Fragile</span>
+                  <span>Stable</span>
+                  <span>Resilient</span>
+                </div>
+
+                <Link
+                  href="/health-checks"
+                  className="mt-4 flex items-center justify-between rounded-lg border border-brand/30 bg-brand/10 px-3 py-2.5 text-xs font-semibold text-white transition-colors hover:border-brand/50 hover:bg-brand/20"
+                >
+                  Free AI Diagnostic
+                  <ArrowRight className="h-3.5 w-3.5 text-brand" />
+                </Link>
               </div>
             </Reveal>
           </div>
@@ -413,11 +428,14 @@ export default async function HomePage() {
 
           <Reveal direction="left" delay={120}>
             <div className="card-dark-panel">
-              <p className="font-mono text-xs uppercase tracking-[0.22em] text-white/40">By invitation</p>
+              <p className="font-mono text-xs uppercase tracking-[0.22em] text-brand">The Deni Sawa view · By invitation</p>
               <p className="mt-4 font-display text-3xl leading-snug text-white">
-                “The best operators don't go it alone. They plug into a community that holds them to a higher standard.”
+                The best operators don't go it alone. They plug into a community that holds them to a higher
+                standard.
               </p>
-              <p className="mt-6 text-sm text-white/50">— The Deni Sawa Partners team</p>
+              <p className="mt-6 text-sm text-white/50">
+                A curated peer network for founders, professionals and investors navigating complex situations.
+              </p>
             </div>
           </Reveal>
         </div>
