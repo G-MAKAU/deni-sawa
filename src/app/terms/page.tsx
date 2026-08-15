@@ -66,7 +66,7 @@ export default function TermsPage() {
 
       <section className="section-pad bg-background">
         <div className="container-lux">
-          <div className="mx-auto max-w-3xl">
+          <div className="mx-auto w-full">
             <div className="space-y-10">
               {sections.map((section) => (
                 <div key={section.title}>

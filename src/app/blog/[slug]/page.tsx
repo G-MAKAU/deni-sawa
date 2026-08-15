@@ -162,7 +162,7 @@ export default async function BlogPostPage({ params }: PageProps) {
       {/* Article content */}
       <section className="relative overflow-hidden py-16 lg:py-24">
         <div className="container-lux">
-          <div className="mx-auto max-w-6xl">
+          <div className="mx-auto w-full">
             <BlogCoverImage
               src={post.cover_image_url}
               alt={post.title}
