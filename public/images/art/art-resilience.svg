@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" width="1600" height="1000" role="img">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0F0F0F"/>
+      <stop offset="1" stop-color="#1A1A1A"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.42" r="0.62">
+      <stop offset="0" stop-color="#E8510A" stop-opacity="0.16"/>
+      <stop offset="1" stop-color="#E8510A" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowGreen" cx="0.5" cy="0.42" r="0.62">
+      <stop offset="0" stop-color="#5A9E28" stop-opacity="0.14"/>
+      <stop offset="1" stop-color="#5A9E28" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="dots" width="44" height="44" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="1.4" fill="#ffffff" opacity="0.05"/>
+    </pattern>
+    <linearGradient id="strokeGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#E8510A"/>
+      <stop offset="1" stop-color="#5A9E28"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="1000" fill="url(#bg)"/>
+  <rect width="1600" height="1000" fill="url(#glow)"/>
+  <rect width="1600" height="1000" fill="url(#dots)"/>
+  <rect width="1600" height="1000" fill="none" stroke="#ffffff" stroke-opacity="0.06" stroke-width="1.5"/>
+  <g transform="translate(80 88)">
+    <text x="0" y="0" font-family="'JetBrains Mono', Menlo, monospace" font-size="22" letter-spacing="6" fill="#ffffff" opacity="0.55" text-transform="uppercase">DS / 11 — Resilience</text>
+    <rect x="0" y="14" width="64" height="3" fill="url(#strokeGrad)"/>
+  </g>
+  
+  <g transform="translate(140 520)">
+    <path d="M0 0 L180 -200 L360 0 L540 -140 L720 40 L900 -120 L1080 80 L1260 -40 L1440 60" fill="none" stroke="url(#strokeGrad)" stroke-width="6" stroke-linecap="round"/>
+    <g fill="none" stroke="#5A9E28" stroke-width="2.5" opacity="0.3">
+      <path d="M0 60 L180 -140 L360 60 L540 -80 L720 100 L900 -60 L1080 140 L1260 -20 L1440 120"/>
+      <path d="M0 120 L180 -80 L360 120 L540 -20 L720 160 L900 0 L1080 200 L1260 40 L1440 180"/>
+    </g>
+    <circle cx="180" cy="-200" r="16" fill="#E8510A"/>
+    <circle cx="540" cy="-140" r="16" fill="#E8510A"/>
+    <circle cx="900" cy="-120" r="16" fill="#E8510A"/>
+    <circle cx="1260" cy="-40" r="16" fill="#E8510A"/>
+  </g>
+  <text x="80" y="940" font-family="'JetBrains Mono', Menlo, monospace" font-size="18" letter-spacing="4" fill="#ffffff" opacity="0.28">DENI SAWA PARTNERS · WWW.DENISAWA.CO.KE</text>
+</svg>

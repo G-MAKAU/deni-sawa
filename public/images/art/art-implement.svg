@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" width="1600" height="1000" role="img">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0F0F0F"/>
+      <stop offset="1" stop-color="#1A1A1A"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.42" r="0.62">
+      <stop offset="0" stop-color="#E8510A" stop-opacity="0.16"/>
+      <stop offset="1" stop-color="#E8510A" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowGreen" cx="0.5" cy="0.42" r="0.62">
+      <stop offset="0" stop-color="#5A9E28" stop-opacity="0.14"/>
+      <stop offset="1" stop-color="#5A9E28" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="dots" width="44" height="44" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="1.4" fill="#ffffff" opacity="0.05"/>
+    </pattern>
+    <linearGradient id="strokeGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#E8510A"/>
+      <stop offset="1" stop-color="#5A9E28"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="1000" fill="url(#bg)"/>
+  <rect width="1600" height="1000" fill="url(#glow)"/>
+  <rect width="1600" height="1000" fill="url(#dots)"/>
+  <rect width="1600" height="1000" fill="none" stroke="#ffffff" stroke-opacity="0.06" stroke-width="1.5"/>
+  <g transform="translate(80 88)">
+    <text x="0" y="0" font-family="'JetBrains Mono', Menlo, monospace" font-size="22" letter-spacing="6" fill="#ffffff" opacity="0.55" text-transform="uppercase">DS / 06 — Implement</text>
+    <rect x="0" y="14" width="64" height="3" fill="url(#strokeGrad)"/>
+  </g>
+  
+  <g transform="translate(120 640)">
+    <g>
+      <rect x="0" y="-36" width="150" height="48" rx="6" fill="none" stroke="#ffffff" stroke-width="2.5" opacity="0.3" stroke-opacity="0.4"/>
+      <rect x="0" y="-100" width="172" height="48" rx="6" fill="none" stroke="#ffffff" stroke-width="2.5" opacity="0.38" stroke-opacity="0.4"/>
+      <rect x="0" y="-164" width="194" height="48" rx="6" fill="none" stroke="#ffffff" stroke-width="2.5" opacity="0.45999999999999996" stroke-opacity="0.4"/>
+      <rect x="0" y="-228" width="216" height="48" rx="6" fill="none" stroke="#ffffff" stroke-width="2.5" opacity="0.54" stroke-opacity="0.4"/>
+      <rect x="0" y="-292" width="238" height="48" rx="6" fill="none" stroke="#ffffff" stroke-width="2.5" opacity="0.62" stroke-opacity="0.4"/>
+      <rect x="0" y="-356" width="260" height="48" rx="6" fill="none" stroke="#ffffff" stroke-width="2.5" opacity="0.7" stroke-opacity="0.4"/>
+      <rect x="0" y="-420" width="282" height="48" rx="6" fill="none" stroke="#ffffff" stroke-width="2.5" opacity="0.78" stroke-opacity="0.4"/>
+      <rect x="0" y="-484" width="304" height="48" rx="6" fill="none" stroke="#E8510A" stroke-width="2.5" opacity="0.8600000000000001" stroke-opacity="1"/>
+    </g>
+    <circle cx="364" cy="-460" r="16" fill="#E8510A"/>
+    <g transform="translate(500 -120)">
+      <circle cx="0" cy="30" r="20" fill="#111" stroke="#5A9E28" stroke-width="2.5" opacity="0.8"/>
+      <circle cx="130" cy="-30" r="20" fill="#111" stroke="#5A9E28" stroke-width="2.5" opacity="0.8"/>
+      <circle cx="260" cy="30" r="20" fill="#111" stroke="#5A9E28" stroke-width="2.5" opacity="0.8"/>
+      <circle cx="390" cy="-30" r="20" fill="#111" stroke="#5A9E28" stroke-width="2.5" opacity="0.8"/>
+      <circle cx="520" cy="30" r="20" fill="#111" stroke="#5A9E28" stroke-width="2.5" opacity="0.8"/>
+    </g>
+  </g>
+  <text x="80" y="940" font-family="'JetBrains Mono', Menlo, monospace" font-size="18" letter-spacing="4" fill="#ffffff" opacity="0.28">DENI SAWA PARTNERS · WWW.DENISAWA.CO.KE</text>
+</svg>

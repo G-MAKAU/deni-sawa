@@ -1,317 +1,458 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, X, Phone, Mail, Clock, ArrowRight, Calendar, Facebook, Instagram, Linkedin, ChevronDown, ChevronRight, Landmark } from 'lucide-react';
-import { useScrollProgress } from '@/lib/hooks';
-import { navLinks, business, services } from '@/data/content';
+import { Menu, X, ChevronDown, ArrowRight, ArrowUpRight, Mail, Phone, Clock } from 'lucide-react';
+import { motion, AnimatePresence, useScroll, useTransform } from 'motion/react';
+import { navItems, site } from '@/data/site';
+import { business } from '@/data/content';
+import { socialLinks } from '@/components/SocialLinks';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
-import { ServicesNavItem, serviceIconMap } from '@/components/ServicesNavItem';
-import { Badge } from '@/components/ui/badge';
+import { Logo } from '@/components/Logo';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
-export function Navbar() {
-  const { scrolled } = useScrollProgress();
-  const pathname = usePathname();
-  const [open, setOpen] = useState(false);
-  const [mobileServicesOpen, setMobileServicesOpen] = useState(false);
+function isActive(href: string | undefined, pathname: string): boolean {
+  if (!href) return false;
+  if (href === '/') return pathname === '/';
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+function useScrollDirection() {
+  const [hidden, setHidden] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const lastY = useRef(0);
 
   useEffect(() => {
-    document.body.style.overflow = open ? 'hidden' : '';
-    return () => { document.body.style.overflow = ''; };
-  }, [open]);
+    let ticking = false;
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      window.requestAnimationFrame(() => {
+        const y = window.scrollY;
 
-  const isNavActive = (link: { href: string }) =>
-    link.href.startsWith('/') && pathname === link.href;
+        // Hysteresis so the compact/normal nav does not flicker near the threshold.
+        if (y > 40) setScrolled(true);
+        else if (y < 20) setScrolled(false);
 
-  const isServicesActive = pathname === '/services' || pathname.startsWith('/services/');
-  const currentServiceSlug = pathname.startsWith('/services/') ? pathname.split('/')[2] : undefined;
+        // Hide only on a meaningful downward scroll; show on any upward scroll.
+        const delta = y - lastY.current;
+        if (delta > 4 && y > 140) setHidden(true);
+        else if (delta < -4) setHidden(false);
+
+        lastY.current = y;
+        ticking = false;
+      });
+    };
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  return { hidden, scrolled };
+}
+
+function ScrollProgress() {
+  const { scrollYProgress } = useScroll();
+  const scaleX = useTransform(scrollYProgress, [0, 1], [0, 1]);
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-[80]">
-      {/* Top utility bar */}
-      <div
+    <motion.div
+      className="fixed inset-x-0 top-0 z-[90] h-[2px] origin-left bg-gradient-to-r from-brand via-brand to-growth"
+      style={{ scaleX }}
+    />
+  );
+}
+
+export function Navbar() {
+  const pathname = usePathname();
+  const { hidden, scrolled } = useScrollDirection();
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [mobileOpen, setMobileOpen] = useState<string | null>(null);
+  const dropdownTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    document.body.style.overflow = drawerOpen ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [drawerOpen]);
+
+  useEffect(() => {
+    setDrawerOpen(false);
+    setOpenDropdown(null);
+    setMobileOpen(null);
+  }, [pathname]);
+
+  const handleDropdownEnter = useCallback((label: string) => {
+    if (dropdownTimeout.current) clearTimeout(dropdownTimeout.current);
+    setOpenDropdown(label);
+  }, []);
+
+  const handleDropdownLeave = useCallback(() => {
+    dropdownTimeout.current = setTimeout(() => setOpenDropdown(null), 120);
+  }, []);
+
+  return (
+    <>
+      <ScrollProgress />
+
+      <motion.header
         className={cn(
-          'overflow-hidden transition-all duration-300 ease-out',
-          scrolled ? 'max-h-0 opacity-0 -translate-y-2' : 'max-h-14 opacity-100 translate-y-0'
+          'sticky top-0 z-[80] w-full transition-colors duration-500',
+          scrolled
+          ? 'border-b border-card-border bg-nav shadow-[0_1px_40px_rgba(0,0,0,0.06)]'
+          : 'border-b border-transparent bg-nav/0'
         )}
+        animate={{
+          y: hidden ? -100 : 0,
+        }}
+        transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
       >
-        <div className="border-b border-border bg-background/95">
-          <div className="container-lux">
-            <div className="flex items-center justify-between py-2.5 text-sm text-muted-foreground">
-              <div className="flex items-center gap-4 sm:gap-6 min-w-0">
-                <a href={`tel:${business.phone.replace(/\s/g, '')}`} className="flex items-center gap-2 whitespace-nowrap transition-colors hover:text-brand">
-                  <Phone className="h-4 w-4 flex-shrink-0" /><span className=" xs:inline sm:inline">{business.phone}</span>
-                </a>
-                <span className="hidden sm:block h-4 w-px bg-border flex-shrink-0" />
-                <a href={`mailto:${business.email}`} className="hidden min-w-0 items-center gap-2 transition-colors hover:text-brand sm:flex">
-                  <Mail className="h-4 w-4 flex-shrink-0" /><span className="truncate">{business.email}</span>
-                </a>
-                <span className="hidden md:block h-4 w-px bg-border flex-shrink-0" />
-                <span className="hidden whitespace-nowrap md:flex items-center gap-2">
-                  <Clock className="h-4 w-4 flex-shrink-0" />Mon–Fri 8am–5pm
-                </span>
-              </div>
-              <div className="flex items-center gap-3 sm:gap-4 flex-shrink-0">
-                <a href={business.facebook} target="_blank" rel="noopener noreferrer" className="text-muted-foreground transition-colors hover:text-brand"><Facebook className="h-5 w-5" /></a>
-                <a href={business.instagram} target="_blank" rel="noopener noreferrer" className="text-muted-foreground transition-colors hover:text-green"><Instagram className="h-5 w-5" /></a>
-                <a href={business.linkedin} target="_blank" rel="noopener noreferrer" className="text-muted-foreground transition-colors hover:text-brand"><Linkedin className="h-5 w-5" /></a>
+        {/* Top contact bar — collapses on scroll */}
+        <div
+          className={cn(
+            'overflow-hidden transition-all duration-300 ease-out',
+            scrolled ? 'max-h-0 -translate-y-full opacity-0' : 'max-h-14 translate-y-0 opacity-100'
+          )}
+        >
+          <div className="border-b border-card-border bg-background/95">
+            <div className="w-full px-4 sm:px-6 lg:px-8">
+              <div className="flex items-center justify-between py-2.5 text-sm text-muted-foreground">
+                <div className="flex min-w-0 items-center gap-4 sm:gap-6">
+                  <a
+                    href={`tel:${site.phone.replace(/\s/g, '')}`}
+                    className="flex items-center gap-2 whitespace-nowrap transition-colors hover:text-brand"
+                  >
+                    <Phone className="h-4 w-4 flex-shrink-0" />
+                    <span className="sm:inline">{site.phone}</span>
+                  </a>
+                  <span className="hidden h-4 w-px flex-shrink-0 bg-card-border sm:block" />
+                  <a
+                    href={`mailto:${business.email}`}
+                    className="hidden min-w-0 items-center gap-2 transition-colors hover:text-brand sm:flex"
+                  >
+                    <Mail className="h-4 w-4 flex-shrink-0" />
+                    <span className="truncate">{business.email}</span>
+                  </a>
+                  <span className="hidden h-4 w-px flex-shrink-0 bg-card-border md:block" />
+                  <span className="hidden items-center gap-2 whitespace-nowrap md:flex">
+                    <Clock className="h-4 w-4 flex-shrink-0" />
+                    Mon–Fri 8am–5pm
+                  </span>
+                </div>
+                <div className="flex flex-shrink-0 items-center gap-3 sm:gap-4">
+                  {socialLinks.map(({ name, href, icon: Icon, ariaLabel, hoverTextClass }) => (
+                    <a
+                      key={name}
+                      href={href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={ariaLabel}
+                      className={cn('text-muted-foreground transition-colors', hoverTextClass)}
+                    >
+                      <Icon className="h-5 w-5" />
+                    </a>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Main nav bar */}
-      <div
-        className={cn(
-          'border-b transition-all duration-300 ease-out',
-          scrolled
-            ? 'border-border bg-accent/95 dark:bg-background/95 shadow-soft-md'
-            : 'border-transparent bg-background/95 dark:bg-background/95'
-        )}
-      >
-        <div className="container-lux">
-          <nav className={cn('relative flex items-center justify-between gap-2 transition-[padding,height] duration-300 ease-out', scrolled ? 'h-16 py-0' : 'py-4')}>
-            {/* Logo — enlarged, elegant, fixed size never shrinks */}
-            <Link href="/" className={cn('flex flex-col items-center group flex-shrink-0', scrolled ? 'self-stretch gap-0' : 'gap-1')}><div
-              className={cn(
-                'flex flex-shrink-0 items-center justify-center bg-gradient-to-br bg-brand shadow-brand-sm ring-1 ring-inset ring-white/20 transition-all duration-300 ease-out group-hover:scale-105 group-hover:shadow-brand-glow',
-                scrolled
-                  ? 'px-11 h-full'
-                  : 'sm:px-7 py-2.5 md:px-12 sm:py-3'
-              )}
-            >
-              <img src={business.logo} alt="Deni Sawa" className={cn('w-auto object-contain brightness-0 invert transition-all duration-300 ease-out', scrolled ? 'h-11' : 'h-17 sm:h-16')} decoding="async" />
-            </div>
-              <span className={cn('hidden overflow-hidden whitespace-nowrap text-[11px] font-semibold uppercase tracking-[0.2em] text-brand transition-all duration-300 ease-out sm:block', scrolled ? 'max-h-0 opacity-0 scale-90' : 'max-h-5 opacity-100')}>Debt Management</span>
-            </Link>
+        <div className="w-full px-4 sm:px-6 lg:px-8">
+          <nav className="flex h-20 items-center justify-between gap-6 lg:h-[76px]">
+            <Logo size="lg" center fill={scrolled} tagline="Debt Management" showTagline={!scrolled} className="shrink-0" />
 
-            {/* Desktop nav — absolutely centered so logo width never shifts it */}
-            <div className="hidden lg:flex absolute inset-0 items-center justify-center pointer-events-none">
-              <div className="flex items-center gap-0.5 pointer-events-auto">
-                {navLinks.map((link) => {
-                  const isActive = link.active && isNavActive(link);
-                  const linkClasses = cn(
-                    'relative rounded-full px-3.5 py-2 text-base font-medium font-bold transition-all duration-300',
-                    link.active
-                      ? isActive
-                        ? 'text-white bg-brand shadow-brand-sm rounded-none'
-                        : 'text-foreground/80 hover:text-brand hover:bg-brand/10'
-                      : 'text-muted-foreground/50 cursor-not-allowed'
-                  );
-                  if (link.label === 'Services') {
-                    return <ServicesNavItem key={link.label} active={isServicesActive} currentSlug={currentServiceSlug} />;
-                  }
-                  const linkInner = (
-                    <span className="flex items-center gap-1.5">
-                      {link.label}
-                      {!link.active && <Badge variant="soon" className="px-1.5 py-0 text-[8px]">Soon</Badge>}
-                    </span>
-                  );
-                  return link.href.startsWith('/') ? (
-                    <Link key={link.label} href={link.href} className={linkClasses}>
-                      {linkInner}
-                    </Link>
-                  ) : (
-                    <a
-                      key={link.label}
-                      href={link.active ? link.href : undefined}
-                      className={linkClasses}
+            <div className="hidden items-center gap-0.5 lg:flex">
+              {navItems.map((item) => {
+                if (item.children) {
+                  const active = isActive(item.href, pathname);
+                  const open = openDropdown === item.label;
+                  return (
+                    <div
+                      key={item.label}
+                      className="relative"
+                      onMouseEnter={() => handleDropdownEnter(item.label)}
+                      onMouseLeave={handleDropdownLeave}
                     >
-                      {linkInner}
-                    </a>
+                      <button
+                        type="button"
+                        onClick={() => setOpenDropdown(open ? null : item.label)}
+                        aria-expanded={open}
+                        className={cn(
+                          'group relative flex items-center gap-1.5 rounded-full px-4 py-2 text-[14px] font-medium tracking-[-0.01em] transition-all duration-300',
+                          active || open
+                            ? 'text-brand'
+                            : 'text-foreground/70 hover:text-foreground'
+                        )}
+                      >
+                        <span
+                          className={cn(
+                            'absolute inset-0 rounded-none transition-all duration-300',
+                            active || open
+                              ? 'bg-brand/[0.08] scale-100'
+                              : 'bg-foreground/[0.04] scale-90 opacity-0 group-hover:scale-100 group-hover:opacity-100'
+                          )}
+                        />
+                        <span className="relative">{item.label}</span>
+                        <ChevronDown
+                          className={cn(
+                            'relative h-3.5 w-3.5 transition-transform duration-300',
+                            open && 'rotate-180'
+                          )}
+                          strokeWidth={2.2}
+                        />
+                      </button>
+
+                      <AnimatePresence>
+                        {open && (
+                          <motion.div
+                            className="absolute left-1/2 top-full -translate-x-1/2 pt-4"
+                            initial={{ opacity: 0, y: -8, scale: 0.97 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: -8, scale: 0.97 }}
+                            transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+                            onMouseEnter={() => handleDropdownEnter(item.label)}
+                            onMouseLeave={handleDropdownLeave}
+                          >
+                            <div className="relative w-[380px] overflow-hidden rounded-2xl border border-card-border bg-card shadow-[0_32px_80px_rgba(0,0,0,0.12),0_0_0_1px_rgba(0,0,0,0.02)]">
+                              <div className="h-[2px] w-full bg-gradient-to-r from-brand via-brand/80 to-growth" />
+                              <div className="p-2">
+                                {item.children.map((child, i) => {
+                                  const childActive = isActive(child.href, pathname);
+                                  return (
+                                    <motion.div
+                                      key={child.href}
+                                      initial={{ opacity: 0, x: -6 }}
+                                      animate={{ opacity: 1, x: 0 }}
+                                      transition={{ delay: i * 0.04, duration: 0.2 }}
+                                    >
+                                      <Link
+                                        href={child.href}
+                                        onClick={() => setOpenDropdown(null)}
+                                        className={cn(
+                                          'group flex items-center justify-between gap-4 rounded-xl px-4 py-3.5 transition-all duration-200',
+                                          childActive ? 'bg-brand/[0.08]' : 'hover:bg-bgalt'
+                                        )}
+                                      >
+                                        <span className="flex flex-col gap-0.5">
+                                          <span
+                                            className={cn(
+                                              'text-[14px] font-semibold transition-colors duration-200',
+                                              childActive ? 'text-brand' : 'text-foreground group-hover:text-brand'
+                                            )}
+                                          >
+                                            {child.label}
+                                          </span>
+                                          {child.description && (
+                                            <span className="text-[12px] leading-relaxed text-muted-foreground">
+                                              {child.description}
+                                            </span>
+                                          )}
+                                        </span>
+                                        <span className={cn(
+                                          'inline-flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg transition-all duration-300',
+                                          childActive
+                                            ? 'bg-brand text-white'
+                                            : 'border border-card-border text-muted-foreground group-hover:border-brand/40 group-hover:bg-brand group-hover:text-white'
+                                        )}>
+                                          <ArrowUpRight className="h-3.5 w-3.5" />
+                                        </span>
+                                      </Link>
+                                    </motion.div>
+                                  );
+                                })}
+                              </div>
+                              <div className="border-t border-card-border bg-bgalt px-4 py-3.5">
+                                <Link
+                                  href="/contact"
+                                  onClick={() => setOpenDropdown(null)}
+                                  className="group inline-flex items-center gap-2 text-[13px] font-semibold text-brand transition-all hover:gap-3"
+                                >
+                                  Talk to an advisor
+                                  <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+                                </Link>
+                              </div>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
                   );
-                })}
-              </div>
+                }
+                const active = isActive(item.href, pathname);
+                return (
+                  <Link
+                    key={item.label}
+                    href={item.href ?? '/'}
+                    className={cn(
+                      'group relative rounded-full px-4 py-2 text-[14px] font-medium tracking-[-0.01em] transition-all duration-300',
+                      active ? 'text-brand' : 'text-foreground/70 hover:text-foreground'
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        'absolute inset-0 rounded-none transition-all duration-300',
+                        active
+                          ? 'bg-brand/[0.08] scale-100'
+                          : 'bg-foreground/[0.04] scale-90 opacity-0 group-hover:scale-100 group-hover:opacity-100'
+                      )}
+                    />
+                    <span className="relative">{item.label}</span>
+                  </Link>
+                );
+              })}
             </div>
 
-            {/* Right side  */}
-            <div className="hidden lg:flex items-center gap-2 flex-shrink-0">
-              <ThemeToggle className="h-9 w-9" />
-              <Link href="/contact" className="btn-brand text-sm whitespace-nowrap !px-5 !py-2.5">
-                <Calendar className="h-4 w-4" />
-                <span className="hidden xl:inline">Schedule Consultation</span>
-                <span className="xl:hidden">Schedule Now</span>
-              </Link>
-            </div>
-
-            {/* Mobile toggle */}
-            <div className="flex lg:hidden items-center gap-2 flex-shrink-0">
-              <ThemeToggle className="h-9 w-9" />
-              <button
-                onClick={() => setOpen(!open)}
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card text-foreground transition-all duration-300 active:scale-90"
-                aria-label="Toggle menu"
+            <div className="flex items-center gap-3">
+              <ThemeToggle />
+              <Link
+                href="/health-checks"
+                className="group relative hidden overflow-hidden rounded-none bg-brand px-6 py-3 text-[12px] font-semibold text-white shadow-[0_2px_20px_rgba(232,81,10,0.3)] transition-all duration-300 hover:shadow-[0_4px_30px_rgba(232,81,10,0.45)] hover:brightness-110 active:scale-[0.97] md:inline-flex md:items-center md:gap-2"
               >
-                {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                <span className="relative z-10">Start Your Assessment</span>
+                <ArrowRight className="relative z-10 h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5" />
+              </Link>
+
+              <button
+                type="button"
+                onClick={() => setDrawerOpen(true)}
+                className="flex h-11 w-11 items-center justify-center rounded-full border border-card-border bg-card text-foreground transition-all duration-200 hover:border-brand/50 hover:text-brand active:scale-95 lg:hidden"
+                aria-label="Open menu"
+              >
+                <Menu className="h-5 w-5" />
               </button>
             </div>
           </nav>
         </div>
-      </div>
+      </motion.header>
 
-      {/* Mobile menu */}
+      {/* Mobile drawer */}
       <div
         className={cn(
-          'lg:hidden fixed inset-0 top-0 z-[60] transition-all duration-500',
-          open ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+          'fixed inset-0 z-[100] lg:hidden',
+          drawerOpen ? 'pointer-events-auto' : 'pointer-events-none'
         )}
       >
-        <div className="absolute inset-0 bg-background/85" onClick={() => setOpen(false)} />
         <div
           className={cn(
-            'absolute top-20 left-4 right-4 max-h-[calc(100vh-6rem)] overflow-y-auto rounded-4xl border border-border bg-card shadow-soft-xl transition-all duration-500',
-            open ? 'translate-y-0 opacity-100' : '-translate-y-4 opacity-0'
+            'absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300',
+            drawerOpen ? 'opacity-100' : 'opacity-0'
+          )}
+          onClick={() => setDrawerOpen(false)}
+        />
+        <div
+          className={cn(
+            'absolute inset-y-0 right-0 flex w-full max-w-[380px] flex-col bg-charcoal text-white transition-transform duration-300 ease-out',
+            drawerOpen ? 'translate-x-0' : 'translate-x-full'
           )}
         >
-          <div className="p-5">
-            <div className="mb-3 flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">Menu</span>
-              <button
-                onClick={() => setOpen(false)}
-                className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-muted text-foreground transition-all duration-300 hover:bg-brand hover:text-white active:scale-90"
-                aria-label="Close menu"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
+          <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
+            <Logo color size="md" center tagline="Debt Management" />
+            <button
+              type="button"
+              onClick={() => setDrawerOpen(false)}
+              className="flex h-11 w-11 items-center justify-center rounded-full border border-white/15 text-white transition-colors hover:bg-white/10 active:scale-95"
+              aria-label="Close menu"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto px-4 py-6">
             <div className="flex flex-col gap-1">
-              {navLinks.map((link, i) => {
-                const isActive = link.active && isNavActive(link);
-                const linkClasses = cn(
-                  'flex items-center justify-between rounded-2xl px-4 py-3.5 text-sm font-medium transition-all duration-300',
-                  link.active
-                    ? isActive
-                      ? 'text-white bg-brand shadow-brand-sm rounded-none'
-                      : 'text-foreground bg-muted/50 hover:bg-brand/10 hover:text-brand'
-                    : 'text-muted-foreground cursor-not-allowed'
-                );
-                const linkInner = (
-                  <>
-                    <span className="flex items-center gap-2.5">
-                      <span className={cn('flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold', isActive ? 'bg-white/25 text-white' : link.active ? 'bg-brand/10 text-brand' : 'bg-muted text-muted-foreground')}>
-                        {i + 1}
-                      </span>
-                      {link.label}
-                      {!link.active && <Badge variant="soon" className="px-1.5 py-0 text-[8px]">Soon</Badge>}
-                    </span>
-                    {isActive && <span className="h-2 w-2 rounded-full bg-white" />}
-                    {link.active && !isActive && <ArrowRight className="h-4 w-4 text-brand" />}
-                  </>
-                );
-                if (link.label === 'Services') {
+              {navItems.map((item, i) => {
+                const active = isActive(item.href, pathname);
+                if (item.children) {
+                  const expanded = mobileOpen === item.label;
                   return (
-                    <div key={link.label} className="overflow-hidden rounded-2xl" style={{ transitionDelay: open ? `${i * 40}ms` : '0ms' }}>
+                    <div key={item.label} className="mb-1" style={{ transitionDelay: `${i * 40}ms` }}>
                       <button
-                        onClick={() => setMobileServicesOpen(!mobileServicesOpen)}
+                        type="button"
+                        onClick={() => setMobileOpen(expanded ? null : item.label)}
+                        aria-expanded={expanded}
                         className={cn(
-                          'flex w-full items-center justify-between rounded-2xl px-4 py-3.5 text-sm font-medium transition-all duration-300',
-                          isServicesActive
-                            ? 'text-brand bg-brand/10'
-                            : 'text-foreground bg-muted/50 hover:bg-brand/10 hover:text-brand'
+                          'flex w-full items-center justify-between rounded-md px-4 py-3 text-[14px] font-medium transition-colors',
+                          active ? 'text-brand' : 'text-white/90 hover:bg-white/5'
                         )}
                       >
-                        <span className="flex items-center gap-2.5">
-                          <span className={cn('flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold', isServicesActive ? 'bg-brand/10 text-brand' : 'bg-muted text-muted-foreground')}>
-                            {i + 1}
-                          </span>
-                          Services
-                        </span>
-                        <ChevronDown className={cn('h-4 w-4 text-muted-foreground transition-transform duration-300', mobileServicesOpen && 'rotate-180')} />
+                        {item.label}
+                        <ChevronDown
+                          className={cn(
+                            'h-4 w-4 text-white/40 transition-transform duration-200',
+                            expanded && 'rotate-180'
+                          )}
+                        />
                       </button>
-                      <div className={cn('grid transition-all duration-300', mobileServicesOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]')}>
-                        <div className="overflow-hidden">
-                          <div className="mt-1 flex flex-col gap-1 px-2 pb-2 pt-1">
-                            <Link
-                              href="/services"
-                              onClick={() => setOpen(false)}
-                              className="mb-1 flex items-center justify-between rounded-2xl bg-ink-25 px-4 py-3 transition-colors hover:bg-brand/10 dark:bg-ink-800/50"
-                            >
-                              <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-muted-foreground">All Services</span>
-                              <ArrowRight className="h-4 w-4 text-brand" />
-                            </Link>
-                            {services.map((s) => {
-                              const Icon = serviceIconMap[s.icon] ?? Landmark;
-                              const isGreen = s.tab === 'Coaching' || s.tab === 'Wellness';
-                              const isCurrent = s.slug === currentServiceSlug;
-                              return (
-                                <Link
-                                  key={s.slug}
-                                  href={`/services/${s.slug}`}
-                                  onClick={() => setOpen(false)}
-                                  aria-current={isCurrent ? 'page' : undefined}
-                                  className={cn(
-                                    'group flex items-center gap-3 rounded-2xl px-3 py-2.5 transition-colors hover:bg-brand/10',
-                                    isCurrent && 'bg-brand/10 ring-1 ring-inset ring-brand/20'
-                                  )}
-                                >
-                                  <span
-                                    className={cn(
-                                      'flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl',
-                                      isGreen ? 'bg-green/10 text-green' : 'bg-brand/10 text-brand',
-                                      isCurrent && (isGreen ? 'bg-green text-white' : 'bg-brand text-white')
-                                    )}
-                                  >
-                                    <Icon className="h-4 w-4" strokeWidth={1.8} />
-                                  </span>
-                                  <span className={cn('flex-1 text-sm font-bold transition-colors group-hover:text-brand', isCurrent ? 'text-brand' : 'text-foreground')}>
-                                    {s.tab}
-                                  </span>
-                                  <ChevronRight className={cn('h-4 w-4 text-muted-foreground transition-transform duration-300 group-hover:translate-x-0.5', isCurrent && 'text-brand')} />
-                                </Link>
-                              );
-                            })}
-                          </div>
-                        </div>
+                      <div
+                        className={cn(
+                          'ml-4 flex flex-col gap-0.5 overflow-hidden border-l border-white/10 transition-all duration-300',
+                          expanded ? 'max-h-[400px] pb-2 opacity-100' : 'max-h-0 opacity-0'
+                        )}
+                      >
+                        {item.children.map((child) => (
+                          <Link
+                            key={child.href}
+                            href={child.href}
+                            onClick={() => setDrawerOpen(false)}
+                            className={cn(
+                              'flex items-center justify-between rounded-md px-4 py-2.5 text-sm transition-colors hover:bg-white/5',
+                              isActive(child.href, pathname) ? 'text-brand' : 'text-white/65'
+                            )}
+                          >
+                            {child.label}
+                            <ArrowRight className="h-3.5 w-3.5 text-white/30" />
+                          </Link>
+                        ))}
                       </div>
                     </div>
                   );
                 }
-                return link.href.startsWith('/') ? (
+                return (
                   <Link
-                    key={link.label}
-                    href={link.href}
-                    onClick={() => link.active && setOpen(false)}
-                    className={linkClasses}
-                    style={{ transitionDelay: open ? `${i * 40}ms` : '0ms' }}
+                    key={item.label}
+                    href={item.href ?? '/'}
+                    onClick={() => setDrawerOpen(false)}
+                    style={{ transitionDelay: `${i * 40}ms` }}
+                    className={cn(
+                      'rounded-md px-4 py-3 text-[14px] font-medium transition-colors',
+                      active ? 'bg-brand/15 text-brand' : 'text-white/90 hover:bg-white/5'
+                    )}
                   >
-                    {linkInner}
+                    {item.label}
                   </Link>
-                ) : (
-                  <a
-                    key={link.label}
-                    href={link.active ? link.href : undefined}
-                    onClick={() => link.active && setOpen(false)}
-                    className={linkClasses}
-                    style={{ transitionDelay: open ? `${i * 40}ms` : '0ms' }}
-                  >
-                    {linkInner}
-                  </a>
                 );
               })}
             </div>
-            <div className="my-4 h-px bg-border" />
-            <div className="flex flex-col gap-3">
-              <Link href="/contact" onClick={() => setOpen(false)} className="btn btn-brand rounded-none w-full">
-                <Calendar className="h-4 w-4" />Schedule Consultation
-              </Link>
-              <a href={`tel:${business.phone.replace(/\s/g, '')}`} className="btn-ghost-light w-full">
-                <Phone className="h-4 w-4" />{business.phone}
+          </div>
+
+          <div className="border-t border-white/10 px-6 py-5">
+            <div className="mb-4 space-y-2.5">
+              <a
+                href={`mailto:${site.email}`}
+                className="flex items-center gap-2.5 text-sm text-white/60 transition-colors hover:text-white"
+              >
+                <Mail className="h-4 w-4 text-brand" />
+                {site.email}
+              </a>
+              <a
+                href={`tel:${site.phone}`}
+                className="flex items-center gap-2.5 text-sm text-white/60 transition-colors hover:text-white"
+              >
+                <Phone className="h-4 w-4 text-brand" />
+                {site.phone}
               </a>
             </div>
-            <div className="mt-4 pt-4 border-t border-border flex items-center justify-between">
-              <a href={`mailto:${business.email}`} className="text-xs text-muted-foreground hover:text-brand transition-colors">{business.email}</a>
-              <div className="flex items-center gap-3">
-                <a href={business.facebook} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-brand transition-colors"><Facebook className="h-4 w-4" /></a>
-                <a href={business.instagram} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-green transition-colors"><Instagram className="h-4 w-4" /></a>
-                <a href={business.linkedin} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-brand transition-colors"><Linkedin className="h-4 w-4" /></a>
-              </div>
-            </div>
+            <Button asChild size="lg" className="w-full rounded-none">
+              <Link href="/health-checks" onClick={() => setDrawerOpen(false)}>
+                Start Your Assessment
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
           </div>
         </div>
       </div>
-    </header>
+    </>
   );
 }

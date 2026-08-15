@@ -19,10 +19,12 @@ export const business = {
   phone: '+254 702 448 601',
   phoneAlt: '+254 756 281136',
   website: 'denisawa.co.ke',
-  facebook: 'https://www.facebook.com/p/Deni-Sawa-Debt-Management-100083280310225',
-  instagram: 'https://www.instagram.com/p/C9cDDWcNQ5q',
-  linkedin: 'https://ke.linkedin.com/company/deni-sawa-partners',
-  logo: '/Deni_sawa-Logo.png',
+  facebook: 'https://www.facebook.com/profile.php?id=61586258092432',
+  instagram: 'https://www.instagram.com/denisawadm/',
+  linkedin: 'https://www.linkedin.com/company/deni-sawa-partners/',
+  tiktok: 'https://vm.tiktok.com/ZS983HG7L1yvo-3wc1w/',
+  youtube: 'http://www.youtube.com/@denisawa8468',
+  logo: '/Deni-sawa-main-logo.webp',
 };
 
 export const navLinks = [

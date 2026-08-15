@@ -5,7 +5,7 @@ import { Clock, Calendar, ArrowLeft, ArrowRight } from 'lucide-react';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { BlogContentRenderer } from '@/components/blog/BlogContentRenderer';
 import { BlogCoverImage } from '@/components/blog/BlogCoverImage';
-import { ClientShareButton } from '@/components/blog/ShareButton';
+import { ShareMenu } from '@/components/ShareMenu';
 import { getBlogPosts, getBlogPostBySlug } from '@/lib/supabase/queries';
 import { business } from '@/data/content';
 
@@ -162,7 +162,7 @@ export default async function BlogPostPage({ params }: PageProps) {
       {/* Article content */}
       <section className="relative overflow-hidden py-16 lg:py-24">
         <div className="container-lux">
-          <div className="mx-auto max-w-3xl">
+          <div className="mx-auto max-w-6xl">
             <BlogCoverImage
               src={post.cover_image_url}
               alt={post.title}
@@ -180,7 +180,7 @@ export default async function BlogPostPage({ params }: PageProps) {
             <div className="mt-12 border-t border-border pt-8">
               <div className="flex flex-wrap items-center justify-between gap-4">
                 <span className="text-sm font-medium text-muted-foreground">Share this insight</span>
-                <ClientShareButton url={canonical} title={post.title} />
+                <ShareMenu url={canonical} title={post.title} text={post.excerpt ?? post.title} variant="pill" />
               </div>
             </div>
           </div>

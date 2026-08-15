@@ -38,7 +38,7 @@ export function DatePicker({ value, onSelect, placeholder = 'Pick a date', class
           )}
         >
           <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
-          {value && selected ? format(selected, 'PPP') : <span>{placeholder}</span>}
+          {value && selected ? format(selected, 'PP') : <span>{placeholder}</span>}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto max-w-[calc(100vw-1rem)] p-0" align="start">

@@ -1,177 +1,183 @@
-'use client';
-
-import { useState } from 'react';
 import Link from 'next/link';
-import { Mail, Phone, MapPin, Facebook, Instagram, Linkedin, ArrowRight, Send, CheckCircle2 } from 'lucide-react';
-import { Reveal } from '@/components/Reveal';
-import { business, services } from '@/data/content';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { ArrowUpRight, Mail, Phone, MapPin, ArrowRight } from 'lucide-react';
+import { site, services } from '@/data/site';
+import { socialLinks } from '@/components/SocialLinks';
+import { cn } from '@/lib/utils';
+import { Logo } from '@/components/Logo';
+
+const columns = [
+  {
+    title: 'Services',
+    links: [
+      { label: 'All Business Support', href: '/business-support' },
+      ...services.map((s) => ({ label: s.title.split(' / ')[0], href: `/business-support/${s.slug}` })),
+    ],
+  },
+  {
+    title: 'Platform',
+    links: [
+      { label: 'Health Checks', href: '/health-checks' },
+      { label: 'Learning & Leadership', href: '/learning' },
+      { label: 'Investors', href: '/investors' },
+      { label: 'SpecialSit Network', href: '/specialsit-network' },
+      { label: 'The Deni Sawa Method™', href: '/deni-sawa-method' },
+      { label: 'Blog & Insights', href: '/blog' },
+    ],
+  },
+  {
+    title: 'Company',
+    links: [
+      { label: 'About', href: '/about' },
+      { label: 'Leadership', href: '/about/leadership' },
+      { label: 'Philosophy', href: '/about/philosophy' },
+      { label: 'Contact', href: '/contact' },
+      { label: 'Privacy Policy', href: '/privacy' },
+      { label: 'Terms of Use', href: '/terms' },
+    ],
+  },
+];
 
 export function Footer() {
-  const [email, setEmail] = useState('');
-  const [subscribed, setSubscribed] = useState(false);
-
-  const handleSubscribe = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (email) { setSubscribed(true); setEmail(''); setTimeout(() => setSubscribed(false), 4000); }
-  };
-
-  const quickLinks = [
-    { label: 'Home', href: '/', active: true },
-    { label: 'About', href: '/about', active: true },
-    { label: 'Services', href: '/services', active: true },
-    { label: 'Academy', href: '/academy', active: true },
-    { label: 'Blog', href: '/blog', active: true },
-  ];
-
-  const helpLinks = [
-    { label: 'Book Consultation', href: '/contact', active: true },
-    { label: 'Contact', href: '/contact', active: true },
-    { label: 'FAQs', href: '/contact', active: true },
-  ];
-
   return (
-    <footer id="contact" className="relative bg-ink-900 text-white/60 overflow-hidden">
-      <div className="absolute inset-0 -z-10">
-        <div className="absolute top-0 left-1/4 h-[400px] w-[400px] rounded-full bg-[radial-gradient(circle_at_center,rgba(45,157,120,0.10),transparent_70%)]" />
-        <div className="absolute bottom-0 right-1/4 h-[300px] w-[300px] rounded-full bg-[radial-gradient(circle_at_center,rgba(255,116,1,0.10),transparent_70%)]" />
-      </div>
+    <footer className="relative overflow-hidden bg-charcoal text-white">
+      {/* Gradient accent line */}
+      <div className="h-[2px] w-full bg-gradient-to-r from-brand via-brand/60 to-growth" />
 
-      {/* Contact section */}
-      <div className="border-b border-white/5">
-        <div className="container-lux py-20">
-          <div className="grid lg:grid-cols-2 gap-12 items-start">
-            <div>
-              <Reveal><div className="inline-flex items-center gap-2 rounded-full border border-brand/30 bg-brand/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-brand mb-5">Get in Touch</div></Reveal>
-              <Reveal delay={100}>
-                <h2 className="font-heading text-3xl lg:text-4xl font-bold text-white leading-tight mb-5">
-                  Let's start your journey to<span className="block text-brand-gradient mt-1">financial freedom</span>
-                </h2>
-              </Reveal>
-              <Reveal delay={200}><p className="text-base text-white/50 leading-relaxed mb-8 max-w-md">{business.description}</p></Reveal>
-              <div className="space-y-4">
-                <Reveal delay={300}>
-                  <a href={`mailto:${business.email}`} className="group flex items-center gap-4">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand/15 text-brand transition-all duration-300 group-hover:bg-brand group-hover:text-white"><Mail className="h-5 w-5" /></div>
-                    <div><div className="text-xs text-white/40 uppercase tracking-widest">Email</div><div className="text-sm font-medium text-white">{business.email}</div></div>
-                  </a>
-                </Reveal>
-                <Reveal delay={400}>
-                  <a href={`tel:${business.phone.replace(/\s/g, '')}`} className="group flex items-center gap-4">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-green/15 text-green transition-all duration-300 group-hover:bg-green group-hover:text-white"><Phone className="h-5 w-5" /></div>
-                    <div><div className="text-xs text-white/40 uppercase tracking-widest">Phone</div><div className="text-sm font-medium text-white">{business.phone}</div></div>
-                  </a>
-                </Reveal>
-                <Reveal delay={500}>
-                  <div className="group flex items-center gap-4">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand/15 text-brand"><MapPin className="h-5 w-5" /></div>
-                    <div><div className="text-xs text-white/40 uppercase tracking-widest">Location</div><div className="text-sm font-medium text-white">Nairobi, Kenya</div></div>
-                  </div>
-                </Reveal>
-              </div>
+      {/* CTA Section */}
+      <div className="relative border-b border-white/[0.06]">
+        <div className="absolute inset-0 bg-gradient-to-br from-brand/[0.03] via-transparent to-growth/[0.02]" />
+        <div className="container-lux relative">
+          <div className="flex flex-col items-center justify-between gap-6 py-16 md:flex-row md:py-20">
+            <div className="text-center md:text-left">
+              <h3 className="text-2xl font-semibold tracking-tight text-white md:text-3xl">
+                Ready to transform your business?
+              </h3>
+              <p className="mt-3 text-base text-white/50">
+                Start with a confidential assessment and discover your path to Best-in-Class.
+              </p>
             </div>
-
-            <Reveal direction="right">
-              <div className="rounded-4xl border border-white/10 bg-white/10 p-8">
-                <h3 className="font-heading text-xl font-bold text-white mb-6">Send us a message</h3>
-                <form className="space-y-4" onSubmit={handleSubscribe}>
-                  <Input type="text" placeholder="Your name" className="border-white/10 bg-white/5 text-white placeholder:text-white/30 focus:border-brand" />
-                  <Input type="email" placeholder="Your email" required value={email} onChange={(e) => setEmail(e.target.value)} className="border-white/10 bg-white/5 text-white placeholder:text-white/30 focus:border-brand" />
-                  <Textarea placeholder="How can we help you?" rows={4} className="border-white/10 bg-white/5 text-white placeholder:text-white/30 focus:border-brand" />
-                  <button type="submit" className="btn-brand w-full">
-                    {subscribed ? <><CheckCircle2 className="h-4 w-4" />Message Sent</> : <><Send className="h-4 w-4" />Send Message</>}
-                  </button>
-                </form>
-              </div>
-            </Reveal>
+            <Link
+              href="/health-checks"
+              className="group inline-flex items-center gap-2.5 rounded-full bg-brand px-7 py-3.5 text-[15px] font-semibold text-white shadow-[0_4px_30px_rgba(232,81,10,0.35)] transition-all duration-300 hover:shadow-[0_6px_40px_rgba(232,81,10,0.5)] hover:brightness-110 active:scale-[0.97]"
+            >
+              Start Your Assessment
+              <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+            </Link>
           </div>
         </div>
       </div>
 
-      {/* Main footer */}
-      <div className="container-lux py-16">
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8 lg:gap-10">
-          <div className="col-span-2 lg:col-span-2">
-            <img src={business.logo} alt="Deni Sawa" className="h-16 w-auto mb-5 brightness-0 invert" decoding="async" />
-            <p className="text-sm text-white/40 leading-relaxed mb-6 max-w-xs">{business.description}</p>
-            <div className="flex items-center gap-3">
-              <a href={business.facebook} target="_blank" rel="noopener noreferrer" className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white/60 transition-all duration-300 hover:bg-brand hover:text-white hover:border-brand"><Facebook className="h-4 w-4" /></a>
-              <a href={business.instagram} target="_blank" rel="noopener noreferrer" className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white/60 transition-all duration-300 hover:bg-green hover:text-white hover:border-green"><Instagram className="h-4 w-4" /></a>
-              <a href={business.linkedin} target="_blank" rel="noopener noreferrer" className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white/60 transition-all duration-300 hover:bg-brand hover:text-white hover:border-brand"><Linkedin className="h-4 w-4" /></a>
+      {/* Main content */}
+      <div className="container-lux">
+        <div className="grid grid-cols-1 gap-12 py-16 sm:grid-cols-2 lg:grid-cols-5 lg:gap-8 lg:py-20">
+          {/* Brand column */}
+          <div className="lg:col-span-2 lg:pr-12">
+            <Logo color />
+            <p className="mt-6 max-w-sm text-[15px] leading-relaxed text-white/45">
+              AI-enabled advisory and fractional business support helping organisations move from
+              Special Situations to Best-in-Class performance.
+            </p>
+
+            {/* Contact info */}
+            <div className="mt-8 space-y-3">
+              <a
+                href={`mailto:${site.email}`}
+                className="group flex items-center gap-3 text-sm text-white/50 transition-colors hover:text-white"
+              >
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/[0.08] bg-white/[0.02] transition-all group-hover:border-brand/40 group-hover:bg-brand/10">
+                  <Mail className="h-4 w-4 text-brand" />
+                </div>
+                {site.email}
+              </a>
+              <a
+                href={`tel:${site.phone}`}
+                className="group flex items-center gap-3 text-sm text-white/50 transition-colors hover:text-white"
+              >
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/[0.08] bg-white/[0.02] transition-all group-hover:border-brand/40 group-hover:bg-brand/10">
+                  <Phone className="h-4 w-4 text-brand" />
+                </div>
+                {site.phone}
+              </a>
+              <div className="flex items-center gap-3 text-sm text-white/50">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/[0.08] bg-white/[0.02]">
+                  <MapPin className="h-4 w-4 text-brand" />
+                </div>
+                {site.address}
+              </div>
+            </div>
+
+            {/* Social icons */}
+            <div className="mt-8 flex flex-wrap items-center gap-3">
+              {socialLinks.map(({ name, href, icon: Icon, ariaLabel, hoverClass }) => (
+                <a
+                  key={name}
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={ariaLabel}
+                  className={cn(
+                    'group flex h-11 w-11 items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.02] text-white/60 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md',
+                    hoverClass
+                  )}
+                >
+                  <Icon className="h-[18px] w-[18px]" />
+                </a>
+              ))}
+              <a
+                href={`mailto:${site.email}`}
+                aria-label="Email"
+                className="group flex h-11 w-11 items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.02] text-white/60 transition-all duration-300 hover:-translate-y-0.5 hover:border-growth/40 hover:bg-growth/10 hover:text-growth hover:shadow-md"
+              >
+                <Mail className="h-[18px] w-[18px]" />
+              </a>
             </div>
           </div>
 
-          <div>
-            <h4 className="font-heading text-sm font-bold text-white uppercase tracking-widest mb-4">Quick Links</h4>
-            <ul className="space-y-3">
-              {quickLinks.map((link) => (
-                <li key={link.label}>
-                  {link.href.startsWith('/') ? (
-                    <Link href={link.href} className="text-sm inline-flex items-center gap-1.5 group text-white/60 hover:text-brand transition-colors">
-                      <ArrowRight className="h-3 w-3 opacity-0 -ml-4 transition-all duration-300 group-hover:opacity-100 group-hover:ml-0" />
+          {/* Link columns */}
+          {columns.map((col) => (
+            <nav key={col.title} aria-label={col.title}>
+              <h4 className="font-mono text-[11px] font-semibold uppercase tracking-[0.22em] text-white/35">
+                {col.title}
+              </h4>
+              <ul className="mt-6 space-y-4">
+                {col.links.map((link) => (
+                  <li key={link.href}>
+                    <Link
+                      href={link.href}
+                      className="group inline-flex items-center gap-2 text-[14px] text-white/55 transition-all duration-200 hover:text-white"
+                    >
+                      <span className="h-px w-0 bg-brand transition-all duration-300 group-hover:w-4" />
                       {link.label}
                     </Link>
-                  ) : (
-                    <span className={`text-sm inline-flex items-center gap-1.5 group ${link.active ? 'text-white/60 hover:text-brand cursor-pointer' : 'text-white/30 cursor-not-allowed'}`}>
-                      <ArrowRight className="h-3 w-3 opacity-0 -ml-4 transition-all duration-300 group-hover:opacity-100 group-hover:ml-0" />
-                      {link.label}
-                      {!link.active && <Badge variant="soon" className="px-1.5 py-0 text-[8px]">Soon</Badge>}
-                    </span>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="font-heading text-sm font-bold text-white uppercase tracking-widest mb-4">Services</h4>
-            <ul className="space-y-3">
-              {services.slice(0, 5).map((s) => (
-                <li key={s.title}>
-                  <Link href={`/services/${s.slug}`} className="text-sm text-white/60 hover:text-brand transition-colors inline-flex items-center gap-1.5 group">
-                    <ArrowRight className="h-3 w-3 opacity-0 -ml-4 transition-all duration-300 group-hover:opacity-100 group-hover:ml-0" />
-                    {s.title}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="font-heading text-sm font-bold text-white uppercase tracking-widest mb-4">Help & Support</h4>
-            <ul className="space-y-3">
-              {helpLinks.map((link) => (
-                <li key={link.label}>
-                  <span className={`text-sm inline-flex items-center gap-1.5 group ${link.active ? 'text-white/60 hover:text-brand cursor-pointer' : 'text-white/30 cursor-not-allowed'}`}>
-                    <ArrowRight className="h-3 w-3 opacity-0 -ml-4 transition-all duration-300 group-hover:opacity-100 group-hover:ml-0" />
-                    {link.label}
-                    {!link.active && <Badge variant="soon" className="px-1.5 py-0 text-[8px]">Soon</Badge>}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="col-span-2 lg:col-span-1">
-            <h4 className="font-heading text-sm font-bold text-white uppercase tracking-widest mb-4">Newsletter</h4>
-            <p className="text-sm text-white/40 mb-4">Subscribe to receive Deni Sawa updates.</p>
-            <form onSubmit={handleSubscribe} className="flex flex-col gap-2">
-              <Input type="email" placeholder="Your email" required value={email} onChange={(e) => setEmail(e.target.value)} className="border-white/10 bg-white/5 text-white placeholder:text-white/30 focus:border-brand" />
-              <button type="submit" className="btn-brand text-sm w-full">
-                {subscribed ? <CheckCircle2 className="h-4 w-4" /> : <Send className="h-4 w-4" />}
-                {subscribed ? 'Subscribed' : 'Subscribe'}
-              </button>
-            </form>
-          </div>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          ))}
         </div>
       </div>
 
-      <div className="border-t border-white/5">
-        <div className="container-lux py-6 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p className="text-xs text-white/40">© {new Date().getFullYear()} {business.fullName}. All rights reserved.</p>
-          <p className="text-xs text-white/40">Professional · Ethical · Successful · Sustainable</p>
+      {/* Bottom bar */}
+      <div className="border-t border-white/[0.06]">
+        <div className="container-lux flex flex-col items-center justify-between gap-4 py-6 sm:flex-row">
+          <p className="text-[13px] text-white/35">
+            © {new Date().getFullYear()} {site.name}. All rights reserved.
+          </p>
+          <div className="flex items-center gap-8">
+            <Link href="/privacy" className="text-[13px] text-white/40 transition-colors hover:text-white">
+              Privacy Policy
+            </Link>
+            <Link href="/terms" className="text-[13px] text-white/40 transition-colors hover:text-white">
+              Terms of Use
+            </Link>
+            <Link
+              href="/contact"
+              className="group inline-flex items-center gap-1.5 text-[13px] font-semibold text-brand transition-all hover:text-brand-400"
+            >
+              Investor & Partner Enquiries
+              <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+            </Link>
+          </div>
         </div>
       </div>
     </footer>

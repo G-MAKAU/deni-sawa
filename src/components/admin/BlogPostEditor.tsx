@@ -1,10 +1,14 @@
 'use client';
 
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
-  Save, Eye, Star, StarOff, ChevronDown, X, Loader2, Tag, User, FolderOpen, CheckCircle2,
+  Save, Star, StarOff, ChevronDown, X, Loader2, Eye, Tag, User, FolderOpen, CheckCircle2,
 } from 'lucide-react';
-import { LexicalEditor } from './LexicalEditor';
+import { LexicalEditor } from '@/features/lexical/LexicalEditor';
+import { htmlToLexicalState } from '@/features/lexical/htmlToState';
+import { lexicalToHtml } from '@/lib/lexical-to-html';
+import { lexicalToPlainText } from '@/lib/lexical-to-plaintext';
+import { StoragePickerModal, type PickerFile } from '@/components/admin/storage/StoragePickerModal';
 import { type AdminPost, type Author, type Category, type PostStatus } from './types';
 import { cn } from '@/lib/utils';
 
@@ -14,6 +18,8 @@ interface BlogPostEditorProps {
   categories: Category[];
   onSave: (data: Partial<AdminPost> & { id?: string }) => Promise<void> | void;
   onUploadImage: (file: File) => Promise<string>;
+  /** Which top-level tab is active — drives what the editor body shows. */
+  view: 'editor' | 'settings';
 }
 
 function slugify(text: string): string {
@@ -35,7 +41,10 @@ const statusOptions: { value: PostStatus; label: string; color: string; dot: str
   { value: 'archived', label: 'Archived', color: 'text-red-500', dot: 'bg-red-400' },
 ];
 
-export function BlogPostEditor({ post, authors, categories, onSave, onUploadImage }: BlogPostEditorProps) {
+const FIELD_INPUT =
+  'w-full rounded-lg border border-ink-200 bg-[var(--a-subtle)] px-3 py-2 text-sm text-ink-800 placeholder-ink-400 focus:border-brand/50 focus:outline-none dark:border-ink-700 dark:bg-ink-800 dark:text-ink-100';
+
+export function BlogPostEditor({ post, authors, categories, onSave, onUploadImage, view }: BlogPostEditorProps) {
   const [title, setTitle] = useState(post?.title ?? '');
   const [slug, setSlug] = useState(post?.slug ?? '');
   const [excerpt, setExcerpt] = useState(post?.excerpt ?? '');
@@ -43,18 +52,67 @@ export function BlogPostEditor({ post, authors, categories, onSave, onUploadImag
   const [isFeatured, setIsFeatured] = useState(post ? post.isFeatured : true);
   const [authorId, setAuthorId] = useState(post?.authorId ?? '');
   const [categoryId, setCategoryId] = useState(post?.categoryId ?? '');
-  const [htmlContent, setHtmlContent] = useState(post?.contentHtml ?? '');
-  const [markdownContent] = useState(post?.contentMarkdown ?? '');
   const [featuredImage, setFeaturedImage] = useState<string | null>(post?.featuredImageUrl ?? null);
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
   const [showSEO, setShowSEO] = useState(false);
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
-  const [activeTab, setActiveTab] = useState<'write' | 'preview'>('write');
+  const [subTab, setSubTab] = useState<'write' | 'preview'>('write');
   const [isSaving, setIsSaving] = useState(false);
   const [seoTitle, setSeoTitle] = useState(post?.seoTitle ?? '');
   const [seoDescription, setSeoDescription] = useState(post?.seoDescription ?? '');
   const [seoKeywords, setSeoKeywords] = useState(post?.seoKeywords ?? '');
   const [savedFlash, setSavedFlash] = useState(false);
+
+  // Storage picker
+  const browseResolveRef = React.useRef<((url: string | null) => void) | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickerTarget, setPickerTarget] = useState<'featured' | 'content'>('featured');
+
+  const openBrowse = React.useCallback((target: 'featured' | 'content') => {
+    return new Promise<string | null>((resolve) => {
+      setPickerTarget(target);
+      browseResolveRef.current = resolve;
+      setPickerOpen(true);
+    });
+  }, []);
+
+  const handlePickerClose = React.useCallback(() => {
+    browseResolveRef.current?.(null);
+    browseResolveRef.current = null;
+    setPickerOpen(false);
+  }, []);
+
+  const handlePickerPick = React.useCallback((file: PickerFile) => {
+    browseResolveRef.current?.(file.publicUrl);
+    browseResolveRef.current = null;
+    setPickerOpen(false);
+  }, []);
+
+  // Rich editor state
+  const [lexicalState, setLexicalState] = useState<Record<string, unknown> | null>(null);
+  const [htmlContent, setHtmlContent] = useState(post?.contentHtml ?? '');
+  const [plainText, setPlainText] = useState(post?.contentMarkdown ?? '');
+
+  // Load the existing post HTML into the Lexical editor.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const state = await htmlToLexicalState(post?.contentHtml ?? '');
+      if (cancelled) return;
+      setLexicalState(state);
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [post?.id]);
+
+  const handleEditorChange = (state: unknown) => {
+    const next = state as Record<string, unknown>;
+    setLexicalState(next);
+    setHtmlContent(lexicalToHtml(next));
+    setPlainText(lexicalToPlainText(next));
+  };
 
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
@@ -63,13 +121,9 @@ export function BlogPostEditor({ post, authors, categories, onSave, onUploadImag
   };
 
   const estimateReadingMinutes = useCallback(() => {
-    const text =
-      markdownContent && markdownContent.trim().length > 0
-        ? markdownContent
-        : htmlContent.replace(/<[^>]*>/g, ' ');
-    const words = text.trim().split(/\s+/).filter(Boolean).length;
+    const words = (plainText || htmlContent.replace(/<[^>]*>/g, ' ')).trim().split(/\s+/).filter(Boolean).length;
     return Math.max(1, Math.ceil(words / 200));
-  }, [htmlContent, markdownContent]);
+  }, [plainText, htmlContent]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,7 +148,7 @@ export function BlogPostEditor({ post, authors, categories, onSave, onUploadImag
           authorName: author?.full_name ?? '',
           categoryName: category?.name ?? '',
           featuredImageUrl: featuredImage,
-          contentMarkdown: markdownContent,
+          contentMarkdown: plainText,
           contentHtml: htmlContent,
           readingMinutes: estimateReadingMinutes(),
           seoTitle,
@@ -116,7 +170,7 @@ export function BlogPostEditor({ post, authors, categories, onSave, onUploadImag
   return (
     <form onSubmit={handleSubmit} className="flex h-full flex-col">
       {/* Header */}
-      <div className="flex flex-col gap-3 border-b border-ink-200 bg-white px-4 py-3 dark:border-ink-800 dark:bg-ink-900 sm:px-5 lg:flex-row lg:items-center">
+      <div className="flex flex-col gap-3 border-b border-ink-200 bg-[var(--a-card)] px-4 py-3 dark:border-ink-800 dark:bg-ink-900 sm:px-5 lg:flex-row lg:items-center">
         <div className="min-w-0 flex-1">
           <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-ink-400">
             Title <span className="text-brand">*</span>
@@ -131,18 +185,6 @@ export function BlogPostEditor({ post, authors, categories, onSave, onUploadImag
         </div>
 
         <div className="flex flex-wrap items-center gap-2 lg:shrink-0">
-          <button
-            type="button"
-            onClick={() => setIsFeatured(!isFeatured)}
-            className={cn(
-              'rounded-lg p-2 transition-colors',
-              isFeatured ? 'bg-brand/15 text-brand' : 'text-ink-400 hover:bg-brand/10 hover:text-brand'
-            )}
-            title={isFeatured ? 'Remove from featured' : 'Mark as featured'}
-          >
-            {isFeatured ? <Star size={15} className="fill-brand text-brand" /> : <StarOff size={15} />}
-          </button>
-
           <div className="relative">
             <button
               type="button"
@@ -159,7 +201,7 @@ export function BlogPostEditor({ post, authors, categories, onSave, onUploadImag
             {showStatusDropdown && (
               <>
                 <div className="fixed inset-0 z-10" onClick={() => setShowStatusDropdown(false)} />
-                <div className="absolute right-0 top-full z-20 mt-1 min-w-32 rounded-lg border border-ink-200 bg-white py-1 shadow-xl dark:border-ink-700 dark:bg-ink-800">
+                <div className="absolute right-0 top-full z-20 mt-1 min-w-32 rounded-lg border border-ink-200 bg-[var(--a-card)] py-1 shadow-xl dark:border-ink-700 dark:bg-ink-800">
                   {statusOptions.map((opt) => (
                     <button
                       key={opt.value}
@@ -196,153 +238,130 @@ export function BlogPostEditor({ post, authors, categories, onSave, onUploadImag
       </div>
 
       {/* Body */}
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden lg:flex-row">
-        {/* Editor column */}
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-          <div className="flex items-center gap-1 border-b border-ink-200 bg-ink-25 px-4 py-2 dark:border-ink-800 dark:bg-ink-900/50 sm:px-5">
-            <button
-              type="button"
-              onClick={() => setActiveTab('write')}
-              className={cn(
-                'rounded-md px-3 py-1 text-xs font-semibold transition-colors',
-                activeTab === 'write'
-                  ? 'bg-ink-800 text-white dark:bg-ink-700'
-                  : 'text-ink-500 hover:text-ink-700 dark:text-ink-400'
-              )}
-            >
-              Write
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('preview')}
-              className={cn(
-                'inline-flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-semibold transition-colors',
-                activeTab === 'preview'
-                  ? 'bg-ink-800 text-white dark:bg-ink-700'
-                  : 'text-ink-500 hover:text-ink-700 dark:text-ink-400'
-              )}
-            >
-              <Eye size={11} /> Preview
-            </button>
-            <div className="ml-auto flex items-center gap-1 truncate text-[10px] text-ink-400">
-              <span className="truncate">/{slug || 'post-slug'}</span>
-            </div>
-          </div>
-
-          <div className="min-h-0 flex-1 overflow-y-auto bg-white dark:bg-ink-950">
-            {activeTab === 'write' ? (
-              <div className="flex h-full min-h-0 flex-col">
-                <div className="min-h-0 flex-1 overflow-y-auto">
-                  <LexicalEditor initialContent={htmlContent} onChange={setHtmlContent} onUploadImage={onUploadImage} />
+      {view === 'settings' ? (
+        <div className="min-h-0 flex-1 overflow-y-auto bg-[var(--a-card)] p-4 dark:bg-ink-950 sm:p-6">
+          <div className="mx-auto max-w-3xl space-y-6">
+            {/* Publishing */}
+            <div className="rounded-lg border border-ink-200 bg-[var(--a-card)] p-5 dark:border-ink-800">
+              <h3 className="mb-4 text-[11px] font-semibold uppercase tracking-wider text-ink-500">Publishing</h3>
+              <div className="grid gap-5 sm:grid-cols-2">
+                <div>
+                  <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-ink-500">
+                    URL Slug <span className="text-brand">*</span>
+                  </label>
+                  <div className="flex items-center gap-1 rounded-lg border border-ink-200 bg-[var(--a-subtle)] px-3 py-2 dark:border-ink-700 dark:bg-ink-800">
+                    <span className="shrink-0 text-xs text-ink-400">/blog/</span>
+                    <input
+                      type="text"
+                      value={slug}
+                      onChange={(e) => { setSlug(slugify(e.target.value)); setSlugManuallyEdited(true); }}
+                      className="min-w-0 flex-1 bg-transparent text-sm text-ink-800 focus:outline-none dark:text-ink-100"
+                      placeholder="post-slug"
+                    />
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
-                <article
-                  className="prose max-w-none dark:prose-invert"
-                  dangerouslySetInnerHTML={{
-                    __html:
-                      htmlContent ||
-                      '<p class="italic text-ink-400">No content yet — switch to the Write tab to add content.</p>',
-                  }}
-                />
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Sidebar */}
-        <div className="w-full shrink-0 overflow-y-auto border-t border-ink-200 bg-ink-25 scrollbar-thin dark:border-ink-800 dark:bg-ink-900/50 lg:w-72 lg:border-l lg:border-t-0">
-          <div className="space-y-5 p-4">
-            {/* Slug */}
-            <div>
-              <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-ink-500">
-                URL Slug <span className="text-brand">*</span>
-              </label>
-              <div className="flex items-center gap-1 rounded-lg border border-ink-200 bg-white px-3 py-2 dark:border-ink-700 dark:bg-ink-800">
-                <span className="shrink-0 text-xs text-ink-400">/blog/</span>
-                <input
-                  type="text"
-                  value={slug}
-                  onChange={(e) => { setSlug(slugify(e.target.value)); setSlugManuallyEdited(true); }}
-                  className="min-w-0 flex-1 bg-transparent text-xs text-ink-800 focus:outline-none dark:text-ink-100"
-                  placeholder="post-slug"
-                />
-              </div>
-            </div>
-
-            {/* Author */}
-            <div>
-              <label className="mb-1.5 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider text-ink-500">
-                <User size={10} /> Author <span className="text-brand">*</span>
-              </label>
-              <select
-                value={authorId}
-                onChange={(e) => setAuthorId(e.target.value)}
-                className="w-full rounded-lg border border-ink-200 bg-white px-3 py-2 text-xs text-ink-800 focus:border-brand/50 focus:outline-none dark:border-ink-700 dark:bg-ink-800 dark:text-ink-100"
-              >
-                <option value="">Select author...</option>
-                {authors.map((a) => (
-                  <option key={a.id} value={a.id}>{a.full_name}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Category */}
-            <div>
-              <label className="mb-1.5 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider text-ink-500">
-                <FolderOpen size={10} /> Category <span className="text-brand">*</span>
-              </label>
-              <select
-                value={categoryId}
-                onChange={(e) => setCategoryId(e.target.value)}
-                className="w-full rounded-lg border border-ink-200 bg-white px-3 py-2 text-xs text-ink-800 focus:border-brand/50 focus:outline-none dark:border-ink-700 dark:bg-ink-800 dark:text-ink-100"
-              >
-                <option value="">Select category...</option>
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Excerpt */}
-            <div>
-              <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-ink-500">
-                Excerpt
-              </label>
-              <textarea
-                value={excerpt}
-                onChange={(e) => setExcerpt(e.target.value)}
-                rows={3}
-                placeholder="Short summary shown on the blog cards..."
-                className="w-full resize-none rounded-lg border border-ink-200 bg-white px-3 py-2 text-xs text-ink-800 placeholder-ink-400 focus:border-brand/50 focus:outline-none dark:border-ink-700 dark:bg-ink-800 dark:text-ink-100"
-              />
-            </div>
-
-            {/* Featured image */}
-            <div>
-              <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-ink-500">
-                Featured Image URL
-              </label>
-              <input
-                type="url"
-                value={featuredImage ?? ''}
-                onChange={(e) => setFeaturedImage(e.target.value.trim() || null)}
-                placeholder="https://..."
-                className="w-full rounded-lg border border-ink-200 bg-white px-3 py-2 text-xs text-ink-800 placeholder-ink-400 focus:border-brand/50 focus:outline-none dark:border-ink-700 dark:bg-ink-800 dark:text-ink-100"
-              />
-              {featuredImage && (
-                <div className="relative mt-2 overflow-hidden rounded-lg border border-ink-200 dark:border-ink-700">
-                  <img src={featuredImage} alt="Featured post image" className="h-32 w-full object-cover" />
+                <div>
+                  <label className="mb-1.5 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider text-ink-500">
+                    <User size={11} /> Author <span className="text-brand">*</span>
+                  </label>
+                  <select
+                    value={authorId}
+                    onChange={(e) => setAuthorId(e.target.value)}
+                    className={FIELD_INPUT}
+                  >
+                    <option value="">Select author...</option>
+                    {authors.map((a) => (
+                      <option key={a.id} value={a.id}>{a.full_name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="mb-1.5 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider text-ink-500">
+                    <FolderOpen size={11} /> Category <span className="text-brand">*</span>
+                  </label>
+                  <select
+                    value={categoryId}
+                    onChange={(e) => setCategoryId(e.target.value)}
+                    className={FIELD_INPUT}
+                  >
+                    <option value="">Select category...</option>
+                    {categories.map((c) => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="mb-1.5 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider text-ink-500">
+                    <Star size={11} /> Featured
+                  </label>
                   <button
                     type="button"
-                    onClick={() => setFeaturedImage(null)}
-                    className="absolute right-1.5 top-1.5 rounded-full bg-black/70 p-1 text-white transition-colors hover:text-red-400"
+                    onClick={() => setIsFeatured(!isFeatured)}
+                    className={cn(
+                      'flex w-full items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold transition-colors',
+                      isFeatured
+                        ? 'border-brand/40 bg-brand/10 text-brand'
+                        : 'border-ink-200 bg-[var(--a-subtle)] text-ink-500 hover:border-brand/40 dark:border-ink-700'
+                    )}
                   >
-                    <X size={12} />
+                    {isFeatured ? <Star size={14} className="fill-brand text-brand" /> : <StarOff size={14} />}
+                    {isFeatured ? 'Featured' : 'Not featured'}
                   </button>
                 </div>
-              )}
+              </div>
+            </div>
+
+            {/* Summary & Media */}
+            <div className="rounded-lg border border-ink-200 bg-[var(--a-card)] p-5 dark:border-ink-800">
+              <h3 className="mb-4 text-[11px] font-semibold uppercase tracking-wider text-ink-500">Summary & Media</h3>
+              <div className="space-y-5">
+                <div>
+                  <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-ink-500">Excerpt</label>
+                  <textarea
+                    value={excerpt}
+                    onChange={(e) => setExcerpt(e.target.value)}
+                    rows={4}
+                    placeholder="Short summary shown on the blog cards..."
+                    className={cn(FIELD_INPUT, 'resize-none')}
+                  />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-ink-500">Featured Image URL</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="url"
+                      value={featuredImage ?? ''}
+                      onChange={(e) => setFeaturedImage(e.target.value.trim() || null)}
+                      placeholder="https://... or browse storage"
+                      className={FIELD_INPUT}
+                    />
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const url = await openBrowse('featured');
+                        if (url) setFeaturedImage(url);
+                      }}
+                      title="Browse storage"
+                      className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-brand/30 bg-brand/5 px-3 py-2 text-xs font-semibold text-brand transition-colors hover:bg-brand/10"
+                    >
+                      <FolderOpen size={13} /> Browse
+                    </button>
+                  </div>
+                  {featuredImage && (
+                    <div className="relative mt-2 overflow-hidden rounded-lg border border-ink-200 dark:border-ink-700">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={featuredImage} alt="Featured post image" className="h-40 w-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => setFeaturedImage(null)}
+                        className="absolute right-1.5 top-1.5 rounded-full bg-black/70 p-1 text-white transition-colors hover:text-red-400"
+                      >
+                        <X size={12} />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
 
             {/* SEO */}
@@ -350,7 +369,7 @@ export function BlogPostEditor({ post, authors, categories, onSave, onUploadImag
               <button
                 type="button"
                 onClick={() => setShowSEO(!showSEO)}
-                className="flex w-full items-center justify-between bg-ink-100 px-3 py-2.5 transition-colors hover:bg-ink-100/80 dark:bg-ink-800/60"
+                className="flex w-full items-center justify-between bg-[var(--a-subtle)] px-4 py-3 transition-colors hover:bg-[var(--a-hover)]"
               >
                 <span className="flex items-center gap-2">
                   <Tag size={12} className="text-ink-500" />
@@ -358,47 +377,40 @@ export function BlogPostEditor({ post, authors, categories, onSave, onUploadImag
                 </span>
                 <ChevronDown size={12} className={cn('text-ink-400 transition-transform', showSEO && 'rotate-180')} />
               </button>
-
               {showSEO && (
-                <div className="space-y-3 border-t border-ink-200 p-3 dark:border-ink-800">
+                <div className="space-y-3 border-t border-ink-200 p-4 dark:border-ink-800">
                   <div>
-                    <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-ink-500">
-                      SEO Title
-                    </label>
+                    <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-ink-500">SEO Title</label>
                     <input
                       type="text"
                       value={seoTitle}
                       onChange={(e) => setSeoTitle(e.target.value)}
                       maxLength={70}
                       placeholder="Override title for search engines..."
-                      className="w-full rounded-md border border-ink-200 bg-white px-2.5 py-1.5 text-xs text-ink-800 placeholder-ink-400 focus:border-brand/50 focus:outline-none dark:border-ink-700 dark:bg-ink-800 dark:text-ink-100"
+                      className={cn(FIELD_INPUT, 'text-xs')}
                     />
                     <p className="mt-1 text-[10px] text-ink-400">{seoTitle.length}/70 characters</p>
                   </div>
                   <div>
-                    <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-ink-500">
-                      Meta Description
-                    </label>
+                    <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-ink-500">Meta Description</label>
                     <textarea
                       value={seoDescription}
                       onChange={(e) => setSeoDescription(e.target.value)}
                       maxLength={160}
                       rows={3}
                       placeholder="Brief description for search results..."
-                      className="w-full resize-none rounded-md border border-ink-200 bg-white px-2.5 py-1.5 text-xs text-ink-800 placeholder-ink-400 focus:border-brand/50 focus:outline-none dark:border-ink-700 dark:bg-ink-800 dark:text-ink-100"
+                      className={cn(FIELD_INPUT, 'resize-none text-xs')}
                     />
                     <p className="mt-1 text-[10px] text-ink-400">{seoDescription.length}/160 characters</p>
                   </div>
                   <div>
-                    <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-ink-500">
-                      Keywords
-                    </label>
+                    <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-ink-500">Keywords</label>
                     <input
                       type="text"
                       value={seoKeywords}
                       onChange={(e) => setSeoKeywords(e.target.value)}
                       placeholder="debt, coaching, nairobi..."
-                      className="w-full rounded-md border border-ink-200 bg-white px-2.5 py-1.5 text-xs text-ink-800 placeholder-ink-400 focus:border-brand/50 focus:outline-none dark:border-ink-700 dark:bg-ink-800 dark:text-ink-100"
+                      className={cn(FIELD_INPUT, 'text-xs')}
                     />
                     <p className="mt-1 text-[10px] text-ink-400">Comma-separated keywords</p>
                   </div>
@@ -407,7 +419,60 @@ export function BlogPostEditor({ post, authors, categories, onSave, onUploadImag
             </div>
           </div>
         </div>
-      </div>
+      ) : (
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+          {/* Write / Preview toggle */}
+          <div className="flex items-center gap-1 border-b border-ink-200 bg-[var(--a-subtle)] px-4 py-2 dark:border-ink-800 dark:bg-ink-900/50 sm:px-5">
+            <button
+              type="button"
+              onClick={() => setSubTab('write')}
+              className={cn(
+                'rounded-md px-3 py-1 text-xs font-semibold transition-colors',
+                subTab === 'write' ? 'bg-ink-800 text-white dark:bg-ink-700' : 'text-ink-500 hover:text-ink-700 dark:text-ink-400'
+              )}
+            >
+              Write
+            </button>
+            <button
+              type="button"
+              onClick={() => setSubTab('preview')}
+              className={cn(
+                'inline-flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-semibold transition-colors',
+                subTab === 'preview' ? 'bg-ink-800 text-white dark:bg-ink-700' : 'text-ink-500 hover:text-ink-700 dark:text-ink-400'
+              )}
+            >
+              <Eye size={11} /> Preview
+            </button>
+            <span className="ml-auto truncate text-[10px] text-ink-400">
+              /blog/{slug || 'post-slug'} · {plainText.split(/\s+/).filter(Boolean).length} words
+            </span>
+          </div>
+
+          {/* Full-width editor / preview */}
+          <div className="min-h-0 flex-1 overflow-y-auto bg-[var(--a-card)] p-4 dark:bg-ink-950 sm:p-6">
+            {subTab === 'write' ? (
+              <LexicalEditor
+                key={post?.id ?? 'new'}
+                state={lexicalState ?? undefined}
+                onChange={handleEditorChange}
+                onUploadImage={onUploadImage}
+                onBrowseImage={() => openBrowse('content')}
+                placeholder="Start writing your article…"
+                className="min-h-[620px]"
+              />
+            ) : (
+              <article
+                className="prose mx-auto max-w-3xl dark:prose-invert"
+                dangerouslySetInnerHTML={{
+                  __html: htmlContent || '<p class="italic text-ink-400">No content yet — switch to Write to add content.</p>',
+                }}
+              />
+            )}
+          </div>
+        </div>
+      )}
+
+      <StoragePickerModal open={pickerOpen} onClose={handlePickerClose} onPick={handlePickerPick} />
     </form>
   );
 }

@@ -13,8 +13,12 @@ out/
 # logs
 *.log
 build_out.txt
+build_out2.txt
 start4.txt
 start_log.txt
+
+# TypeScript build cache
+*.tsbuildinfo
 
 # misc
 tmp.b64

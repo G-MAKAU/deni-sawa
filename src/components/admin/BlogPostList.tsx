@@ -108,12 +108,19 @@ export function BlogPostList({ posts, selectedId, onSelect, onNew, onDelete }: B
             const st = statusStyles[post.status] ?? statusStyles.draft;
             const active = post.id === selectedId;
             return (
-              <button
+              <div
                 key={post.id}
-                type="button"
+                role="button"
+                tabIndex={0}
                 onClick={() => onSelect(post.id)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onSelect(post.id);
+                  }
+                }}
                 className={cn(
-                  'group w-full border-b border-ink-200 px-4 py-3 text-left transition-colors dark:border-ink-800',
+                  'group w-full cursor-pointer border-b border-ink-200 px-4 py-3 text-left transition-colors focus:outline-none focus-visible:bg-brand/5 dark:border-ink-800',
                   active ? 'bg-brand/10 dark:bg-brand/10' : 'hover:bg-ink-25 dark:hover:bg-ink-800/60'
                 )}
               >
@@ -143,7 +150,7 @@ export function BlogPostList({ posts, selectedId, onSelect, onNew, onDelete }: B
                     <Trash2 size={12} />
                   </button>
                 </div>
-              </button>
+              </div>
             );
           })
         )}

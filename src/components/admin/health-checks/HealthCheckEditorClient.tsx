@@ -1,0 +1,210 @@
+'use client';
+
+import * as React from 'react';
+import Link from 'next/link';
+import { useParams, useRouter } from 'next/navigation';
+import { toast } from 'sonner';
+import { Loader2, Save } from 'lucide-react';
+import { adminFetch, adminPut } from '@/lib/admin-client';
+import { AdminCard, AsyncButton, ErrorBanner, Field, Loading, PageHeader, Toggle } from '@/components/admin/ui';
+
+interface CheckDetail {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  estimated_minutes: number | null;
+  tags: string[];
+  is_active: boolean;
+  sort_order: number;
+  section_count: number;
+}
+
+const INPUT_CLASS =
+  'h-11 w-full rounded-lg border border-[var(--a-border)] bg-[var(--a-subtle)] px-3.5 text-sm text-[var(--a-ink)] placeholder:text-[var(--a-placeholder)] focus:border-[#E8510A] focus:outline-none focus:ring-2 focus:ring-[#E8510A]/20';
+
+function makeSlug(value: string): string {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+export function HealthCheckEditorClient() {
+  const params = useParams<{ id: string }>();
+  const router = useRouter();
+  const id = params.id;
+
+  const [check, setCheck] = React.useState<CheckDetail | null>(null);
+  const [error, setError] = React.useState<string | null>(null);
+  const [saving, setSaving] = React.useState(false);
+  const [slugTouched, setSlugTouched] = React.useState(false);
+
+  const [name, setName] = React.useState('');
+  const [slug, setSlug] = React.useState('');
+  const [description, setDescription] = React.useState('');
+  const [estimatedMinutes, setEstimatedMinutes] = React.useState<string>('');
+  const [tags, setTags] = React.useState('');
+  const [isActive, setIsActive] = React.useState(true);
+  const [sortOrder, setSortOrder] = React.useState<string>('0');
+
+  React.useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const { check: row } = await adminFetch<{ check: CheckDetail }>(`/api/admin/health-checks/${id}`);
+        if (cancelled) return;
+        setCheck(row);
+        setName(row.name);
+        setSlug(row.slug);
+        setDescription(row.description ?? '');
+        setEstimatedMinutes(row.estimated_minutes?.toString() ?? '');
+        setTags(row.tags.join(', '));
+        setIsActive(row.is_active);
+        setSortOrder(row.sort_order.toString());
+      } catch (e) {
+        if (!cancelled) setError(e instanceof Error ? e.message : 'Failed to load health check.');
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
+
+  if (error) return <ErrorBanner message={error} />;
+  if (!check) return <Loading label="Loading health check…" />;
+
+  const handleSave = async () => {
+    if (!name.trim()) {
+      setError('Name is required.');
+      return;
+    }
+    setSaving(true);
+    try {
+      await adminPut(`/api/admin/health-checks/${id}`, {
+        name: name.trim(),
+        slug: slugTouched ? slug.trim() : undefined,
+        description: description.trim() || null,
+        estimated_minutes: estimatedMinutes ? Number(estimatedMinutes) : null,
+        tags: tags
+          .split(',')
+          .map((t) => t.trim())
+          .filter(Boolean),
+        is_active: isActive,
+        sort_order: Number(sortOrder || 0),
+      });
+      toast.success('Health check saved');
+      setSlugTouched(false);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Failed to save health check.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <>
+      <PageHeader
+        title={check.name}
+        subtitle="Edit the check's public details."
+        crumbs={[{ label: 'Health Checks', href: '/admin/health-checks' }, { label: check.name }]}
+        actions={
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => router.push(`/admin/health-checks/${id}/questions`)}
+              className="h-9 rounded-lg border border-[var(--a-border)] bg-[var(--a-card)] px-3.5 text-[13px] font-semibold text-[var(--a-text)] hover:border-[#E8510A]/40 hover:text-[#E8510A]"
+            >
+              Manage questions
+            </button>
+            <AsyncButton
+              onClick={handleSave}
+              loading={saving}
+              loadingLabel="Saving…"
+              label="Save changes"
+              icon={<Save className="h-4 w-4" />}
+              size="sm"
+            />
+          </div>
+        }
+      />
+
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="space-y-6 lg:col-span-2">
+          <AdminCard title="Details" subtitle="Public information shown on the intro page.">
+            <div className="grid gap-5 sm:grid-cols-2">
+              <Field label="Name" required>
+                <input className={INPUT_CLASS} value={name} onChange={(e) => { setName(e.target.value); if (!slugTouched) setSlug(makeSlug(e.target.value)); }} />
+              </Field>
+              <Field label="URL slug" hint="Leave to auto-generate from the name.">
+                <input className={`${INPUT_CLASS} font-mono`} value={slug} onChange={(e) => { setSlug(e.target.value); setSlugTouched(true); }} />
+              </Field>
+              <Field label="Estimated minutes" className="sm:col-span-2">
+                <input
+                  className={INPUT_CLASS}
+                  type="number"
+                  min={1}
+                  max={600}
+                  value={estimatedMinutes}
+                  onChange={(e) => setEstimatedMinutes(e.target.value)}
+                  placeholder="15"
+                />
+              </Field>
+              <Field label="Tags" hint="Comma-separated assessment areas, e.g. Financial, Cashflow." className="sm:col-span-2">
+                <input className={INPUT_CLASS} value={tags} onChange={(e) => setTags(e.target.value)} placeholder="Financial, Operations, Governance" />
+              </Field>
+              <Field label="Description" className="sm:col-span-2">
+                <textarea
+                  rows={4}
+                  className="w-full rounded-lg border border-[var(--a-border)] bg-[var(--a-subtle)] px-3.5 py-3 text-sm focus:border-[#E8510A] focus:outline-none focus:ring-2 focus:ring-[#E8510A]/20"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="A short summary shown on the health check intro page…"
+                />
+              </Field>
+            </div>
+          </AdminCard>
+        </div>
+
+        <div className="space-y-6">
+          <AdminCard title="Publishing">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-[var(--a-ink2)]">Active</p>
+                  <p className="text-xs text-[var(--a-muted)]">Visible to visitors</p>
+                </div>
+                <Toggle checked={isActive} onChange={setIsActive} label="Active" />
+              </div>
+              <div className="h-px bg-[var(--a-border-soft)]" />
+              <Field label="Sort order">
+                <input className={INPUT_CLASS} type="number" value={sortOrder} onChange={(e) => setSortOrder(e.target.value)} />
+              </Field>
+            </div>
+          </AdminCard>
+
+          <AdminCard title="Sections">
+            <div className="space-y-2 text-sm text-[var(--a-text2)]">
+              <p>
+                <span className="font-semibold text-[var(--a-ink2)]">{check.section_count}</span> sections currently configured.
+              </p>
+              <Link href={`/admin/health-checks/${id}/sections`} className="inline-block font-semibold text-[#E8510A] hover:underline">
+                Manage sections & subsections →
+              </Link>
+              <Link href={`/admin/health-checks/${id}/prompts`} className="block font-semibold text-[#E8510A] hover:underline">
+                Edit AI report prompts →
+              </Link>
+              <Link href={`/admin/health-checks/${id}/rate-limits`} className="block font-semibold text-[#E8510A] hover:underline">
+                Configure rate limits →
+              </Link>
+              <Link href={`/admin/health-checks/${id}/delivery`} className="block font-semibold text-[#E8510A] hover:underline">
+                Delivery overview →
+              </Link>
+            </div>
+          </AdminCard>
+        </div>
+      </div>
+    </>
+  );
+}

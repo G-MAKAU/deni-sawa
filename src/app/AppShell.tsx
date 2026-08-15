@@ -21,10 +21,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <ThemeProvider>
-      <div className="min-h-screen bg-background">
+      <div className="flex min-h-screen flex-col bg-background">
+        <a href="#main-content" className="skip-link">
+          Skip to main content
+        </a>
         <ScrollToTop />
         {!isAdmin && <Navbar />}
-        <main className={isAdmin ? '' : 'pt-40 lg:pt-[212px]'}>{children}</main>
+        <main id="main-content" className="flex-1">
+          {children}
+        </main>
         {!isAdmin && <Footer />}
         {!isAdmin && <AIChatWidget />}
       </div>

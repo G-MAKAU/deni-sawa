@@ -1,81 +1,165 @@
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 /* ─────────────────────────────────────────
-   shadcn-style CSS variables
+   Brand tokens — Deni Sawa Partners
+   Orange (#E8510A) & Green (#5A9E28) are
+   constants — they never change between modes.
    ───────────────────────────────────────── */
-@layer base {
-  :root {
-    --background: 0 0% 98%;
-    --foreground: 0 0% 11%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 11%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 11%;
-    --primary: 160 55% 40%;          /* #2D9D78 */
-    --primary-foreground: 0 0% 100%;
-    --secondary: 240 4% 13%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 5% 94%;
-    --muted-foreground: 240 4% 46%;
-    --accent: 240 5% 94%;
-    --accent-foreground: 0 0% 11%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 6% 90%;
-    --input: 240 6% 90%;
-    --ring: 160 55% 50%;
-    --radius: 0.75rem;
-    --orange: #FF7401;
-  }
+:root {
+  --brand: #E8510A;
+  --brand-strong: #C44508;
+  --growth: #5A9E28;
+  --growth-strong: #48801F;
 
-  .dark {
-    --background: 0 0% 7%;           /* #111111 */
-    --foreground: 0 0% 96%;
-    --card: 0 0% 10%;
-    --card-foreground: 0 0% 96%;
-    --popover: 0 0% 10%;
-    --popover-foreground: 0 0% 96%;
-    --primary: 160 55% 40%;          /* #2D9D78 */
-    --primary-foreground: 0 0% 100%;
-    --secondary: 240 4% 16%;
-    --secondary-foreground: 0 0% 96%;
-    --muted: 240 4% 16%;
-    --muted-foreground: 240 5% 55%;
-    --accent: 240 4% 16%;
-    --accent-foreground: 0 0% 96%;
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 4% 18%;
-    --input: 240 4% 18%;
-    --ring: 160 55% 50%;
-    --orange: #FF7401;
-  }
+  --bg: #FFFFFF;
+  --bg-alt: #F9F7F5;
+  --card-bg: #FFFFFF;
+  --card-border: #E0E0E0;
+  --text: #1A1A1A;
+  --text-muted: #666666;
+  --nav-bg: #FFFFFF;
+  --footer-bg: #2C2C2C;
+  --charcoal: #2C2C2C;
+  --charcoal-deep: #1A1A1A;
+
+  /* Navy — its own identity (#193d5b) */
+  --navy: #193d5b;
+  --navy-deep: #14334d;
+  --navy-soft: #2a4a68;
+
+  --card-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  --card-shadow-hover: 0 12px 36px rgba(0, 0, 0, 0.12);
+  --focus-ring: 0 0 0 3px rgba(232, 81, 10, 0.35);
+
+  --radius: 0.5rem;        /* 8px cards */
+  --radius-button: 6px;
+  --radius-badge: 0.75rem; /* 12px badges */
+
+  /* Legacy shadcn hsl variables — kept mapped to brand so shared
+     components (admin, chat, blog) adopt the palette automatically */
+  --background: 0 0% 100%;
+  --foreground: 0 0% 10%;
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 10%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 10%;
+  --primary: 19 93% 47%;        /* #E8510A */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 94 59% 39%;      /* #5A9E28 */
+  --secondary-foreground: 0 0% 100%;
+  --muted: 30 20% 97%;          /* #F9F7F5 */
+  --muted-foreground: 0 0% 40%;
+  --accent: 30 20% 97%;
+  --accent-foreground: 0 0% 10%;
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 0 0% 88%;           /* #E0E0E0 */
+  --input: 0 0% 88%;
+  --ring: 19 93% 47%;
+  --orange: #E8510A;
+
+  /* Admin console palette — semantic tokens that flip with the theme so the
+     /admin UI responds to the site-wide dark mode toggle. */
+  --a-bg: #F9F7F5;
+  --a-card: #FFFFFF;
+  --a-border: #E8E2DC;
+  --a-border-soft: #F0EAE4;
+  --a-subtle: #FCFBF9;
+  --a-hover: #F5F1ED;
+  --a-track: #D6D0CA;
+  --a-ink: #111111;
+  --a-ink2: #1A1A1A;
+  --a-text: #4B5563;
+  --a-text2: #6B7280;
+  --a-muted: #8A857F;
+  --a-placeholder: #B5AFA8;
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  --bg: #0F0F0F;
+  --bg-alt: #1A1A1A;
+  --card-bg: #222222;
+  --card-border: #333333;
+  --text: #E8E8E8;
+  --text-muted: #888888;
+  --nav-bg: #111111;
+  --footer-bg: #0A0A0A;
+  --charcoal: #0F0F0F;
+  --charcoal-deep: #1A1A1A;
+  --navy: #0f2438;
+  --navy-deep: #0c1d2e;
+  --navy-soft: #163349;
+
+  --card-shadow: 0 4px 24px rgba(232, 81, 10, 0.08);
+  --card-shadow-hover: 0 10px 36px rgba(232, 81, 10, 0.16);
+  --focus-ring: 0 0 0 3px rgba(232, 81, 10, 0.45);
+
+  --background: 0 0% 6%;        /* #0F0F0F */
+  --foreground: 0 0% 91%;
+  --card: 0 0% 13%;             /* #222222 */
+  --card-foreground: 0 0% 91%;
+  --popover: 0 0% 13%;
+  --popover-foreground: 0 0% 91%;
+  --primary: 19 93% 47%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 94 59% 39%;
+  --secondary-foreground: 0 0% 100%;
+  --muted: 0 0% 10%;
+  --muted-foreground: 0 0% 53%;
+  --accent: 0 0% 10%;
+  --accent-foreground: 0 0% 91%;
+  --destructive: 0 62% 30%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 0 0% 20%;           /* #333333 */
+  --input: 0 0% 20%;
+  --ring: 19 93% 47%;
+  color-scheme: dark;
+
+  /* Admin console palette (dark) */
+  --a-bg: #151517;
+  --a-card: #1E1E22;
+  --a-border: #2E2E36;
+  --a-border-soft: #26262C;
+  --a-subtle: #232329;
+  --a-hover: #2A2A31;
+  --a-track: #3A3A42;
+  --a-ink: #F5F5F7;
+  --a-ink2: #E7E7EB;
+  --a-text: #C9C9CE;
+  --a-text2: #A2A2A9;
+  --a-muted: #8B8B93;
+  --a-placeholder: #5C5C64;
 }
 
 /* ─────────────────────────────────────────
-   Base styles
+   Base
    ───────────────────────────────────────── */
 @layer base {
   * { @apply border-border; }
   html {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    scroll-behavior: smooth;
   }
   body {
-    @apply bg-background text-foreground font-body antialiased transition-colors duration-300;
+    @apply bg-background text-foreground font-body antialiased transition-colors duration-200;
     overflow-x: hidden;
   }
   h1, h2, h3, h4, h5, h6 { @apply font-heading; }
-  ::selection { background: rgba(45,157,120,0.18); }
-  .green-selection ::selection { background: rgba(255,116,1,0.20); }
-  a:focus-visible {
-    outline: 2px solid hsl(var(--ring));
-    outline-offset: 2px;
+  ::selection { background: rgba(232, 81, 10, 0.16); }
+
+  a:focus-visible, button:focus-visible, [role="button"]:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
     border-radius: 4px;
+  }
+
+  /* Skip link for accessibility */
+  .skip-link {
+    @apply fixed left-4 top-4 z-[200] -translate-y-24 rounded bg-brand px-4 py-2 text-sm font-semibold text-white transition-transform focus:translate-y-0;
   }
 }
 
@@ -83,57 +167,66 @@
    Components
    ───────────────────────────────────────── */
 @layer components {
-  .container-lux { @apply mx-auto max-w-7xl px-5 sm:px-6 lg:px-8; }
+  .container-lux { @apply mx-auto w-full max-w-[1200px] px-5 sm:px-8; }
 
-  /* Buttons */
-  .btn-brand {
-    @apply relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-none bg-brand px-7 py-3.5 text-sm font-bold text-white shadow-brand-sm transition-all duration-300 hover:bg-brand-600 hover:shadow-brand-glow active:scale-[0.97];
+  /* Section rhythm */
+  .section-pad { @apply py-12 md:py-16 lg:py-24; }
+
+  /* Eyebrow label — JetBrains Mono data-label */
+  .eyebrow {
+    @apply inline-flex items-center gap-2 font-mono text-[11px] font-semibold uppercase tracking-[0.18em];
   }
-  .btn-brand-outline {
-    @apply relative inline-flex items-center justify-center gap-2 rounded-full border-2 border-brand/40 bg-transparent px-7 py-3.5 text-sm font-bold text-brand transition-all duration-300 hover:border-brand hover:bg-brand/5 active:scale-[0.97];
+  .eyebrow-brand { @apply text-brand; }
+  .eyebrow-growth { @apply text-growth; }
+  .eyebrow-on-dark { @apply text-brand; }
+
+  /* Buttons (see src/components/ui/button.tsx for the Button component) */
+  .btn-base {
+    @apply relative inline-flex h-11 items-center justify-center gap-2 whitespace-nowrap px-6 text-[15px] font-semibold transition-all duration-200 ease-in-out focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50;
+    border-radius: var(--radius-button);
+  }
+
+  .btn-primary {
+    @apply btn-base bg-brand text-white hover:bg-brand-600 active:bg-brand-700;
+    box-shadow: 0 2px 8px rgba(232, 81, 10, 0.28);
+  }
+  .btn-secondary {
+    @apply btn-base border-2 border-growth text-growth hover:bg-growth hover:text-white;
+    background: transparent;
   }
   .btn-ghost-dark {
-    @apply relative inline-flex items-center justify-center gap-2 rounded-full border border-white/15 bg-white/10 px-7 py-3.5 text-sm font-semibold text-white/90 transition-all duration-300 hover:bg-white/15 hover:border-white/30 active:scale-[0.97];
+    @apply btn-base border border-white/25 bg-transparent text-white hover:bg-white/10;
   }
-  .btn-ghost-light {
-    @apply relative inline-flex items-center justify-center gap-2 rounded-full border border-ink-200 bg-white px-7 py-3.5 text-sm font-semibold text-ink-800 transition-all duration-300 hover:border-brand/40 hover:shadow-soft active:scale-[0.97] dark:border-ink-700 dark:bg-ink-800 dark:text-white dark:hover:border-brand/50;
+  .btn-outline-dark {
+    @apply btn-base border border-foreground/15 text-foreground hover:border-brand hover:text-brand;
+    background: transparent;
   }
 
   /* Cards */
   .card-elevated {
-    @apply rounded-3xl border border-border bg-card p-7 shadow-card transition-all duration-400 hover:shadow-soft-md hover:-translate-y-0.5 dark:shadow-card-dark;
+    @apply rounded-lg border border-card-border bg-card p-8 transition-all duration-200 ease-in-out;
+    box-shadow: var(--card-shadow);
   }
-  .card-dark {
-    @apply rounded-3xl border border-white/10 bg-white/10 p-7 transition-all duration-400 hover:bg-white/15 hover:-translate-y-0.5;
+  .card-elevated:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--card-shadow-hover);
   }
-
-  /* Eyebrows */
-  .eyebrow {
-    @apply inline-flex items-center gap-2 rounded-full border border-brand/20 bg-brand/10 px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-brand;
+  .card-dark-panel {
+    @apply rounded-lg border border-white/10 p-8 transition-all duration-200 ease-in-out;
+    background: rgba(255, 255, 255, 0.04);
   }
-  .eyebrow-dark {
-    @apply inline-flex items-center gap-2 rounded-full border border-brand/25 bg-brand/10 px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-brand-300;
-  }
-
-  /* Section heading */
-  .section-heading {
-    @apply font-heading text-4xl lg:text-5xl font-extrabold leading-tight tracking-tight text-foreground;
+  .card-dark-panel:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 36px rgba(0, 0, 0, 0.35);
   }
 
-  /* Glass pane */
-  .glass {
-    @apply rounded-3xl border border-white/15 bg-white/10 shadow-soft-lg;
-  }
-  .glass-light {
-    @apply rounded-3xl border border-border bg-card/90 shadow-soft;
-  }
+  /* Horizontal divider with brand accent */
+  .divider-brand { @apply h-px w-full bg-card-border; }
+  .divider-accent { @apply h-[3px] w-16 rounded-full bg-brand; }
 
-  /* Chat bubble */
-  .chat-bubble-user {
-    @apply ml-auto max-w-[80%] rounded-3xl rounded-br-lg bg-brand px-4 py-3 text-sm text-white shadow-brand-sm;
-  }
-  .chat-bubble-ai {
-    @apply mr-auto max-w-[85%] rounded-3xl rounded-bl-lg border border-border bg-muted px-4 py-3 text-sm text-foreground shadow-soft;
+  /* Hero display headline (Playfair) */
+  .hero-display {
+    @apply font-display font-semibold leading-[1.08] tracking-tight;
   }
 }
 
@@ -142,44 +235,170 @@
    ───────────────────────────────────────── */
 @layer utilities {
   .text-brand-gradient {
-    @apply bg-gradient-to-r from-brand-400 via-brand to-brand-700 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-brand-500 via-brand to-brand-700 bg-clip-text text-transparent;
   }
-  .text-green-gradient {
-    @apply bg-gradient-to-r from-green-400 via-green to-green-700 bg-clip-text text-transparent;
-  }
-  .text-brand-green-gradient {
-    background: linear-gradient(90deg, #FF9218 0%, #FF7401 30%, #FF7401 70%, #FF7401 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
-  .text-dark-gradient {
-    background: linear-gradient(135deg, #1C1C1E 0%, #3A3A3C 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
+  .text-growth-gradient {
+    @apply bg-gradient-to-r from-growth-400 via-growth to-growth-700 bg-clip-text text-transparent;
   }
   .scrollbar-hide::-webkit-scrollbar { display: none; }
   .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
-  .duration-400 { transition-duration: 400ms; }
+  .duration-200 { transition-duration: 200ms; }
 
-  /* Hero mesh gradient */
-  .hero-mesh {
-    background:
-      radial-gradient(ellipse 60% 50% at 80% 40%, rgba(255,116,1,0.12) 0%, transparent 70%),
-      radial-gradient(ellipse 40% 60% at 20% 70%, rgba(45,157,120,0.10) 0%, transparent 60%),
-      radial-gradient(ellipse 30% 40% at 50% 20%, rgba(255,116,1,0.05) 0%, transparent 50%);
-  }
-  .hero-mesh-dark {
-    background:
-      radial-gradient(ellipse 60% 50% at 80% 40%, rgba(255,116,1,0.15) 0%, transparent 70%),
-      radial-gradient(ellipse 40% 60% at 20% 70%, rgba(45,157,120,0.12) 0%, transparent 60%),
-      radial-gradient(ellipse 30% 40% at 50% 20%, rgba(255,116,1,0.06) 0%, transparent 50%);
+  /* Hero diagonal geometric pattern — brand colours at low opacity */
+  .hero-pattern {
+    background-image:
+      repeating-linear-gradient(
+        -45deg,
+        rgba(232, 81, 10, 0.16) 0px,
+        rgba(232, 81, 10, 0.16) 2px,
+        transparent 2px,
+        transparent 18px
+      ),
+      repeating-linear-gradient(
+        45deg,
+        rgba(90, 158, 40, 0.05) 0px,
+        rgba(90, 158, 40, 0.05) 1px,
+        transparent 1px,
+        transparent 26px
+      );
   }
 }
 
 /* Custom scrollbar */
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { @apply bg-muted; }
-::-webkit-scrollbar-thumb { @apply bg-brand/40 rounded; }
-::-webkit-scrollbar-thumb:hover { @apply bg-brand/70; }
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-alt); }
+::-webkit-scrollbar-thumb { background: rgba(232, 81, 10, 0.4); border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(232, 81, 10, 0.7); }
+
+/* ─────────────────────────────────────────
+   Lexical — Deni Sawa brand surfaces
+   ───────────────────────────────────────── */
+.ds-lexical-content {
+  min-height: 120px;
+  color: var(--text);
+}
+.ds-lexical-content p { margin: 0.75rem 0; line-height: 1.7; }
+.ds-lexical-content ul { list-style: disc; padding-left: 1.5rem; margin: 1rem 0; }
+.ds-lexical-content ol { list-style: decimal; padding-left: 1.5rem; margin: 1rem 0; }
+.ds-lexical-content blockquote {
+  margin: 1.25rem 0;
+  border-left: 3px solid var(--brand);
+  background: rgba(232, 81, 10, 0.06);
+  padding: 1rem 1.25rem;
+  font-style: italic;
+  border-radius: 0 var(--radius-button) var(--radius-button) 0;
+}
+
+/* CalloutNode — branded priority panel */
+.ds-callout {
+  margin: 1.5rem 0;
+  border-radius: var(--radius);
+  padding: 1.25rem 1.5rem;
+  border: 1px solid var(--card-border);
+  border-left: 4px solid var(--brand);
+  background: linear-gradient(90deg, rgba(232, 81, 10, 0.07), transparent 65%);
+}
+.ds-callout p { margin: 0.35rem 0; }
+.ds-callout--brand { border-left-color: var(--brand); background: linear-gradient(90deg, rgba(232, 81, 10, 0.08), transparent 65%); }
+.ds-callout--growth { border-left-color: var(--growth); background: linear-gradient(90deg, rgba(90, 158, 40, 0.08), transparent 65%); }
+.ds-callout--dark { border-left-color: var(--text); background: var(--bg-alt); }
+.ds-callout::before {
+  content: "Priority";
+  display: block;
+  margin-bottom: 0.5rem;
+  font-family: var(--font-jetbrains);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--brand);
+}
+.ds-callout--growth::before { content: "Note"; color: var(--growth); }
+.ds-callout--dark::before { content: "Note"; color: var(--text-muted); }
+
+/* DividerNode — report section divider */
+.ds-divider {
+  margin: 2rem 0;
+  height: 1px;
+  border: none;
+  background: linear-gradient(90deg, transparent, var(--card-border) 20%, var(--brand) 50%, var(--card-border) 80%, transparent);
+}
+
+/* Lexical checklists — the checkbox glyph is drawn with ::before on the
+   list item (Lexical sets role="checkbox" + aria-checked on check items). */.ds-lexical-content li[role="checkbox"] {
+  position: relative;
+  padding-left: 1.9rem;
+  list-style: none;
+}
+.ds-lexical-content li[role="checkbox"]::before {
+  content: "";
+  position: absolute;
+  left: 0.1rem;
+  top: 0.32em;
+  width: 1.05rem;
+  height: 1.05rem;
+  border: 1.5px solid var(--text-muted);
+  border-radius: 0.25rem;
+  background: transparent;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+.ds-lexical-content li[role="checkbox"][aria-checked="true"]::before {
+  content: "✓";
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-size: 0.75rem;
+  line-height: 1;
+  border-color: var(--growth);
+  background: var(--growth);
+}
+
+/* VariableNode — {{variable}} pill inside the Lexical editor */
+.ds-variable {
+  display: inline-block;
+  margin: 0 0.125rem;
+  padding: 0.0625rem 0.5rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(232, 81, 10, 0.35);
+  background: rgba(232, 81, 10, 0.09);
+  color: var(--brand);
+  font-family: var(--font-jetbrains);
+  font-size: 0.85em;
+  line-height: 1.4;
+  cursor: default;
+}
+
+/* Lexical image node */
+.ds-lexical-image {
+  display: inline-block;
+  max-width: 100%;
+  margin: 0.5rem 0;
+  vertical-align: middle;
+}
+.ds-lexical-image img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.08);
+}
+
+/* WhatsApp template body — {{variable}} highlight */
+.wa-body[contenteditable]:focus { outline: none; }
+.wa-body:empty::before {
+  content: attr(data-placeholder);
+  color: #b5afa8;
+  pointer-events: none;
+}
+.wa-var {
+  display: inline-block;
+  padding: 0 0.3rem;
+  margin: 0 0.0625rem;
+  border-radius: 0.3rem;
+  background: rgba(232, 81, 10, 0.12);
+  color: #c94508;
+  font-family: var(--font-jetbrains);
+  font-size: 0.9em;
+}
+.wa-preview-text .wa-var { color: #c94508; background: rgba(232, 81, 10, 0.12); border-radius: 0.3rem; padding: 0 0.25rem; }

@@ -12,21 +12,36 @@ interface ThemeContextValue {
 
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
+const STORAGE_KEY = 'denisawa-theme';
+
+/** Resolve theme from storage or system preference. */
+function resolveInitialTheme(): Theme {
+  if (typeof window === 'undefined') return 'light';
+  const stored = localStorage.getItem(STORAGE_KEY) as Theme | null;
+  if (stored === 'light' || stored === 'dark') return stored;
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
+/** Apply the `data-theme` attribute to <html> without a React state round-trip. */
+function applyTheme(theme: Theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  document.documentElement.classList.toggle('dark', theme === 'dark');
+}
+
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<Theme>('light');
 
+  // Apply the stored/system theme immediately on mount to avoid a flash.
   useEffect(() => {
-    const stored = localStorage.getItem('denisawa-theme') as Theme | null;
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const initial = stored || (prefersDark ? 'dark' : 'light');
+    const initial = resolveInitialTheme();
     setThemeState(initial);
-    document.documentElement.classList.toggle('dark', initial === 'dark');
+    applyTheme(initial);
   }, []);
 
   const setTheme = (t: Theme) => {
     setThemeState(t);
-    localStorage.setItem('denisawa-theme', t);
-    document.documentElement.classList.toggle('dark', t === 'dark');
+    localStorage.setItem(STORAGE_KEY, t);
+    applyTheme(t);
   };
 
   const toggleTheme = () => setTheme(theme === 'light' ? 'dark' : 'light');

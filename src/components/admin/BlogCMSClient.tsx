@@ -5,6 +5,7 @@ import { createBrowserClient } from '@/lib/supabase/browser';
 import { BlogPostList } from './BlogPostList';
 import { BlogPostEditor } from './BlogPostEditor';
 import { type AdminPost, type Author, type Category, type AdminIdentity } from './types';
+import { useConfirm } from '@/components/admin/confirm';
 import { cn } from '@/lib/utils';
 
 type AuthState = 'loading' | 'signedOut' | 'authorized' | 'forbidden';
@@ -20,6 +21,7 @@ function getEmbeddedField<T extends Record<string, unknown>>(
 
 export function BlogCMSClient() {
   const supabase = useMemo(() => createBrowserClient(), []);
+  const confirm = useConfirm();
 
   const [authState, setAuthState] = useState<AuthState>('loading');
   const [admin, setAdmin] = useState<AdminIdentity | null>(null);
@@ -31,7 +33,7 @@ export function BlogCMSClient() {
   const [loading, setLoading] = useState(true);
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
-  const [mobilePanel, setMobilePanel] = useState<'posts' | 'editor'>('posts');
+  const [activeTab, setActiveTab] = useState<'posts' | 'editor' | 'settings'>('posts');
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -165,37 +167,43 @@ export function BlogCMSClient() {
   const handleNewPost = () => {
     setSelectedPostId(null);
     setIsCreating(true);
-    setMobilePanel('editor');
+    setActiveTab('editor');
   };
 
   const handleSelectPost = (id: string) => {
+    const post = posts.find((p) => p.id === id);
     setSelectedPostId(id);
     setIsCreating(false);
-    setMobilePanel('editor');
+    setActiveTab('editor');
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Delete this post? This cannot be undone.')) return;
+    try {
+      const ok = await confirm({
+        message: 'Delete this post? This cannot be undone.',
+        action: async () => {
+          const token = await getToken();
+          if (!token) throw new Error('Session expired. Please sign in again.');
+          const response = await fetch(`/api/admin/blog/posts/${id}`, {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (!response.ok) {
+            const data = await response.json().catch(() => ({}));
+            throw new Error(data.error || 'Failed to delete post');
+          }
+        },
+      });
+      if (!ok) return;
 
-    const token = await getToken();
-    if (!token) return;
-
-    const response = await fetch(`/api/admin/blog/posts/${id}`, {
-      method: 'DELETE',
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    if (!response.ok) {
-      const data = await response.json().catch(() => ({}));
-      setError(data.error || 'Failed to delete post');
-      return;
-    }
-
-    setPosts((prev) => prev.filter((p) => p.id !== id));
-    if (selectedPostId === id) {
-      setSelectedPostId(null);
-      setIsCreating(false);
-      setMobilePanel('posts');
+      setPosts((prev) => prev.filter((p) => p.id !== id));
+      if (selectedPostId === id) {
+        setSelectedPostId(null);
+        setIsCreating(false);
+        setActiveTab('posts');
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to delete post');
     }
   };
 
@@ -332,12 +340,12 @@ export function BlogCMSClient() {
   return (
     <div className="space-y-4">
       {/* Top bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-3xl border border-border bg-card px-5 py-4 shadow-soft">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[var(--a-border)] bg-[var(--a-card)] px-5 py-4 shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
         <div>
-          <p className="text-xs text-muted-foreground">Signed in as</p>
-          <p className="text-sm font-bold">
+          <p className="text-xs text-[var(--a-muted)]">Signed in as</p>
+          <p className="text-sm font-bold text-[var(--a-ink2)]">
             {admin?.full_name ?? admin?.email}
-            <span className="ml-2 rounded-full bg-brand/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-brand">
+            <span className="ml-2 rounded-full bg-[#E8510A]/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#c94508]">
               {admin?.role}
             </span>
           </p>
@@ -347,13 +355,13 @@ export function BlogCMSClient() {
             href="/blog"
             target="_blank"
             rel="noopener noreferrer"
-            className="rounded-full border border-border px-4 py-2 text-xs font-semibold text-muted-foreground transition-colors hover:border-brand/40 hover:text-brand"
+            className="rounded-lg border border-[var(--a-border)] bg-[var(--a-card)] px-3.5 py-2 text-xs font-semibold text-[var(--a-text)] transition-colors hover:border-[#E8510A]/40 hover:text-[#E8510A]"
           >
             View site blog
           </a>
           <button
             onClick={handleSignOut}
-            className="rounded-full border border-border px-4 py-2 text-xs font-semibold text-muted-foreground transition-colors hover:border-red-500/40 hover:text-red-500"
+            className="rounded-lg border border-[var(--a-border)] bg-[var(--a-card)] px-3.5 py-2 text-xs font-semibold text-[var(--a-text)] transition-colors hover:border-red-500/40 hover:text-red-600"
           >
             Sign out
           </button>
@@ -366,91 +374,59 @@ export function BlogCMSClient() {
         </p>
       )}
 
-      {/* Mobile tabs */}
-      <div className="flex gap-1 rounded-2xl border border-border bg-card p-1 shadow-soft lg:hidden">
-        <button
-          type="button"
-          onClick={() => setMobilePanel('posts')}
-          className={cn(
-            'flex-1 rounded-xl px-3 py-2 text-sm font-semibold transition-colors',
-            mobilePanel === 'posts' ? 'bg-brand text-white' : 'text-muted-foreground'
-          )}
-        >
-          Posts
-        </button>
-        <button
-          type="button"
-          onClick={() => setMobilePanel('editor')}
-          className={cn(
-            'flex-1 rounded-xl px-3 py-2 text-sm font-semibold transition-colors',
-            mobilePanel === 'editor' ? 'bg-brand text-white' : 'text-muted-foreground'
-          )}
-        >
-          Editor
-        </button>
+      {/* Tabs */}
+      <div className="inline-flex rounded-lg border border-[var(--a-border)] bg-[var(--a-card)] p-1">
+        {(
+          [
+            { key: 'posts', label: 'Posts' },
+            { key: 'editor', label: 'Editor' },
+            { key: 'settings', label: 'Settings' },
+          ] as const
+        ).map((tab) => (
+          <button
+            key={tab.key}
+            type="button"
+            onClick={() => setActiveTab(tab.key)}
+            className={cn(
+              'rounded-md px-5 py-2 text-[13px] font-semibold transition-colors',
+              activeTab === tab.key ? 'bg-[#E8510A] text-white' : 'text-[var(--a-text2)] hover:text-[var(--a-ink2)]'
+            )}
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
 
       {loading ? (
-        <div className="flex h-64 items-center justify-center rounded-3xl border border-border bg-card">
+        <div className="flex h-64 items-center justify-center rounded-lg border border-[var(--a-border)] bg-[var(--a-card)]">
           <Loader />
         </div>
+      ) : activeTab === 'posts' ? (
+        <div className="max-h-[72vh] overflow-hidden rounded-lg border border-[var(--a-border)] bg-[var(--a-card)] shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
+          <BlogPostList
+            posts={posts}
+            selectedId={selectedPostId}
+            onSelect={handleSelectPost}
+            onNew={handleNewPost}
+            onDelete={handleDelete}
+          />
+        </div>
+      ) : showEditor ? (
+        <div className="h-[calc(100vh-260px)] min-h-[560px] overflow-hidden rounded-lg border border-[var(--a-border)] bg-[var(--a-card)] shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
+          <BlogPostEditor
+            key={selectedPost?.id ?? 'new'}
+            post={selectedPost}
+            authors={authors}
+            categories={categories}
+            onSave={handleSave}
+            onUploadImage={handleUploadImage}
+            view={activeTab === 'settings' ? 'settings' : 'editor'}
+          />
+        </div>
       ) : (
-        <>
-          {/* Mobile layout */}
-          <div className="flex h-[70vh] overflow-hidden rounded-3xl border border-border bg-card shadow-soft lg:hidden">
-            <div className="flex w-full flex-col overflow-hidden">
-              <div className="flex-1 overflow-y-auto">
-                {mobilePanel === 'posts' ? (
-                  <BlogPostList
-                    posts={posts}
-                    selectedId={selectedPostId}
-                    onSelect={handleSelectPost}
-                    onNew={handleNewPost}
-                    onDelete={handleDelete}
-                  />
-                ) : showEditor ? (
-                  <BlogPostEditor
-                    key={selectedPost?.id ?? 'new'}
-                    post={selectedPost}
-                    authors={authors}
-                    categories={categories}
-                    onSave={handleSave}
-                    onUploadImage={handleUploadImage}
-                  />
-                ) : (
-                  <EmptyState onNew={handleNewPost} />
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Desktop layout */}
-          <div className="hidden h-[70vh] overflow-hidden rounded-3xl border border-border bg-card shadow-soft lg:flex">
-            <div className="w-80 shrink-0 overflow-hidden border-r border-border">
-              <BlogPostList
-                posts={posts}
-                selectedId={selectedPostId}
-                onSelect={handleSelectPost}
-                onNew={handleNewPost}
-                onDelete={handleDelete}
-              />
-            </div>
-            <div className="flex-1 overflow-hidden">
-              {showEditor ? (
-                <BlogPostEditor
-                  key={selectedPost?.id ?? 'new'}
-                  post={selectedPost}
-                  authors={authors}
-                  categories={categories}
-                  onSave={handleSave}
-                  onUploadImage={handleUploadImage}
-                />
-              ) : (
-                <EmptyState onNew={handleNewPost} />
-              )}
-            </div>
-          </div>
-        </>
+        <div className="rounded-lg border border-[var(--a-border)] bg-[var(--a-card)]">
+          <EmptyState onNew={handleNewPost} />
+        </div>
       )}
     </div>
   );

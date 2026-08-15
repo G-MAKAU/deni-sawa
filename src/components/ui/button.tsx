@@ -6,21 +6,31 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full text-sm font-bold transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.97]',
+  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-none text-[15px] font-semibold transition-all duration-200 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50',
   {
     variants: {
       variant: {
-        default: 'bg-brand text-white shadow-brand-sm hover:bg-brand-600 hover:shadow-brand-glow',
-        outline: 'border-2 border-brand/40 bg-transparent text-brand hover:border-brand hover:bg-brand/5',
-        ghost: 'hover:bg-accent hover:text-accent-foreground',
-        secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
+        // Primary — solid brand orange, white text
+        default:
+          'bg-brand text-white shadow-brand hover:bg-brand-600 active:bg-brand-700',
+        // Secondary — green outline, green text, fill on hover
+        secondary:
+          'border-2 border-growth bg-transparent text-growth hover:bg-growth hover:text-white',
+        // Ghost — transparent with white border/text, for dark sections
+        ghost:
+          'border border-white/30 bg-transparent text-white hover:border-white hover:bg-white/10',
+        // Outline — subtle neutral border
+        outline:
+          'border border-foreground/15 bg-transparent text-foreground hover:border-brand hover:text-brand',
+        ghostLight: 'hover:bg-accent hover:text-accent-foreground',
         link: 'text-brand underline-offset-4 hover:underline',
       },
       size: {
-        default: 'px-7 py-3.5',
-        sm: 'px-5 py-2.5 text-xs',
-        lg: 'px-8 py-4 text-base',
-        icon: 'h-10 w-10',
+        default: 'h-11 px-6',
+        sm: 'h-10 px-5 text-sm',
+        lg: 'h-[52px] px-8 text-base',
+        xl: 'h-[60px] px-10 text-base',
+        icon: 'h-11 w-11',
       },
     },
     defaultVariants: { variant: 'default', size: 'default' },
