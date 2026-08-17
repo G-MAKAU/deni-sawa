@@ -33,7 +33,11 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       supabase.from('whatsapp_config').select('*').limit(1).maybeSingle(),
     ]);
 
-    const smtpConfigured = Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASSWORD);
+    const smtpConfigured = Boolean(
+      (process.env.EMAIL_HOST ?? process.env.SMTP_HOST) &&
+        (process.env.EMAIL_USER ?? process.env.SMTP_USER) &&
+        (process.env.EMAIL_PASS ?? process.env.SMTP_PASSWORD)
+    );
     const waConfig = waConfigResult.data as
       | { provider: string; is_active: boolean; from_number: string | null; account_sid: string | null; phone_number_id: string | null }
       | null
@@ -45,9 +49,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       whatsappTemplates: whatsappResult.data ?? [],
       smtp: {
         configured: smtpConfigured,
-        host: process.env.SMTP_HOST ?? null,
+        host: process.env.EMAIL_HOST ?? process.env.SMTP_HOST ?? null,
         fromName: process.env.SMTP_FROM_NAME ?? 'Deni Sawa Partners',
-        fromEmail: process.env.SMTP_FROM_EMAIL ?? 'noreply@deni-sawa.com',
+        fromEmail: process.env.SMTP_FROM_EMAIL ?? 'noreply@denisawa.co.ke',
       },
       whatsapp: {
         configured: Boolean(waConfig),

@@ -9,6 +9,8 @@ import {
   $isTextNode,
   $createParagraphNode,
   $isParagraphNode,
+  $isNodeSelection,
+  $getNodeByKey,
   COMMAND_PRIORITY_CRITICAL,
   FORMAT_ELEMENT_COMMAND,
   FORMAT_TEXT_COMMAND,
@@ -21,6 +23,7 @@ import {
   OUTDENT_CONTENT_COMMAND,
   type ElementNode,
   type TextFormatType,
+  type TextNode,
 } from 'lexical';
 import { $createHeadingNode, $createQuoteNode, $isHeadingNode, $isQuoteNode } from '@lexical/rich-text';
 import { $createCodeNode, $isCodeNode } from '@lexical/code';
@@ -34,6 +37,7 @@ import {
 import { TOGGLE_LINK_COMMAND } from '@lexical/link';
 import { $createTableNodeWithDimensions, $isTableNode } from '@lexical/table';
 import { $createHorizontalRuleNode } from '@lexical/react/LexicalHorizontalRuleNode';
+import { $isImageNode, type ImageLayout } from '../nodes/ImageNode';
 import {
   Bold,
   Italic,
@@ -206,6 +210,25 @@ function getTextColor(selection: ReturnType<typeof $getSelection>): string | nul
   return null;
 }
 
+/** Reads a CSS property value from the selection anchor's text style (e.g. font-size). */
+function getSelectionStyle(selection: ReturnType<typeof $getSelection>, prop: string): string | null {
+  if (!$isRangeSelection(selection)) return null;
+  try {
+    const anchor = selection.anchor.getNode();
+    const style = $isTextNode(anchor)
+      ? anchor.getStyle()
+      : $isElementNode(anchor)
+        ? (() => {
+            const first = anchor.getFirstChild();
+            return first && $isTextNode(first) ? (first as TextNode).getStyle() : '';
+          })()
+        : '';
+    return parseCssProperty(style, prop) ?? null;
+  } catch {
+    return null;
+  }
+}
+
 /** Reads the background-color of the anchor block (paragraph/heading), normalised to hex. */
 function getBlockBackground(selection: ReturnType<typeof $getSelection>): string | null {
   if (!$isRangeSelection(selection)) return null;
@@ -256,8 +279,27 @@ const ToolbarButton = ({
 
 const ToolbarSep = () => <div className="mx-1 hidden h-5 w-px bg-card-border sm:block" />;
 
-const COLOR_PRESETS: Array<{ name: string; value: string }> = [
-  { name: 'Brand', value: '#E8510A' },
+const IMAGE_LAYOUTS: Array<{ value: ImageLayout; label: string }> = [
+  { value: 'inline', label: 'Inline' },
+  { value: 'square-left', label: 'Square left' },
+  { value: 'square-right', label: 'Square right' },
+  { value: 'tight-left', label: 'Tight left' },
+  { value: 'tight-right', label: 'Tight right' },
+  { value: 'center', label: 'Center' },
+  { value: 'behind', label: 'Behind text' },
+  { value: 'front', label: 'In front of text' },
+];
+
+const FONT_SIZES = ['12', '13', '14', '15', '16', '18', '20', '24', '28', '32'];
+
+const FONT_FAMILIES: Array<{ label: string; value: string }> = [
+  { label: 'Inter (Body)', value: 'Inter, system-ui, sans-serif' },
+  { label: 'Georgia (Display)', value: 'Georgia, "Times New Roman", serif' },
+  { label: 'JetBrains Mono (Mono)', value: '"JetBrains Mono", ui-monospace, monospace' },
+  { label: 'Arial', value: 'Arial, Helvetica, sans-serif' },
+];
+
+const COLOR_PRESETS: Array<{ name: string; value: string }> = [  { name: 'Brand', value: '#E8510A' },
   { name: 'Growth', value: '#5A9E28' },
   { name: 'Ink', value: '#1A1A1A' },
   { name: 'Muted', value: '#666666' },
@@ -429,7 +471,13 @@ export function ToolbarPlugin({
   const [linkOpen, setLinkOpen] = useState(false);
   const [varOpen, setVarOpen] = useState(false);
   const [imageMenuOpen, setImageMenuOpen] = useState(false);
+  const [layoutOpen, setLayoutOpen] = useState(false);
+  const [fontSizeOpen, setFontSizeOpen] = useState(false);
+  const [fontFamilyOpen, setFontFamilyOpen] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<{ key: string; layout: ImageLayout } | null>(null);
+  const [fontSize, setFontSize] = useState<string | null>(null);
+  const [fontFamily, setFontFamily] = useState<string | null>(null);
   const [linkUrl, setLinkUrl] = useState('');
   const linkInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -445,6 +493,21 @@ export function ToolbarPlugin({
           if ($isRangeSelection(selection)) selectionRef.current = selection;
           const hasFormat = (type: TextFormatType) =>
             $isRangeSelection(selection) && selection.hasFormat(type);
+
+          // Detect a selected image so the Layout dropdown can appear.
+          if ($isNodeSelection(selection) && selection.getNodes().length === 1) {
+            const node = selection.getNodes()[0];
+            if ($isImageNode(node)) {
+              setSelectedImage({ key: node.getKey(), layout: node.getLayout() });
+            } else {
+              setSelectedImage(null);
+            }
+          } else {
+            setSelectedImage(null);
+          }
+
+          setFontSize(getSelectionStyle(selection, 'font-size'));
+          setFontFamily(getSelectionStyle(selection, 'font-family'));
 
           setToolbar((prev) => ({
             ...prev,
@@ -630,6 +693,32 @@ export function ToolbarPlugin({
     [editor]
   );
 
+  const applyFontSize = useCallback(
+    (px: string) => {
+      editor.update(() => {
+        const current = $getSelection();
+        const selection =
+          $isRangeSelection(current) ? current : ($isRangeSelection(selectionRef.current) ? selectionRef.current : null);
+        if (!selection) return;
+        $patchStyleText(selection, { 'font-size': px ? `${px}px` : null });
+      });
+    },
+    [editor]
+  );
+
+  const applyFontFamily = useCallback(
+    (family: string) => {
+      editor.update(() => {
+        const current = $getSelection();
+        const selection =
+          $isRangeSelection(current) ? current : ($isRangeSelection(selectionRef.current) ? selectionRef.current : null);
+        if (!selection) return;
+        $patchStyleText(selection, { 'font-family': family });
+      });
+    },
+    [editor]
+  );
+
   const insertVariable = useCallback(
     (name: string) => {
       setVarOpen(false);
@@ -683,8 +772,21 @@ export function ToolbarPlugin({
     }
   }, [editor, onBrowseImage]);
 
+  const applyImageLayout = useCallback(
+    (layout: ImageLayout) => {
+      if (!selectedImage) return;
+      setLayoutOpen(false);
+      editor.update(() => {
+        const node = $getNodeByKey(selectedImage.key);
+        if ($isImageNode(node)) node.setLayout(layout);
+      });
+      setSelectedImage((prev) => (prev ? { ...prev, layout } : prev));
+    },
+    [editor, selectedImage]
+  );
+
   return (
-    <div className="flex flex-wrap items-center gap-1 border-b border-card-border bg-card px-3 py-2">
+    <div className="flex flex-wrap items-center gap-1 rounded-t-lg border-b border-card-border bg-card px-3 py-2">
       {/* Undo / Redo */}
       <ToolbarButton onClick={() => editor.dispatchCommand(UNDO_COMMAND, undefined)} disabled={!toolbar.canUndo} title="Undo">
         <Undo2 className="h-4 w-4" />
@@ -741,6 +843,109 @@ export function ToolbarPlugin({
         )}
       </div>
 
+      {/* Text colour */}
+      <ColorControl
+        label="Text colour"
+        icon={<Palette className="h-4 w-4" />}
+        value={toolbar.textColor}
+        onChange={applyTextColor}
+      />
+
+      {/* Block background (paragraphs & headings) */}
+      <ColorControl
+        label="Background colour"
+        icon={<PaintBucket className="h-4 w-4" />}
+        value={toolbar.blockBg}
+        onChange={applyBlockBackground}
+        disabled={!['paragraph', 'h1', 'h2', 'h3'].includes(toolbar.block)}
+      />
+
+      {/* Font size */}
+      <div className="relative">
+        <button
+          type="button"
+          onMouseDown={(e) => {
+            e.preventDefault();
+            setFontSizeOpen((o) => !o);
+          }}
+          className="flex h-9 items-center gap-0.5 rounded-btn border border-card-border px-2 text-xs font-medium text-foreground transition-colors hover:border-brand/40"
+          aria-haspopup="listbox"
+          aria-expanded={fontSizeOpen}
+          title="Font size"
+        >
+          <span className="w-6">{fontSize?.replace('px', '') ?? '16'}</span>
+          <ChevronDown className={cn('h-3 w-3 text-muted-foreground transition-transform', fontSizeOpen && 'rotate-180')} />
+        </button>
+        {fontSizeOpen && (
+          <>
+            <div className="fixed inset-0 z-10" onMouseDown={() => setFontSizeOpen(false)} />
+            <div className="absolute left-0 top-full z-20 mt-1 max-h-56 w-20 overflow-y-auto rounded-lg border border-card-border bg-card py-1 shadow-card-hover">
+              {FONT_SIZES.map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    applyFontSize(s);
+                    setFontSizeOpen(false);
+                  }}
+                  className={cn(
+                    'flex w-full items-center justify-center py-1.5 text-center transition-colors hover:bg-brand/10',
+                    fontSize?.replace('px', '') === s ? 'text-brand' : 'text-foreground'
+                  )}
+                  style={{ fontSize: `${s}px`, lineHeight: 1.2 }}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Font family */}
+      <div className="relative">
+        <button
+          type="button"
+          onMouseDown={(e) => {
+            e.preventDefault();
+            setFontFamilyOpen((o) => !o);
+          }}
+          className="flex h-9 items-center gap-0.5 rounded-btn border border-card-border px-2 text-xs font-medium text-foreground transition-colors hover:border-brand/40"
+          aria-haspopup="listbox"
+          aria-expanded={fontFamilyOpen}
+          title="Font family"
+        >
+          <span className="max-w-[96px] truncate">{FONT_FAMILIES.find((f) => f.value === fontFamily)?.label ?? 'Font'}</span>
+          <ChevronDown className={cn('h-3 w-3 text-muted-foreground transition-transform', fontFamilyOpen && 'rotate-180')} />
+        </button>
+        {fontFamilyOpen && (
+          <>
+            <div className="fixed inset-0 z-10" onMouseDown={() => setFontFamilyOpen(false)} />
+            <div className="absolute left-0 top-full z-20 mt-1 w-56 rounded-lg border border-card-border bg-card py-1 shadow-card-hover">
+              {FONT_FAMILIES.map((f) => (
+                <button
+                  key={f.value}
+                  type="button"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    applyFontFamily(f.value);
+                    setFontFamilyOpen(false);
+                  }}
+                  className={cn(
+                    'flex w-full items-center justify-between px-3 py-2 text-left text-[13px] transition-colors hover:bg-brand/10',
+                    fontFamily === f.value ? 'text-brand' : 'text-foreground'
+                  )}
+                >
+                  <span style={{ fontFamily: f.value }}>{f.label.split(' (')[0]}</span>
+                  <span className="font-mono text-[10px] text-muted-foreground">{f.label.split('(')[1]?.replace(')', '')}</span>
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+
       <ToolbarSep />
 
       {/* Inline formatting */}
@@ -765,25 +970,6 @@ export function ToolbarPlugin({
       <ToolbarButton onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'code')} active={toolbar.code} title="Inline code">
         <Code className="h-4 w-4" />
       </ToolbarButton>
-
-      <ToolbarSep />
-
-      {/* Text colour */}
-      <ColorControl
-        label="Text colour"
-        icon={<Palette className="h-4 w-4" />}
-        value={toolbar.textColor}
-        onChange={applyTextColor}
-      />
-
-      {/* Block background (paragraphs & headings) */}
-      <ColorControl
-        label="Background colour"
-        icon={<PaintBucket className="h-4 w-4" />}
-        value={toolbar.blockBg}
-        onChange={applyBlockBackground}
-        disabled={!['paragraph', 'h1', 'h2', 'h3'].includes(toolbar.block)}
-      />
 
       <ToolbarSep />
 
@@ -942,6 +1128,55 @@ export function ToolbarPlugin({
             )}
           </div>
         </>
+      )}
+
+      {/* Image layout — appears when an image is selected */}
+      {selectedImage && (
+        <div className="relative">
+          <button
+            type="button"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              setLayoutOpen((o) => !o);
+            }}
+            className="flex h-9 items-center gap-1.5 rounded-btn border border-card-border px-3 text-sm font-medium text-foreground transition-colors hover:border-brand/40"
+            aria-haspopup="listbox"
+            aria-expanded={layoutOpen}
+          >
+            <ImageIcon className="h-3.5 w-3.5 text-brand" />
+            {IMAGE_LAYOUTS.find((l) => l.value === selectedImage.layout)?.label ?? 'Layout'}
+            <ChevronDown className={cn('h-3.5 w-3.5 text-muted-foreground transition-transform', layoutOpen && 'rotate-180')} />
+          </button>
+          {layoutOpen && (
+            <>
+              <div className="fixed inset-0 z-10" onMouseDown={() => setLayoutOpen(false)} />
+              <div className="absolute left-0 top-full z-20 mt-1 w-44 overflow-hidden rounded-lg border border-card-border bg-card py-1 shadow-card-hover">
+                {IMAGE_LAYOUTS.map((layout) => (
+                  <button
+                    key={layout.value}
+                    type="button"
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      applyImageLayout(layout.value);
+                    }}
+                    className={cn(
+                      'flex w-full items-center gap-2 px-3 py-2 text-sm transition-colors hover:bg-brand/10',
+                      selectedImage.layout === layout.value ? 'text-brand' : 'text-foreground'
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        'h-2 w-2 rounded-full',
+                        selectedImage.layout === layout.value ? 'bg-brand' : 'bg-card-border'
+                      )}
+                    />
+                    {layout.label}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
       )}
 
       {/* Clear formatting */}

@@ -146,16 +146,16 @@ export function SessionsViewer() {
     }
   };
 
-  const handleGenerateReport = async () => {
+  const handleGenerateReport = async (reportType: 'summary' | 'detailed') => {
     if (!selectedId) return;
     try {
       const ok = await confirm({
-        message: 'Generate a summary report for this session?',
+        message: `Generate a ${reportType === 'summary' ? 'summary' : 'detailed'} report for this session?`,
         danger: false,
         confirmLabel: 'Generate',
         action: async () => {
           setGenerating(true);
-          await adminPost(`/api/admin/health-checks/sessions/${selectedId}/generate`, { report_type: 'summary' });
+          await adminPost(`/api/admin/health-checks/sessions/${selectedId}/generate`, { report_type: reportType });
         },
       });
       if (!ok) return;
@@ -473,16 +473,27 @@ export function SessionsViewer() {
             {detail.is_complete && reports.length === 0 && (
               <div className="rounded-lg border border-amber-500/25 bg-amber-500/5 px-4 py-3 text-sm text-amber-700">
                 <p className="font-semibold">No report was generated for this session.</p>
-                <p className="mt-1 text-xs">You can generate it now from the admin console.</p>
-                <button
-                  type="button"
-                  onClick={handleGenerateReport}
-                  disabled={generating}
-                  className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-[#5A9E28] px-3.5 py-2 text-xs font-bold text-white transition-colors hover:bg-[#4d8820] disabled:opacity-50"
-                >
-                  {generating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-3.5 w-3.5" />}
-                  {generating ? 'Generating…' : 'Generate summary report'}
-                </button>
+                <p className="mt-1 text-xs">Generate a summary or detailed report now.</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleGenerateReport('summary')}
+                    disabled={generating}
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-[#5A9E28] px-3.5 py-2 text-xs font-bold text-white transition-colors hover:bg-[#4d8820] disabled:opacity-50"
+                  >
+                    {generating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-3.5 w-3.5" />}
+                    {generating ? 'Generating…' : 'Generate summary report'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleGenerateReport('detailed')}
+                    disabled={generating}
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-[#E8510A] px-3.5 py-2 text-xs font-bold text-white transition-colors hover:bg-[#c94508] disabled:opacity-50"
+                  >
+                    {generating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-3.5 w-3.5" />}
+                    {generating ? 'Generating…' : 'Generate detailed report'}
+                  </button>
+                </div>
               </div>
             )}
 

@@ -56,7 +56,7 @@ export default async function HomePage() {
       {/* ── 1. Hero ─────────────────────────────────────────── */}
       <section className="hero-pattern relative overflow-hidden bg-charcoal text-white">
         <div className="container-lux section-pad">
-          <div className="grid items-center gap-14 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16">
+          <div className="grid items-center gap-14 lg:grid-cols-[1fr_1fr] lg:gap-16">
             <div className="max-w-4xl">
               <Reveal>
                 <span className="eyebrow mb-6 items-start gap-2 text-brand">
@@ -101,35 +101,40 @@ export default async function HomePage() {
               </Reveal>
             </div>
 
-            {/* Framed hero image */}
-            <Reveal delay={200} className="relative hidden lg:block">
-              <div className="absolute -right-6 -top-6 h-36 w-36 rounded-full border border-brand/25" />
+            {/* Hero image — full-width after the text on small screens; starts at the centre of the page on large screens */}
+            <Reveal delay={200} className="relative lg:absolute lg:inset-y-0 lg:left-1/2 lg:right-0">
+              <div className="absolute -right-6 top-10 h-36 w-36 rounded-full border border-brand/25" />
               <div className="absolute -bottom-5 -left-5 h-28 w-28 rounded-lg bg-growth/10" />
-              <div className="relative aspect-[4/5] overflow-hidden rounded-lg border border-white/10 shadow-2xl shadow-black/40">
+
+              <div className="relative aspect-[4/5] lg:h-full lg:w-full lg:aspect-auto">
                 <Image
                   src="/images/hero-1.jpg"
                   alt="Deni Sawa Partners advisory team in session"
                   fill
                   priority
-                  sizes="(min-width: 1024px) 44vw, 100vw"
+                  sizes="(min-width: 1024px) 50vw, 100vw"
                   className="object-cover"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-charcoal/85 via-charcoal/5 to-transparent" />
-                <div className="absolute inset-0 ring-1 ring-inset ring-white/10" />
+                {/* Subtle smooth fade from the left edge so the image blends into the hero */}
+                {/* inset-y-0 left-0 w-[250px] bg-gradient-to-r from-charcoal to-transparent */}
+                <div className="absolute mt-15" />
+                {/* Soft bottom vignette keeps the floating card readable */}
+                <div className="absolute inset-0 bg-gradient-to-t from-charcoal/75 via-transparent to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-transparent via-transparent to-charcoal/25" />
               </div>
 
               {/* Floating Health Score card */}
-              <div className="absolute -left-10 bottom-10 w-72 rounded-xl border border-white/10 bg-charcoal/90 p-5 shadow-2xl shadow-black/40 backdrop-blur-md">
+              <div className="absolute bottom-4 left-4 lg:-left-10 lg:bottom-10 w-72 rounded-xl border border-white/10 bg-charcoal/90 p-5 shadow-2xl shadow-black/40 backdrop-blur-md">
                 <div className="flex items-center justify-between">
-                  <p className="text-sm font-semibold text-white">Business Health Score</p>
-                  <span className="rounded-full bg-brand/15 px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-widest text-brand">
+                  <p className="text-sm font-semibold text-brand">Business Health Score</p>
+                  <span className="rounded-full bg-brand/15 px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-widest text-charcoal">
                     AI
                   </span>
                 </div>
 
                 <div className="mt-3 flex items-end gap-1.5">
-                  <span className="font-display text-5xl font-bold leading-none text-white">72</span>
-                  <span className="mb-1 text-sm text-white/40">/100</span>
+                  <span className="font-display text-5xl font-bold leading-none text-brand">72</span>
+                  <span className="mb-1 text-sm text-growth">/100</span>
                   <span className="ml-auto mb-0.5 inline-flex items-center gap-1 rounded-full bg-growth/15 px-2 py-0.5 text-[10px] font-semibold text-growth">
                     <TrendingUp className="h-3 w-3" /> Improving
                   </span>
@@ -143,7 +148,7 @@ export default async function HomePage() {
                     style={{ left: '72%' }}
                   />
                 </div>
-                <div className="mt-1.5 flex justify-between font-mono text-[9px] uppercase tracking-wider text-white/40">
+                <div className="mt-1.5 flex justify-between font-mono text-[9px] uppercase tracking-wider text-charcoal">
                   <span>Fragile</span>
                   <span>Stable</span>
                   <span>Resilient</span>

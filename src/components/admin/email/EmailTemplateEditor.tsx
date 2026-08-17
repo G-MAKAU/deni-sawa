@@ -42,8 +42,8 @@ const SAMPLE_VALUES: Record<string, string> = {
   recipient_name: 'Jane Wanjiku',
   check_name: 'Business Health Check',
   report_type: 'summary',
-  report_url: 'https://deni-sawa.com/health-checks/report/example',
-  resume_url: 'https://deni-sawa.com/health-checks/assessment/business-health-check',
+  report_url: 'https://denisawa.co.ke/health-checks/report/example',
+  resume_url: 'https://denisawa.co.ke/health-checks/assessment/business-health-check',
 };
 
 function substituteInState(state: Record<string, unknown>, values: Record<string, string>): Record<string, unknown> {
@@ -96,7 +96,7 @@ export function EmailTemplateEditor() {
   const [subject, setSubject] = React.useState('');
   const [previewText, setPreviewText] = React.useState('');
   const [fromName, setFromName] = React.useState('Deni Sawa Partners');
-  const [fromEmail, setFromEmail] = React.useState('noreply@deni-sawa.com');
+  const [fromEmail, setFromEmail] = React.useState('noreply@denisawa.co.ke');
   const [replyTo, setReplyTo] = React.useState('');
   const [isActive, setIsActive] = React.useState(true);
   const [bodyLexical, setBodyLexical] = React.useState<Record<string, unknown> | null>(null);
@@ -368,7 +368,7 @@ export function EmailTemplateEditor() {
             {/* Branded footer */}
             <div className="bg-[var(--a-bg)] px-6 py-5 text-center text-[11px] text-[var(--a-muted)]">
               <p>Deni Sawa Partners · Financial coaching, advisory &amp; debt solutions · Nairobi, Kenya</p>
-              <p className="mt-1">deni-sawa.com</p>
+              <p className="mt-1">denisawa.co.ke</p>
             </div>
           </div>
         </div>
@@ -450,7 +450,7 @@ export function EmailTemplateEditor() {
       >
         <div className="space-y-4">
           <Field label="Send to" required>
-            <input className={INPUT_CLASS} type="email" value={testTo} onChange={(e) => setTestTo(e.target.value)} placeholder="you@deni-sawa.com" />
+            <input className={INPUT_CLASS} type="email" value={testTo} onChange={(e) => setTestTo(e.target.value)} placeholder="you@denisawa.co.ke" />
           </Field>
           <div className="h-px bg-[var(--a-border-soft)]" />
           {template.available_variables.map((variable) => (

@@ -80,7 +80,7 @@ export default async function AboutPage() {
                 growth and Best-in-Class performance.
               </p>
               <p>
-                Whether it is a free AI-powered Health Check or a full advisory mandate, the method is the same:
+                Whether it is a free Health Check or a full advisory mandate, the method is the same:
                 Diagnose, Evaluate, Negotiate, Implement, Sustain.
               </p>
             </div>

@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
+import { jsonrepair } from 'jsonrepair';
 
 export interface GenerateReportOptions {
   systemPrompt: string;
@@ -28,7 +29,37 @@ function extractJson(raw: string): string | null {
   return text.slice(start, end + 1);
 }
 
-const ALLOWED_NODES = new Set(['root', 'heading', 'paragraph', 'quote', 'list', 'listitem', 'text', 'callout', 'divider', 'link']);
+/**
+ * Parses a JSON string, auto-repairing common LLM mistakes (missing commas
+ * between elements, unquoted keys, trailing commas) via jsonrepair.
+ */
+function parseJsonLenient(json: string): unknown {
+  try {
+    return JSON.parse(json);
+  } catch {
+    try {
+      return JSON.parse(jsonrepair(json));
+    } catch {
+      throw new Error('The model did not return valid JSON.');
+    }
+  }
+}
+
+const ALLOWED_NODES = new Set([
+  'root',
+  'heading',
+  'paragraph',
+  'quote',
+  'list',
+  'listitem',
+  'text',
+  'callout',
+  'divider',
+  'link',
+  'table',
+  'tablerow',
+  'tablecell',
+]);
 const TEXT_KEYS = new Set(['text', 'link']);
 const LEAF_KEYS = new Set(['divider']);
 const HEADING_TAGS = new Set(['h1', 'h2', 'h3', 'h4', 'h5', 'h6']);
@@ -80,6 +111,30 @@ function sanitizeNode(node: unknown): unknown | null {
   if (type === 'callout') {
     const tone = n.tone === 'growth' || n.tone === 'dark' ? n.tone : 'brand';
     return { children, direction: 'ltr', format: '', indent: 0, tone, type: 'callout', version: 1 };
+  }
+  if (type === 'table') {
+    // Gemini often emits empty Lexical tables — drop them so they don't render
+    // as blank boxes; the model is instructed to use lists/paragraphs instead.
+    if (children.length === 0) return null;
+    return { children, direction: 'ltr', format: '', indent: 0, type: 'table', version: 1 };
+  }
+  if (type === 'tablerow') {
+    if (children.length === 0) return null;
+    return { children, direction: 'ltr', format: '', indent: 0, type: 'tablerow', version: 1 };
+  }
+  if (type === 'tablecell') {
+    return {
+      children,
+      colSpan: typeof n.colSpan === 'number' ? n.colSpan : 1,
+      rowSpan: typeof n.rowSpan === 'number' ? n.rowSpan : 1,
+      headerState: typeof n.headerState === 'number' ? n.headerState : 0,
+      direction: 'ltr',
+      format: '',
+      indent: 0,
+      type: 'tablecell',
+      version: 1,
+      backgroundColor: typeof n.backgroundColor === 'string' ? n.backgroundColor : null,
+    };
   }
   return { children, direction: 'ltr', format: '', indent: 0, textFormat: 0, textStyle: '', type, version: 1 };
 }
@@ -222,15 +277,15 @@ export function buildFallbackReport(options: {
 
 /**
  * Generates a Lexical-state report via the Anthropic Claude API using the
- * stored prompt configuration. Returns null when the API key is missing or the
- * response cannot be parsed, so callers can fall back gracefully.
+ * stored prompt configuration. Throws when the API key is missing or the
+ * response cannot be parsed, so callers can catch and fall back knowingly.
  */
-export async function generateReportWithClaude(options: GenerateReportOptions): Promise<GeneratedReport | null> {
+export async function generateReportWithClaude(options: GenerateReportOptions): Promise<GeneratedReport> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) return null;
+  if (!apiKey) throw new Error('Anthropic API key is not configured.');
 
   const startedAt = Date.now();
-  const model = options.model ?? process.env.ANTHROPIC_MODEL ?? 'claude-sonnet-4-6';
+  const model = options.model ?? process.env.ANTHROPIC_MODEL ?? 'claude-sonnet-4-5';
   // The stored value can be up to 200,000 (context window), but the API rejects
   // output tokens beyond the model's practical ceiling — clamp to a safe max.
   const maxTokens = Math.min(options.maxTokens ?? 4000, 32000);
@@ -250,9 +305,9 @@ export async function generateReportWithClaude(options: GenerateReportOptions): 
       .join('');
 
     const json = extractJson(text);
-    if (!json) return null;
+    if (!json) throw new Error('Claude did not return a valid JSON report.');
 
-    const state = validateLexicalState(JSON.parse(json));
+    const state = validateLexicalState(parseJsonLenient(json));
     return {
       state,
       model,
@@ -260,68 +315,92 @@ export async function generateReportWithClaude(options: GenerateReportOptions): 
       generationSeconds: (Date.now() - startedAt) / 1000,
     };
   } catch (error) {
-    console.error('Claude generation failed:', error);
-    return null;
+    throw new Error(error instanceof Error ? `Claude generation failed: ${error.message}` : 'Claude generation failed.');
   }
 }
 
 /**
  * Generates a Lexical-state report via the Google Gemini API. Mirrors the
  * Claude path — the model must return a valid Lexical EditorState JSON.
+ * Throws on failure so callers can fall back knowingly.
  */
-export async function generateReportWithGemini(options: GenerateReportOptions): Promise<GeneratedReport | null> {
+export async function generateReportWithGemini(options: GenerateReportOptions): Promise<GeneratedReport> {
   const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) return null;
+  if (!apiKey) throw new Error('Gemini API key is not configured.');
 
   const startedAt = Date.now();
-  const model = options.model ?? process.env.GEMINI_MODEL ?? 'gemini-2.5-pro';
-  // Gemini output caps are lower than the stored max — clamp to a safe ceiling.
-  const maxTokens = Math.min(options.maxTokens ?? 4000, 32768);
+  const model = options.model ?? process.env.GEMINI_MODEL ?? 'gemini-2.5-flash';
+  // Gemini 2.5 supports up to 65,536 output tokens — allow long reports.
+  const maxTokens = Math.min(options.maxTokens ?? 4000, 65536);
 
-  try {
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          systemInstruction: { parts: [{ text: options.systemPrompt }] },
-          contents: [{ role: 'user', parts: [{ text: options.userContent }] }],
-          generationConfig: { maxOutputTokens: maxTokens, temperature: 0.6 },
-        }),
+  // Gemini occasionally returns malformed JSON on large prompts — retry once
+  // with a strictness reminder before giving up.
+  const attempts: Array<{ suffix: string; label: string }> = [
+    { suffix: '', label: 'initial' },
+    { suffix: '\n\nReminder: respond with strictly valid JSON only. Every key and value must be double-quoted (e.g. "type":"heading"). No comments, no trailing commas, no text outside the JSON.', label: 'retry' },
+  ];
+
+  for (const attempt of attempts) {
+    try {
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            systemInstruction: { parts: [{ text: options.systemPrompt }] },
+            contents: [{ role: 'user', parts: [{ text: options.userContent + attempt.suffix }] }],
+            generationConfig: { maxOutputTokens: maxTokens, temperature: 0.6 },
+          }),
+        }
+      );
+
+      if (!res.ok) {
+        let detail = '';
+        try {
+          const data = (await res.json()) as { error?: { message?: string } };
+          detail = data.error?.message ?? '';
+        } catch {
+          /* ignore */
+        }
+        throw new Error(`Gemini request failed (${res.status}${detail ? `): ${detail}` : ')'}`);
       }
-    );
 
-    if (!res.ok) return null;
+      const data = (await res.json()) as {
+        candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+      };
+      const text = data.candidates?.[0]?.content?.parts
+        ?.map((p) => p.text || '')
+        .join('')
+        .trim();
+      if (!text) throw new Error('Gemini returned an empty response.');
 
-    const data = (await res.json()) as {
-      candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
-    };
-    const text = data.candidates?.[0]?.content?.parts
-      ?.map((p) => p.text || '')
-      .join('')
-      .trim();
-    if (!text) return null;
+      const json = extractJson(text);
+      if (!json) throw new Error('Gemini did not return a valid JSON report.');
 
-    const json = extractJson(text);
-    if (!json) return null;
-
-    const state = validateLexicalState(JSON.parse(json));
-    return {
-      state,
-      model,
-      generationSeconds: (Date.now() - startedAt) / 1000,
-    };
-  } catch (error) {
-    console.error('Gemini generation failed:', error);
-    return null;
+      const state = validateLexicalState(parseJsonLenient(json));
+      return {
+        state,
+        model,
+        generationSeconds: (Date.now() - startedAt) / 1000,
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (attempt.label === 'retry') {
+        throw new Error(`Gemini generation failed: ${message}`);
+      }
+      // First attempt failed — log and retry once.
+      console.warn(`Gemini generation ${attempt.label} failed, retrying:`, message);
+    }
   }
+
+  throw new Error('Gemini generation failed.');
 }
 
-/** Dispatches to the configured provider (anthropic | google). */
+/** Dispatches to the configured provider (anthropic | google). Throws on failure. */
 export function generateReportForProvider(
   provider: ReportProvider,
   options: GenerateReportOptions
-): Promise<GeneratedReport | null> {
+): Promise<GeneratedReport> {
   return provider === 'google' ? generateReportWithGemini(options) : generateReportWithClaude(options);
 }

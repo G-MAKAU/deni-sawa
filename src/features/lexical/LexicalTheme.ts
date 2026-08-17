@@ -32,7 +32,7 @@ export const LexicalTheme: EditorThemeClasses = {
     ol: 'my-4 list-decimal space-y-2 pl-6 marker:text-brand',
     checklist: 'my-4 list-none space-y-2 pl-2',
     listitem: 'text-[15px] leading-[1.7] text-foreground marker:text-growth',
-    listitemChecked: 'line-through text-muted-foreground',
+    listitemChecked: 'text-foreground',
     listitemUnchecked: '',
     nested: {
       listitem: 'list-none',

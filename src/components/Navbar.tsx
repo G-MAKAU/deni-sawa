@@ -162,7 +162,7 @@ export function Navbar() {
 
         <div className="w-full px-4 sm:px-6 lg:px-8">
           <nav className="flex h-20 items-center justify-between gap-6 lg:h-[76px]">
-            <Logo size="lg" center fill={scrolled} tagline="Debt Management" showTagline={!scrolled} className="shrink-0" />
+            <Logo size="lg" center fill={scrolled} tagline="Partners" showTagline={!scrolled} className="shrink-0" />
 
             <div className="hidden items-center gap-0.5 lg:flex">
               {navItems.map((item) => {
@@ -349,7 +349,7 @@ export function Navbar() {
           )}
         >
           <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
-            <Logo color size="md" center tagline="Debt Management" />
+            <Logo color size="md" center tagline="Partners" />
             <button
               type="button"
               onClick={() => setDrawerOpen(false)}

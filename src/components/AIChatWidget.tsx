@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { MessageCircle, X, Send, Sparkles, Loader2, Lightbulb, MessagesSquare, ArrowUpRight, Calendar, CheckCircle2, Phone, Mail, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { business, aiSystemPrompt, services, programs } from '@/data/content';
+import { learningPrograms } from '@/data/site';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { DatePicker } from '@/components/ui/date-picker';
@@ -18,32 +19,46 @@ type Tab = 'suggestions' | 'chat';
 
 const welcomeMessage: Message = {
   role: 'assistant',
-  content: `Hello! I'm the Deni Sawa AI assistant. I can help you learn about our debt management programmes, financial coaching, and corporate wellness services. What would you like to know?`,
+  content: `Welcome to Deni Sawa Partners. I can guide you through our Business Support services, Health Checks, Learning programmes and the SpecialSit Network — or simply help you take the right first step. What would you like to explore today?`,
 };
 
 const suggestionGroups = [
   {
-    label: 'Services',
+    label: 'Health Checks',
     prompts: [
-      'Tell me about your debt management services',
-      'What programmes do you offer?',
-      'What is your approach to financial coaching?',
+      'Tell me about the Business Health Check',
+      'How does the Professional Financial Health Check work?',
+      'What do I get after completing a Health Check?',
+      'How long does the assessment take?',
+      'Where can I start my Health Check?',
+    ],
+  },
+  {
+    label: 'Business Support',
+    prompts: [
+      'What does a fractional CFO actually do?',
+      'What is fractional CEO support?',
+      'How does Special Situations support work?',
+      'What is the Deni Sawa Method?',
+      'How do I know which service fits my business?',
+    ],
+  },
+  {
+    label: 'Learning & Network',
+    prompts: [
+      learningPrograms[0] ? `Tell me about ${learningPrograms[0].title}` : 'What learning programmes do you offer?',
+      'What learning pathways do you offer?',
+      'Tell me about the SpecialSit Network',
+      'Who is the Executive Finance programme for?',
     ],
   },
   {
     label: 'Getting Started',
     prompts: [
-      'How can I book a consultation?',
-      'How much does counselling cost?',
-      'What do I need to prepare for a session?',
-    ],
-  },
-  {
-    label: 'Common Questions',
-    prompts: [
+      'How do I book a consultation?',
+      'How do I contact the team?',
       'Is my information confidential?',
-      'How soon can I expect results?',
-      'Do you serve businesses too?',
+      'Where can I learn more about the firm?',
     ],
   },
 ];
@@ -272,22 +287,22 @@ export function AIChatWidget() {
 
   return (
     <>
-      {/* Teaser bubble — appears after a delay and opens the chat on click */}
+      {/* Teaser bubble — desktop only (keeps mobile clean), appears after a delay */}
       <div
         className={cn(
-          'fixed bottom-24 right-6 z-50 origin-bottom-right transition-all duration-300',
+          'fixed bottom-24 right-6 z-50 hidden origin-bottom-right transition-all duration-300 md:block',
           teaserVisible && !open ? 'scale-100 opacity-100 translate-y-0' : 'pointer-events-none scale-90 opacity-0 translate-y-2'
         )}
       >
         <button
           onClick={() => openChat('suggestions')}
-          className="group flex items-center gap-3 rounded-full border border-border bg-card py-3 pl-4 pr-3 shadow-soft-xl transition-all duration-300 hover:border-brand/40 hover:shadow-brand-glow"
+          className="group flex items-center gap-3 rounded-full border border-brand/15 bg-card py-3 pl-4 pr-3 shadow-soft-xl transition-all duration-300 hover:border-brand/40 hover:shadow-brand-glow"
           aria-label="Open chat"
         >
-          <span className="relative flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-400 to-brand-700 text-white">
-            <Sparkles className="h-4.5 w-4.5" />
+          <span className="relative flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand to-brand-600 text-white">
+            <Sparkles className="h-4 w-4" />
           </span>
-          <span className="text-sm font-semibold text-foreground">Welcome! How can we support you today?</span>
+          <span className="text-sm font-semibold text-foreground">How can we help you today?</span>
           <ArrowUpRight className="h-4 w-4 text-muted-foreground transition-all duration-300 group-hover:text-brand" />
         </button>
       </div>
@@ -296,8 +311,8 @@ export function AIChatWidget() {
       <button
         onClick={() => (open ? setOpen(false) : openChat('suggestions'))}
         className={cn(
-          'fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full shadow-brand-glow transition-all duration-300 active:scale-90',
-          open ? 'bg-ink-800 text-white' : 'bg-green text-white'
+          'fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full text-white shadow-brand-glow transition-all duration-300 active:scale-90',
+          open ? 'bg-charcoaldeep' : 'bg-gradient-to-br from-brand to-brand-600'
         )}
         aria-label="Toggle AI chat"
       >
@@ -307,21 +322,25 @@ export function AIChatWidget() {
       {/* Chat panel */}
       <div
         className={cn(
-          'fixed bottom-24 right-6 z-[100] w-[calc(100vw-3rem)] max-w-[400px] origin-bottom-right transition-all duration-300',
+          'fixed bottom-24 right-6 z-[100] w-[calc(100vw-1.5rem)] max-w-[400px] origin-bottom-right transition-all duration-300',
           open ? 'scale-100 opacity-100' : 'pointer-events-none scale-90 opacity-0'
         )}
       >
-        <div className="flex max-h-[min(680px,calc(100dvh-8.5rem))] flex-col overflow-hidden rounded-4xl border border-border bg-card shadow-soft-xl">
+        <div className="flex max-h-[min(680px,calc(100dvh-8.5rem))] flex-col overflow-hidden rounded-3xl border border-border bg-card shadow-soft-xl">
           {/* Header */}
-          <div className="flex items-center gap-3 border-b border-border bg-gradient-to-r from-green to-green-600 p-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/25">
-              <Sparkles className="h-5 w-5 text-white" />
-            </div>
-            <div>
-              <div className="font-heading text-sm font-bold text-white">Deni Sawa Assistant</div>
-              <div className="flex items-center gap-1.5 text-xs text-white/80">
-                <span className="h-1.5 w-1.5 rounded-full bg-green-400" />
-                AI-powered · Online now
+          <div className="relative overflow-hidden bg-gradient-to-br from-charcoaldeep via-charcoal to-navydeep p-4">
+            <div className="pointer-events-none absolute -right-8 -top-12 h-32 w-32 rounded-full bg-brand/20 blur-2xl" />
+            <div className="pointer-events-none absolute -bottom-12 -left-8 h-28 w-28 rounded-full bg-growth/20 blur-2xl" />
+            <div className="relative flex items-center gap-3">
+              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-brand to-brand-600 text-white shadow-lg">
+                <Sparkles className="h-5 w-5" />
+              </div>
+              <div className="min-w-0">
+                <div className="font-heading text-sm font-bold text-white">Deni Sawa Assistant</div>
+                <div className="flex items-center gap-1.5 text-[11px] text-white/70">
+                  <span className="h-1.5 w-1.5 flex-shrink-0 rounded-full bg-growth" />
+                  AI concierge · From Special Situations to Best-in-Class
+                </div>
               </div>
             </div>
           </div>
@@ -332,7 +351,7 @@ export function AIChatWidget() {
               onClick={() => setTab('suggestions')}
               className={cn(
                 'flex flex-1 items-center justify-center gap-1.5 rounded-full px-3 py-2 text-xs font-semibold transition-all duration-300',
-                tab === 'suggestions' ? 'bg-white text-brand shadow-soft dark:bg-ink-800' : 'text-muted-foreground hover:text-brand'
+                tab === 'suggestions' ? 'bg-brand text-white shadow-sm' : 'text-muted-foreground hover:text-brand'
               )}
             >
               <Lightbulb className="h-3.5 w-3.5" />
@@ -342,7 +361,7 @@ export function AIChatWidget() {
               onClick={() => setTab('chat')}
               className={cn(
                 'flex flex-1 items-center justify-center gap-1.5 rounded-full px-3 py-2 text-xs font-semibold transition-all duration-300',
-                tab === 'chat' ? 'bg-white text-brand shadow-soft dark:bg-ink-800' : 'text-muted-foreground hover:text-brand'
+                tab === 'chat' ? 'bg-brand text-white shadow-sm' : 'text-muted-foreground hover:text-brand'
               )}
             >
               <MessagesSquare className="h-3.5 w-3.5" />
@@ -360,11 +379,18 @@ export function AIChatWidget() {
                     className={cn('flex animate-chat-in', msg.role === 'user' ? 'justify-end' : 'justify-start')}
                   >
                     {msg.role === 'assistant' && (
-                      <div className="mr-2 flex-shrink-0 flex h-7 w-7 items-center justify-center rounded-full bg-brand/10 text-brand">
+                      <div className="mr-2 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-brand/10 text-brand">
                         <Sparkles className="h-3.5 w-3.5" />
                       </div>
                     )}
-                    <div className={msg.role === 'user' ? 'chat-bubble-user' : 'chat-bubble-ai'}>
+                    <div
+                      className={cn(
+                        'max-w-[85%] whitespace-pre-line px-3.5 py-2.5 text-[13px] leading-relaxed shadow-sm',
+                        msg.role === 'user'
+                          ? 'rounded-2xl rounded-tr-sm bg-brand text-white'
+                          : 'rounded-2xl rounded-tl-sm border border-border bg-card text-foreground'
+                      )}
+                    >
                       {msg.content}
                     </div>
                   </div>
@@ -375,11 +401,11 @@ export function AIChatWidget() {
                     <div className="flex h-7 w-7 items-center justify-center rounded-full bg-brand/10 text-brand">
                       <Sparkles className="h-3.5 w-3.5" />
                     </div>
-                    <div className="chat-bubble-ai flex items-center gap-1">
+                    <div className="flex items-center gap-1 rounded-2xl rounded-tl-sm border border-border bg-card px-3.5 py-3 shadow-sm">
                       {[0, 1, 2].map((i) => (
                         <span
                           key={i}
-                          className="h-1.5 w-1.5 rounded-full bg-muted-foreground/50 animate-bounce"
+                          className="h-1.5 w-1.5 rounded-full bg-brand/50 animate-bounce"
                           style={{ animationDelay: `${i * 0.15}s` }}
                         />
                       ))}
@@ -509,7 +535,7 @@ export function AIChatWidget() {
                 ))}
 
               {/* Input */}
-              <div className="border-t border-border p-3 bg-card">
+              <div className="border-t border-border bg-card p-3">
                 <form
                   onSubmit={(e) => { e.preventDefault(); sendMessage(input); }}
                   className="flex items-center gap-2"
@@ -519,51 +545,59 @@ export function AIChatWidget() {
                     type="text"
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
-                    placeholder="Ask about our services..."
+                    placeholder="Ask about our services…"
                     disabled={loading}
-                    className="flex-1 rounded-full border border-input bg-background/50 px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-brand focus:outline-none disabled:opacity-50"
+                    className="h-11 flex-1 rounded-full border border-border bg-background/50 px-4 text-sm text-foreground placeholder:text-muted-foreground focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 disabled:opacity-50"
                   />
                   <button
                     type="submit"
                     disabled={loading || !input.trim()}
-                    className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-brand text-white transition-all duration-300 hover:bg-brand-600 active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed"
+                    className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-brand text-white shadow-md ring-1 ring-white/30 transition-all duration-300 hover:bg-brand-600 hover:shadow-brand-glow active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed disabled:ring-0"
                     aria-label="Send message"
                   >
-                    {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                    {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
                   </button>
                 </form>
                 <p className="mt-2 text-center text-[10px] text-muted-foreground">
-                  AI assistant · For personalised advice, book a consultation
+                  AI concierge · Confidential &amp; judgement-free
                 </p>
               </div>
             </>
           ) : (
             /* Suggestions panel */
-            <div className="h-[370px] overflow-y-auto scrollbar-hide p-4 space-y-5 bg-muted/20">
+            <div className="h-[400px] overflow-y-auto scrollbar-hide p-4 space-y-5 bg-muted/20">
               <div className="flex items-start gap-2.5 px-1 pt-1">
-                <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-brand/10 text-brand">
-                  <Lightbulb className="h-4.5 w-4.5" />
+                <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-brand to-brand-600 text-white shadow-sm">
+                  <Sparkles className="h-4 w-4" />
                 </div>
                 <div>
-                  <p className="font-heading text-sm font-bold text-foreground">Suggested Topics</p>
+                  <p className="font-heading text-sm font-bold text-foreground">How can we help you today?</p>
                   <p className="text-xs text-muted-foreground">
-                    Pick a topic to get started — tap an option to send it instantly.
+                    Explore a topic below — or ask us anything in chat.
                   </p>
                 </div>
               </div>
 
-              {suggestionGroups.map((group) => (
+              {suggestionGroups.map((group, gi) => (
                 <div key={group.label}>
-                  <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground px-1">{group.label}</p>
+                  <p className="mb-2 flex items-center gap-2 px-1 text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+                    <span
+                      className={cn(
+                        'h-3 w-0.5 rounded-full',
+                        ['bg-brand', 'bg-growth', 'bg-navy', 'bg-charcoaldeep'][gi % 4]
+                      )}
+                    />
+                    {group.label}
+                  </p>
                   <div className="space-y-2">
                     {group.prompts.map((prompt) => (
                       <button
                         key={prompt}
                         onClick={() => sendMessage(prompt)}
-                        className="group flex w-full items-center justify-between gap-2 rounded-2xl border border-border bg-card px-3.5 py-2.5 text-left text-xs text-muted-foreground transition-all duration-200 hover:border-brand/40 hover:text-brand"
+                        className="group flex w-full items-center justify-between gap-2 rounded-2xl border border-border bg-card px-3.5 py-3 text-left text-xs font-medium text-foreground transition-all duration-200 hover:border-brand/40 hover:bg-brand/5 hover:text-brand"
                       >
                         {prompt}
-                        <ArrowUpRight className="h-3.5 w-3.5 flex-shrink-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
+                        <ArrowUpRight className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground opacity-0 transition-all duration-200 group-hover:translate-x-0.5 group-hover:text-brand group-hover:opacity-100" />
                       </button>
                     ))}
                   </div>

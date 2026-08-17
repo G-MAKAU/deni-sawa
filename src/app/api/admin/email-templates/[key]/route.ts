@@ -72,7 +72,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         body_lexical: parsed.data.body_lexical,
         body_html: bodyHtml,
         from_name: parsed.data.from_name ?? 'Deni Sawa Partners',
-        from_email: parsed.data.from_email ?? 'noreply@deni-sawa.com',
+        from_email: parsed.data.from_email ?? 'noreply@denisawa.co.ke',
         reply_to: parsed.data.reply_to ?? null,
         is_active: parsed.data.is_active ?? true,
         ...(parsed.data.available_variables ? { available_variables: parsed.data.available_variables } : {}),

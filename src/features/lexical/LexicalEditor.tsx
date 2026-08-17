@@ -65,25 +65,29 @@ interface LexicalEditorProps {
 /** Full branded Lexical editor (playground-style) with toolbar, floating toolbar and rich plugins. */
 export function LexicalEditor({ state, onChange, placeholder = 'Start writing…', className, variables, onUploadImage, onBrowseImage }: LexicalEditorProps) {
   return (
-    <div className={cn('overflow-hidden rounded-lg border border-card-border bg-card', className)}>
+    <div className={cn('rounded-lg border border-card-border bg-card', className)}>
       <LexicalComposer initialConfig={buildEditorConfig({ state, editable: true })}>
+        {/* The toolbar has no overflow-hidden so its wrapped controls and
+            dropdown menus are always visible, never clipped. */}
         <ToolbarPlugin variables={variables} onUploadImage={onUploadImage} onBrowseImage={onBrowseImage} />
-        <div className="ds-lexical max-h-[520px] min-h-[220px] overflow-y-auto bg-background px-4 py-3">
-          <RichTextPlugin
-            contentEditable={
-              <ContentEditable
-                className="ds-lexical-content min-h-[220px] focus:outline-none"
-                aria-label={placeholder}
-                data-placeholder={placeholder}
-              />
-            }
-            placeholder={
-              <div className="pointer-events-none absolute left-4 top-4 text-sm text-muted-foreground">
-                {placeholder}
-              </div>
-            }
-            ErrorBoundary={LexicalErrorBoundary}
-          />
+        <div className="overflow-hidden rounded-b-lg">
+          <div className="ds-lexical max-h-[520px] min-h-[220px] overflow-y-auto bg-background px-4 py-3">
+            <RichTextPlugin
+              contentEditable={
+                <ContentEditable
+                  className="ds-lexical-content min-h-[220px] focus:outline-none"
+                  aria-label={placeholder}
+                  data-placeholder={placeholder}
+                />
+              }
+              placeholder={
+                <div className="pointer-events-none absolute left-4 top-4 text-sm text-muted-foreground">
+                  {placeholder}
+                </div>
+              }
+              ErrorBoundary={LexicalErrorBoundary}
+            />
+          </div>
         </div>
 
         {/* Playground-core plugins */}

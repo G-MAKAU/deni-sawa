@@ -25,7 +25,20 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
     const check = (checks[0] as { health_checks?: { name?: string } } | undefined)?.health_checks;
     const title = check?.name ?? 'Health Check Report';
 
-    const document = lexicalStateToDocx(report.lexical_state, title);
+    const session = Array.isArray(report.session) ? report.session[0] : report.session;
+    const { data: prompt } = await supabase
+      .from('health_check_report_prompts')
+      .select('header_lexical, footer_lexical')
+      .eq('health_check_id', (session as { health_check_id?: string } | undefined)?.health_check_id ?? '')
+      .eq('report_type', report.report_type)
+      .maybeSingle();
+
+    const document = lexicalStateToDocx(
+      report.lexical_state,
+      title,
+      (prompt as { header_lexical?: unknown } | null)?.header_lexical as Record<string, unknown> | null | undefined,
+      (prompt as { footer_lexical?: unknown } | null)?.footer_lexical as Record<string, unknown> | null | undefined
+    );
     const buffer = await Packer.toBuffer(document);
 
     return new NextResponse(new Uint8Array(buffer), {

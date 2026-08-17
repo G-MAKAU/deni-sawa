@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 import { faqAnswers } from '@/data/content';
+import { learningPrograms, learningPathways } from '@/data/site';
 
 interface ChatRequest {
   message?: string;
@@ -7,19 +8,34 @@ interface ChatRequest {
   history?: { role: 'user' | 'assistant'; content: string }[];
 }
 
-const DEFAULT_SYSTEM_PROMPT = `You are the Deni Sawa AI assistant. Deni Sawa is a Social Enterprise in Kenya offering practical one-on-one advisory and management services for debt reduction and financial freedom.
+const LEARNING_LINE = `${learningPrograms[0]?.title ?? 'Executive Finance for Non-Finance Leaders'}${
+  learningPrograms[0]?.format ? ` (${learningPrograms[0].format})` : ''
+} plus pathways in ${learningPathways
+  .filter((p) => !p.soon)
+  .map((p) => p.title)
+  .join(', ') || 'Business Recovery, Governance and Financial Resilience'}`;
 
-Key info:
-- Services: Debt Management, Financial Coaching, Financial Literacy, Corporate Financial Wellness, Business Advisory, Money Mindset
-- Programs: Starter (12 weeks), Standard (24 weeks), Solid (48 weeks)
-- Contact: advisory@denisawa.co.ke, +254 702 448 601
-- Strategic partners are seasoned bankers with experience in banking, debt management, finance, risk management, trade finance, capital raising
-- We are Christian-based, with principles aligned with Biblical teachings of service
-- First consultation is free; pricing is transparent and shared during the consultation
-- All client information is strictly confidential and never shared without consent
-- When a user wants to book a consultation, a booking form opens in the chat — encourage them to fill it in and confirm their details
+const DEFAULT_SYSTEM_PROMPT = `You are the Deni Sawa Partners concierge — the articulate, quietly confident voice of a premium advisory firm. You guide visitors with polish, warmth and precision.
 
-Be warm, professional, and encouraging. Keep responses concise (under 150 words). For personal financial advice, encourage booking a consultation. Never give specific financial advice.`;
+THE FIRM
+Deni Sawa Partners is an AI-enabled advisory and fractional business support firm helping organisations and professionals move from Special Situations to Best-in-Class. Based in Nairobi, Kenya.
+
+WHAT WE OFFER
+- Business Support: Fractional CFO, Fractional CEO, Governance & Business Controls, Growth & Business Development, and Special Situations Support.
+- Health Checks: the Business Health Check and the Professional Financial Health Check — free, AI-powered assessments that produce a personalised diagnostic report with prioritised recommendations.
+- Learning: ${LEARNING_LINE}.
+- The SpecialSit Network (SS-N): a curated peer community for founders, professionals and investors.
+
+CONTACT
+advisory@denisawa.co.ke · +254 702 448 601
+
+HOW TO TALK
+- Sound elegant, professional and gently confident — the calm tone of a senior advisor. Never salesy, never robotic.
+- Keep replies concise (under 130 words), well-structured and effortless to scan.
+- Open warmly and close with one graceful invitation or a crisp question.
+- When someone shares a symptom (cashflow pressure, debt stress, governance gaps, growth stalls), name it precisely and point them to the right first step — usually the relevant Health Check.
+- When a user wants to book or talk, the chat opens a booking form — encourage them to complete it.
+- Never give specific financial or legal advice. Never promise results. Always steer towards a Health Check or a consultation.`;
 
 function faqReply(message: string): string | null {
   const lower = message.toLowerCase();
@@ -38,25 +54,36 @@ const FAQ_CONTEXT = `\n\nFrequently asked questions (answer these with the exact
 function fallbackReply(message: string): string {
   const lower = (message || '').toLowerCase();
 
-  if (lower.includes('debt') && (lower.includes('manage') || lower.includes('help') || lower.includes('free'))) {
-    return 'Our Debt Management Service offers professional one-on-one advisory with structured repayment plans and creditor negotiation support. We offer three programmes: Starter (12 weeks), Standard (24 weeks), and Solid (48 weeks). Would you like to book a consultation?';
+  if (lower.includes('health check') || lower.includes('assessment') || lower.includes('diagnostic')) {
+    return 'Our Health Checks are the natural first step. The Business Health Check covers financial health, operations, governance, cashflow and growth readiness — while the Professional Financial Health Check reviews personal debt, cashflow, savings and resilience. Both are free, take about 20 minutes, and end with a personalised AI diagnostic report. Shall I open one for you?';
   }
-  if (lower.includes('program') || lower.includes('package') || lower.includes('offer')) {
-    return 'We offer three programmes:\n\n\u2022 Starter Package (12 weeks) \u2014 advisory services with coaching\n\u2022 Standard Package (24 weeks) \u2014 enhanced coaching and monitoring\n\u2022 Solid Package (48 weeks) \u2014 full-spectrum advisory including governance and funding support\n\nEach is tailored to your needs. Would you like to book a consultation?';
+  if (lower.includes('cfo') || lower.includes('financial leadership') || lower.includes('finance function')) {
+    return 'A Fractional CFO brings senior financial leadership on a part-time basis — financial visibility, cashflow discipline, budgeting and decision-grade reporting, without the cost of a full-time hire. It is ideal for businesses that have outgrown reactive finance.';
   }
-  if (lower.includes('book') || lower.includes('consult') || lower.includes('contact')) {
-    return 'You can book a consultation by emailing advisory@denisawa.co.ke or calling +254 702 448 601, or through the contact form on this page.';
+  if (lower.includes('governance') || lower.includes('controls') || lower.includes('board')) {
+    return 'Our Governance & Business Controls work builds the structures, policies and accountability systems that make a business credible to investors, banks and partners — including KPI frameworks, risk controls and audit readiness.';
   }
-  if (lower.includes('coach') || lower.includes('financial')) {
-    return 'Our Financial Coaching covers personal money management, budgeting, saving habits, and accountability. We also offer Financial Literacy education and Money Mindset coaching rooted in Biblical principles.';
+  if (lower.includes('special situation') || lower.includes('distress') || lower.includes('turnaround') || lower.includes('restructure')) {
+    return 'Special Situations Support is what we do best — financial distress, debt pressure and cashflow crisis, handled with bankers-grade discipline. We stabilise first, then rebuild. It is often the difference between a rescue and a result.';
   }
-  if (lower.includes('corporate') || lower.includes('business') || lower.includes('company')) {
-    return 'Our Corporate Financial Wellness programmes empower your workforce with financial education. We also offer Business Advisory for SMEs covering governance, investor readiness, and process re-engineering.';
+  if (lower.includes('learning') || lower.includes('executive finance') || lower.includes('programme') || lower.includes('program')) {
+    return `${learningPrograms[0]?.title ?? 'Executive Finance for Non-Finance Leaders'} is our flagship programme — a ${
+      learningPrograms[0]?.format ?? 'cohort programme'
+    } for leaders who want financial intelligence behind their decisions. We also offer learning pathways in ${learningPathways
+      .filter((p) => !p.soon)
+      .map((p) => p.title)
+      .join(', ')}.`;
+  }
+  if (lower.includes('network') || lower.includes('specialsit') || lower.includes('community')) {
+    return 'The SpecialSit Network (SS-N) is a curated peer community for founders, professionals and investors navigating complex situations — candid forums, mentorship from seasoned operators, investor connections and real accountability.';
+  }
+  if (lower.includes('book') || lower.includes('consult') || lower.includes('contact') || lower.includes('talk')) {
+    return 'I would be delighted to arrange that. A booking form is opening for you — complete your name, a phone number or email, and the service you are interested in, and our team will reach out to confirm. Or call us directly at +254 702 448 601.';
   }
   if (lower.includes('hi') || lower.includes('hello') || lower.includes('hey')) {
-    return 'Hello! Welcome to Deni Sawa. I can help you learn about our debt management services, financial coaching programmes, and corporate wellness offerings. What would you like to know?';
+    return 'Welcome to Deni Sawa Partners. I can guide you through our Business Support services, Health Checks, Learning programmes and the SpecialSit Network — or simply help you find the right first step. What would you like to explore?';
   }
-  return 'Thank you for your question. Reach us at advisory@denisawa.co.ke or +254 702 448 601, or book a consultation through the contact form. Would you like to know about our services or programmes?';
+  return 'Thank you for reaching out. Whether it is a Business Health Check, fractional support or a Special Situations conversation, we would be glad to help. Reach us at advisory@denisawa.co.ke or +254 702 448 601, or tell me a little more about what you are facing.';
 }
 
 export async function POST(req: NextRequest) {

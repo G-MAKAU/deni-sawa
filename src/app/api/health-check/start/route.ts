@@ -14,6 +14,7 @@ const startSchema = z.object({
   email: z.string().email().trim().optional().or(z.literal('')),
   whatsapp: z.string().trim().max(40).optional().or(z.literal('')),
   preferred_delivery: z.enum(['email', 'whatsapp', 'both']).optional(),
+  report_selection: z.enum(['summary', 'detailed', 'detailed_call']).optional(),
 });
 
 function parseIp(request: NextRequest): string | null {
@@ -39,7 +40,7 @@ export async function POST(request: NextRequest) {
     const supabase = getServiceClient();
     const { data: check, error: checkError } = await supabase
       .from('health_checks')
-      .select('id, slug, name')
+      .select('id, slug, name, detailed_price, detailed_call_price')
       .eq('id', parsed.data.health_check_id)
       .eq('is_active', true)
       .maybeSingle();
@@ -49,6 +50,7 @@ export async function POST(request: NextRequest) {
 
     const email = parsed.data.email?.trim() || null;
     const whatsapp = parsed.data.whatsapp?.trim() || null;
+    const reportSelection = parsed.data.report_selection ?? 'summary';
 
     // business_name required for the Business Health Check.
     if (check.slug === 'business-health-check' && !parsed.data.business_name?.trim()) {
@@ -58,6 +60,19 @@ export async function POST(request: NextRequest) {
     if (!email && !whatsapp) {
       return NextResponse.json({ error: 'Provide at least an email or WhatsApp number.' }, { status: 422 });
     }
+
+    // The Detailed + Advisory Call option must have a WhatsApp number.
+    if (reportSelection === 'detailed_call' && !whatsapp) {
+      return NextResponse.json(
+        { error: 'A WhatsApp number is required for the Detailed + Advisory Call option so we can schedule your call.' },
+        { status: 422 }
+      );
+    }
+
+    const detailedPrice = Number(check.detailed_price ?? 0);
+    const detailedCallPrice = Number(check.detailed_call_price ?? 0);
+    const amount = reportSelection === 'detailed_call' ? detailedCallPrice : reportSelection === 'detailed' ? detailedPrice : 0;
+    const requiresPayment = reportSelection === 'detailed' || reportSelection === 'detailed_call';
 
     // preferred_delivery must be consistent with what was provided.
     let preferredDelivery = parsed.data.preferred_delivery ?? 'email';
@@ -86,6 +101,10 @@ export async function POST(request: NextRequest) {
         email,
         whatsapp,
         preferred_delivery: preferredDelivery,
+        report_selection: reportSelection,
+        requires_call: reportSelection === 'detailed_call',
+        payment_amount: requiresPayment ? amount : null,
+        payment_status: requiresPayment ? 'pending' : 'none',
         ip_address: ipAddress,
         user_agent: request.headers.get('user-agent'),
       })
@@ -95,7 +114,7 @@ export async function POST(request: NextRequest) {
     if (sessionError) throw sessionError;
 
     // ── Started notifications (best-effort) ─────────────────────────────────
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://deni-sawa.com';
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://denisawa.co.ke';
     const resumeUrl = `${siteUrl}/health-checks/assessment/${check.slug}`;
 
     if (preferredDelivery === 'email' || preferredDelivery === 'both') {
@@ -150,6 +169,9 @@ export async function POST(request: NextRequest) {
       slug: check.slug,
       name: check.name,
       resume_url: resumeUrl,
+      report_selection: reportSelection,
+      requires_payment: requiresPayment,
+      amount: amount,
     });
   } catch (error) {
     console.error('Failed to start health check:', error);

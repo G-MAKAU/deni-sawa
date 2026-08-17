@@ -11,10 +11,13 @@ const updateSchema = z.object({
   name: z.string().min(1).max(120).optional(),
   slug: z.string().min(1).max(120).optional(),
   description: z.string().max(1000).nullable().optional(),
+  image_url: z.string().max(500).nullable().optional(),
   estimated_minutes: z.number().int().min(1).max(600).nullable().optional(),
   tags: z.array(z.string()).max(20).optional(),
   is_active: z.boolean().optional(),
   sort_order: z.number().int().optional(),
+  detailed_price: z.number().min(0).optional(),
+  detailed_call_price: z.number().min(0).optional(),
 });
 
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {

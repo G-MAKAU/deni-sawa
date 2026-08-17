@@ -21,7 +21,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     const { data: session } = await supabase
       .from('health_check_sessions')
-      .select('id, health_check_id, full_name, email, whatsapp, preferred_delivery, is_complete')
+      .select('id, health_check_id, full_name, business_name, email, whatsapp, preferred_delivery, is_complete')
       .eq('id', report.session_id)
       .maybeSingle();
     if (!session) return NextResponse.json({ error: 'Session not found.' }, { status: 404 });
@@ -34,7 +34,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json({
       report: result.report,
       regenerated: true,
-      report_url: `${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://deni-sawa.com'}/health-checks/report/${result.report.report_url_token}`,
+      report_url: `${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://denisawa.co.ke'}/health-checks/report/${result.report.report_url_token}`,
     });
   } catch (error) {
     return jsonAdminWriteError(error, 'Failed to regenerate report');

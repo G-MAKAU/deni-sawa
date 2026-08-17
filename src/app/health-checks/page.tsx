@@ -1,7 +1,9 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import Image from 'next/image';
 import { ArrowRight, ClipboardCheck, Sparkles, FileText, Lock, Check } from 'lucide-react';
 import { site, healthChecks } from '@/data/site';
+import { getServiceClient } from '@/lib/supabase/service';
 import { PageHero } from '@/components/PageHero';
 import { SectionHeading } from '@/components/SectionHeading';
 import { CTASection } from '@/components/CTASection';
@@ -31,7 +33,28 @@ const comparison = [
   { label: 'Emailed to you with a private link', basic: false, full: true },
 ];
 
-export default function HealthChecksPage() {
+/** Cover images set on health checks in the admin (Supabase storage), keyed by slug. */
+async function getCheckImages(): Promise<Record<string, string | null>> {
+  try {
+    const supabase = getServiceClient();
+    const slugs = [
+      `${healthChecks.business.slug}-health-check`,
+      `${healthChecks.professional.slug}-health-check`,
+    ];
+    const { data } = await supabase.from('health_checks').select('slug, image_url').in('slug', slugs);
+    const map: Record<string, string | null> = {};
+    (data ?? []).forEach((c) => {
+      map[c.slug] = (c.image_url as string | null) ?? null;
+    });
+    return map;
+  } catch {
+    return {};
+  }
+}
+
+export default async function HealthChecksPage() {
+  const images = await getCheckImages();
+
   return (
     <>
       <PageHero
@@ -54,37 +77,58 @@ export default function HealthChecksPage() {
             title="Two checks. One standard of rigour."
           />
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            {[healthChecks.business, healthChecks.professional].map((check, i) => (
-              <Reveal key={check.slug} delay={i * 80} className="h-full">
-                <div className="card-elevated flex h-full flex-col">
-                  <div className="mb-5 flex items-center gap-3">
-                    <span className="inline-flex h-12 w-12 items-center justify-center rounded-lg bg-brand/10 text-brand">
-                      {i === 0 ? <ClipboardCheck className="h-6 w-6" strokeWidth={1.8} /> : <Sparkles className="h-6 w-6" strokeWidth={1.8} />}
-                    </span>
-                    <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
-                      {String(i + 1).padStart(2, '0')} / Free · 10–15 min
-                    </span>
+            {[healthChecks.business, healthChecks.professional].map((check, i) => {
+              const slugKey = `${check.slug}-health-check`;
+              const imageSrc =
+                images[slugKey] ?? (i === 0 ? '/images/business-check.jpg' : '/images/professional-check.jpg');
+              return (
+                <Reveal key={check.slug} delay={i * 80} className="h-full">
+                  <div className="card-elevated group flex h-full flex-col overflow-hidden">
+                    {/* Cover image */}
+                    <div className="relative aspect-[16/9] w-full overflow-hidden">
+                      <Image
+                        src={imageSrc}
+                        alt={check.title}
+                        fill
+                        priority={i === 0}
+                        sizes="(min-width: 1024px) 50vw, 100vw"
+                        className="object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-charcoal/70 via-charcoal/10 to-transparent" />
+                      <div className="absolute bottom-3 left-4 flex items-center gap-2.5">
+                        <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-brand/90 text-white shadow-lg">
+                          {i === 0 ? <ClipboardCheck className="h-5 w-5" strokeWidth={1.8} /> : <Sparkles className="h-5 w-5" strokeWidth={1.8} />}
+                        </span>
+                        <span className="rounded-full bg-[#111111]/55 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.18em] text-white/85 backdrop-blur-sm">
+                          {String(i + 1).padStart(2, '0')} / Free · 10–15 min
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Body */}
+                    <div className="flex flex-1 flex-col p-7">
+                      <h2 className="text-h3 font-semibold text-foreground">{check.title}</h2>
+                      <p className="mt-3 flex-1 leading-relaxed text-muted-foreground">{check.description}</p>
+                      <div className="mt-6 flex flex-wrap gap-2">
+                        {check.areas.map((area) => (
+                          <span key={area} className="rounded-badge border border-card-border bg-bgalt px-3 py-1 text-xs font-medium text-foreground">
+                            {area}
+                          </span>
+                        ))}
+                      </div>
+                      <div className="mt-8">
+                        <Button asChild size="lg">
+                          <Link href={`/health-checks/${slugKey}`}>
+                            Start Assessment
+                            <ArrowRight className="h-4 w-4" />
+                          </Link>
+                        </Button>
+                      </div>
+                    </div>
                   </div>
-                  <h2 className="text-h3 font-semibold text-foreground">{check.title}</h2>
-                  <p className="mt-3 flex-1 leading-relaxed text-muted-foreground">{check.description}</p>
-                  <div className="mt-6 flex flex-wrap gap-2">
-                    {check.areas.map((area) => (
-                      <span key={area} className="rounded-badge border border-card-border bg-bgalt px-3 py-1 text-xs font-medium text-foreground">
-                        {area}
-                      </span>
-                    ))}
-                  </div>
-                  <div className="mt-8">
-                    <Button asChild size="lg">
-                      <Link href={`/health-checks/${check.slug}-health-check`}>
-                        Start Assessment
-                        <ArrowRight className="h-4 w-4" />
-                      </Link>
-                    </Button>
-                  </div>
-                </div>
-              </Reveal>
-            ))}
+                </Reveal>
+              );
+            })}
           </div>
         </div>
       </section>

@@ -49,6 +49,15 @@ function docxHex(color: string): string {
   return color.replace('#', '');
 }
 
+/** Maps a CSS font-family stack to a Word-safe font (falls back gracefully). */
+function docxFamily(family: string): string {
+  const fam = family.toLowerCase();
+  if (fam.includes('times') || fam.includes('georgia') || fam.includes('serif')) return 'Georgia';
+  if (fam.includes('courier') || fam.includes('mono')) return 'Courier New';
+  if (fam.includes('arial') || fam.includes('helvetica')) return 'Arial';
+  return 'Calibri';
+}
+
 /** Paragraph shading (background colour) derived from an element node's style. */
 function blockShading(node: Node) {
   const bg = cssColorToHex(parseCssProperty(node.style ?? '', 'background-color') ?? '');
@@ -64,12 +73,16 @@ function runsFromChildren(children: Node[] | undefined): TextRun[] {
         const format = child.format ?? 0;
         const isLink = child.type === 'link';
         const color = cssColorToHex(parseCssProperty(child.style ?? '', 'color') ?? '');
+        const px = Number(parseCssProperty(child.style ?? '', 'font-size')?.replace('px', ''));
+        const family = parseCssProperty(child.style ?? '', 'font-family');
         const options: Partial<IRunOptions> = {
           bold: (format & FORMAT_BOLD) !== 0 || undefined,
           italics: (format & FORMAT_ITALIC) !== 0 || undefined,
           underline: (format & FORMAT_UNDERLINE) !== 0 ? {} : undefined,
           strike: (format & FORMAT_STRIKETHROUGH) !== 0 || undefined,
           ...(color ? { color: docxHex(color) } : {}),
+          ...(px ? { size: Math.round(px * 1.5) } : {}),
+          ...(family ? { font: docxFamily(family) } : {}),
           ...(isLink ? { color: ORANGE } : {}),
         };
         runs.push(run(child.text ?? '', options));
@@ -164,79 +177,93 @@ function blockParagraph(node: Node): Paragraph {
 
 /**
  * Converts a serialized Lexical EditorState into a branded Word document.
- * Used by the token-based Word export route.
+ * Used by the token-based Word export route. Optional header/footer Lexical
+ * states are rendered at the top/bottom of the document body.
  */
-export function lexicalStateToDocx(state: Record<string, unknown> | string, title: string): Document {
-  let root: Node | undefined;
-  if (typeof state === 'string') {
-    try {
-      root = (JSON.parse(state) as { root?: Node }).root;
-    } catch {
-      root = undefined;
+export function lexicalStateToDocx(
+  state: Record<string, unknown> | string,
+  title: string,
+  header?: Record<string, unknown> | string | null,
+  footer?: Record<string, unknown> | string | null
+): Document {
+  const rootOf = (source: Record<string, unknown> | string | null | undefined): Node | undefined => {
+    if (!source) return undefined;
+    if (typeof source === 'string') {
+      try {
+        return (JSON.parse(source) as { root?: Node }).root;
+      } catch {
+        return undefined;
+      }
     }
-  } else {
-    root = (state as { root?: Node }).root;
-  }
+    return (source as { root?: Node }).root;
+  };
 
   const children: Paragraph[] = [buildTitle(title)];
-  (root?.children ?? []).forEach((node) => {
-    switch (node.type) {
-      case 'heading':
-      case 'paragraph':
-        children.push(blockParagraph(node));
-        break;
-      case 'quote': {
-        children.push(
-          new Paragraph({
-            spacing: { before: 120, after: 120 },
-            indent: { left: 360 },
-            border: { left: { style: BorderStyle.SINGLE, size: 18, color: ORANGE } },
-            children: runsFromChildren(node.children).length
-              ? runsFromChildren(node.children).map((r) => new TextRun({ ...r, italics: true }))
-              : [new TextRun({ text: '', font: 'Calibri', size: 22, italics: true, color: DARK })],
-          })
-        );
-        break;
-      }
-      case 'callout': {
-        const isGrowth = node.tone === 'growth';
-        const label = node.tone === 'growth' ? 'NOTE' : 'PRIORITY';
-        children.push(
-          new Paragraph({
-            spacing: { before: 160, after: 160 },
-            shading: { type: ShadingType.CLEAR, color: 'auto', fill: isGrowth ? GROWTH_LIGHT : LIGHT },
-            border: { left: { style: BorderStyle.SINGLE, size: 24, color: isGrowth ? GREEN : ORANGE } },
-            children: [
-              new TextRun({ text: label, font: 'Calibri', size: 14, bold: true, color: isGrowth ? GREEN : ORANGE, allCaps: true }),
-              ...(runsFromChildren(node.children).map((r) => new TextRun({ break: 1, ...r })) as TextRun[]),
-            ],
-          })
-        );
-        break;
-      }
-      case 'list':
-        (node.children ?? []).forEach((item) =>
+
+  const appendRoot = (root: Node | undefined) => {
+    (root?.children ?? []).forEach((node) => {
+      switch (node.type) {
+        case 'heading':
+        case 'paragraph':
+          children.push(blockParagraph(node));
+          break;
+        case 'quote': {
           children.push(
             new Paragraph({
-              spacing: { after: 60 },
-              indent: { left: 420, hanging: 200 },
-              bullet: { level: 0 },
-              children: runsFromChildren(item.children).length ? runsFromChildren(item.children) : [run('')],
+              spacing: { before: 120, after: 120 },
+              indent: { left: 360 },
+              border: { left: { style: BorderStyle.SINGLE, size: 18, color: ORANGE } },
+              children: runsFromChildren(node.children).length
+                ? runsFromChildren(node.children).map((r) => new TextRun({ ...r, italics: true }))
+                : [new TextRun({ text: '', font: 'Calibri', size: 22, italics: true, color: DARK })],
             })
-          )
-        );
-        break;
-      case 'divider':
-      default:
-        children.push(
-          new Paragraph({
-            spacing: { before: 120, after: 120 },
-            border: { bottom: { style: BorderStyle.SINGLE, size: 4, color: 'E0E0E0' } },
-            children: [],
-          })
-        );
-    }
-  });
+          );
+          break;
+        }
+        case 'callout': {
+          const isGrowth = node.tone === 'growth';
+          const label = node.tone === 'growth' ? 'NOTE' : 'PRIORITY';
+          children.push(
+            new Paragraph({
+              spacing: { before: 160, after: 160 },
+              shading: { type: ShadingType.CLEAR, color: 'auto', fill: isGrowth ? GROWTH_LIGHT : LIGHT },
+              border: { left: { style: BorderStyle.SINGLE, size: 24, color: isGrowth ? GREEN : ORANGE } },
+              children: [
+                new TextRun({ text: label, font: 'Calibri', size: 14, bold: true, color: isGrowth ? GREEN : ORANGE, allCaps: true }),
+                ...(runsFromChildren(node.children).map((r) => new TextRun({ break: 1, ...r })) as TextRun[]),
+              ],
+            })
+          );
+          break;
+        }
+        case 'list':
+          (node.children ?? []).forEach((item) =>
+            children.push(
+              new Paragraph({
+                spacing: { after: 60 },
+                indent: { left: 420, hanging: 200 },
+                bullet: { level: 0 },
+                children: runsFromChildren(item.children).length ? runsFromChildren(item.children) : [run('')],
+              })
+            )
+          );
+          break;
+        case 'divider':
+        default:
+          children.push(
+            new Paragraph({
+              spacing: { before: 120, after: 120 },
+              border: { bottom: { style: BorderStyle.SINGLE, size: 4, color: 'E0E0E0' } },
+              children: [],
+            })
+          );
+      }
+    });
+  };
+
+  appendRoot(rootOf(header));
+  appendRoot(rootOf(state));
+  appendRoot(rootOf(footer));
 
   return new Document({
     creator: 'Deni Sawa Partners',

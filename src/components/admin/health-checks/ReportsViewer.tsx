@@ -10,7 +10,7 @@ import {
 } from '@tanstack/react-table';
 import { Eye, Loader2, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
-import { adminFetch, adminPost, adminPut } from '@/lib/admin-client';
+import { adminFetch, adminPut } from '@/lib/admin-client';
 import { useConfirm } from '@/components/admin/confirm';
 import { LexicalRenderer } from '@/features/lexical/LexicalRenderer';
 import { ErrorBanner, Loading, Modal, PageHeader, StatusPill, Td, Th, Toggle } from '@/components/admin/ui';
@@ -120,7 +120,8 @@ export function ReportsViewer() {
         confirmLabel: 'Regenerate',
         action: async () => {
           setRegeneratingId(report.id);
-          await adminPost(`/api/admin/health-checks/reports/${report.id}/regenerate`, {});
+          // No body needed — the route regenerates the report identified by its id.
+          await adminFetch(`/api/admin/health-checks/reports/${report.id}/regenerate`, { method: 'POST' });
         },
       });
       if (!ok) return;

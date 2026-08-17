@@ -8,6 +8,8 @@ export interface ReportTextRun {
   underline?: boolean;
   strike?: boolean;
   color?: string;
+  fontSize?: number;
+  fontFamily?: string;
 }
 
 export interface ReportBlock {
@@ -46,6 +48,12 @@ function collectText(node: Record<string, unknown> | null | undefined): ReportTe
     };
     const color = cssColorToHex(parseCssProperty(String(node.style ?? ''), 'color') ?? '');
     if (color) run.color = color;
+
+    const fontSize = Number(parseCssProperty(String(node.style ?? ''), 'font-size')?.replace('px', ''));
+    if (fontSize) run.fontSize = fontSize;
+
+    const family = parseCssProperty(String(node.style ?? ''), 'font-family');
+    if (family) run.fontFamily = family.split(',')[0].trim().replace(/['"]/g, '');
     return [run];
   }
   if (Array.isArray(node.children)) {
@@ -72,11 +80,15 @@ function blockBackground(node: Record<string, unknown>): string | undefined {
 export function lexicalStateToModel(
   state: Record<string, unknown> | string,
   checkType: CheckType,
-  title: string
+  title: string,
+  header?: Record<string, unknown> | string | null,
+  footer?: Record<string, unknown> | string | null
 ): ExportModel {
-  const raw = typeof state === 'string' ? JSON.parse(state) : state;
-  const root = (raw?.root ?? raw) as Record<string, unknown> | undefined;
-  const children = (root?.children as Record<string, unknown>[] | undefined) ?? [];
+  const childrenOf = (source: Record<string, unknown> | string) => {
+    const raw = typeof source === 'string' ? JSON.parse(source) : source;
+    const root = (raw?.root ?? raw) as Record<string, unknown> | undefined;
+    return (root?.children as Record<string, unknown>[] | undefined) ?? [];
+  };
 
   const blocks: ReportBlock[] = [];
 
@@ -117,7 +129,9 @@ export function lexicalStateToModel(
     }
   };
 
-  children.forEach(convert);
+  if (header) childrenOf(header).forEach(convert);
+  childrenOf(state).forEach(convert);
+  if (footer) childrenOf(footer).forEach(convert);
 
   return { checkType, title, blocks };
 }

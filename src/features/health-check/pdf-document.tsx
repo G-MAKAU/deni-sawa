@@ -138,7 +138,7 @@ function ReportFooter() {
   );
 }
 
-/** Inline styles for a text run (bold/italic/underline/strike + colour). */
+/** Inline styles for a text run (bold/italic/underline/strike + colour + size). */
 function runStyle(run: ReportTextRun): Record<string, string> {
   const style: Record<string, string> = {};
   if (run.bold) style.fontWeight = '700';
@@ -146,6 +146,15 @@ function runStyle(run: ReportTextRun): Record<string, string> {
   if (run.underline && !run.strike) style.textDecoration = 'underline';
   if (run.strike) style.textDecoration = 'line-through';
   if (run.color) style.color = run.color;
+  if (run.fontSize) style.fontSize = `${run.fontSize}px`;
+  // react-pdf only ships Helvetica/Times/Courier — map the known families so a
+  // custom family degrades gracefully instead of breaking.
+  if (run.fontFamily) {
+    const fam = run.fontFamily.toLowerCase();
+    if (fam.includes('times') || fam.includes('georgia') || fam.includes('serif')) style.fontFamily = 'Times-Roman';
+    else if (fam.includes('courier') || fam.includes('mono')) style.fontFamily = 'Courier';
+    else if (fam.includes('arial') || fam.includes('helvetica') || fam.includes('inter')) style.fontFamily = 'Helvetica';
+  }
   return style;
 }
 

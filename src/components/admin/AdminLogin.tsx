@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import { createBrowserClient } from '@/lib/supabase/browser';
-import { AlertCircle, Loader2, Lock, ShieldCheck } from 'lucide-react';
+import { AlertCircle, ArrowLeft, CheckCircle2, Loader2, Lock, Mail, ShieldCheck } from 'lucide-react';
 
 const REASON_MESSAGES: Record<string, string> = {
   timeout: 'Your session expired due to inactivity.',
@@ -17,6 +17,12 @@ export function AdminLogin() {
   const [reason, setReason] = React.useState<string | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const [submitting, setSubmitting] = React.useState(false);
+
+  const [forgotMode, setForgotMode] = React.useState(false);
+  const [forgotEmail, setForgotEmail] = React.useState('');
+  const [forgotSent, setForgotSent] = React.useState(false);
+  const [forgotSubmitting, setForgotSubmitting] = React.useState(false);
+  const [forgotError, setForgotError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -53,6 +59,33 @@ export function AdminLogin() {
     }
   };
 
+  const handleForgot = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setForgotError(null);
+    if (!forgotEmail.trim()) {
+      setForgotError('Please enter your admin email address.');
+      return;
+    }
+    setForgotSubmitting(true);
+    try {
+      const res = await fetch('/api/admin/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: forgotEmail.trim() }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setForgotError(data.error ?? 'Something went wrong. Please try again.');
+        return;
+      }
+      setForgotSent(true);
+    } catch {
+      setForgotError('Something went wrong. Please try again.');
+    } finally {
+      setForgotSubmitting(false);
+    }
+  };
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-[var(--a-bg)] px-4 py-12">
       <div className="w-full max-w-md">
@@ -69,8 +102,12 @@ export function AdminLogin() {
 
         {/* Card */}
         <div className="rounded-xl border border-[var(--a-border)] bg-[var(--a-card)] p-8 shadow-[0_2px_8px_rgba(0,0,0,0.06),0_16px_40px_rgba(0,0,0,0.08)]">
-          <h2 className="font-heading text-lg font-bold text-[var(--a-ink)]">Sign in to your account</h2>
-          <p className="mt-1 text-sm text-[var(--a-muted)]">Staff access only.</p>
+          <h2 className="font-heading text-lg font-bold text-[var(--a-ink)]">
+            {forgotMode ? 'Reset your password' : 'Sign in to your account'}
+          </h2>
+          <p className="mt-1 text-sm text-[var(--a-muted)]">
+            {forgotMode ? 'Enter your admin email and we\'ll send you a reset link.' : 'Staff access only.'}
+          </p>
 
           {reason && (
             <div className="mt-5 flex items-start gap-2.5 rounded-lg border border-amber-500/30 bg-amber-500/5 px-4 py-3 text-sm text-amber-700">
@@ -86,46 +123,124 @@ export function AdminLogin() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-            <div>
-              <label htmlFor="email" className="mb-1.5 block text-[13px] font-semibold text-[var(--a-ink2)]">
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                autoComplete="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@deni-sawa.com"
-                className="h-11 w-full rounded-lg border border-[var(--a-border)] bg-[var(--a-subtle)] px-3.5 text-sm text-[var(--a-ink)] placeholder:text-[var(--a-placeholder)] focus:border-[#E8510A] focus:outline-none focus:ring-2 focus:ring-[#E8510A]/20"
-              />
+          {forgotMode && forgotSent ? (
+            <div className="mt-6 text-center">
+              <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-green-500/10 text-green-600">
+                <CheckCircle2 className="h-6 w-6" />
+              </span>
+              <p className="mt-4 text-sm text-[var(--a-muted)]">
+                If an admin account exists for <span className="font-medium text-[var(--a-ink2)]">{forgotEmail}</span>,
+                a reset link is on its way to that inbox.
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setForgotMode(false);
+                  setForgotSent(false);
+                }}
+                className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-[#E8510A] hover:underline"
+              >
+                <ArrowLeft className="h-3.5 w-3.5" /> Back to sign in
+              </button>
             </div>
+          ) : forgotMode ? (
+            <>
+              {forgotError && (
+                <div className="mt-5 flex items-start gap-2.5 rounded-lg border border-red-500/30 bg-red-500/5 px-4 py-3 text-sm text-red-600" role="alert">
+                  <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                  {forgotError}
+                </div>
+              )}
+              <form onSubmit={handleForgot} className="mt-6 space-y-4">
+                <div>
+                  <label htmlFor="forgot-email" className="mb-1.5 block text-[13px] font-semibold text-[var(--a-ink2)]">
+                    Email
+                  </label>
+                  <input
+                    id="forgot-email"
+                    type="email"
+                    autoComplete="email"
+                    value={forgotEmail}
+                    onChange={(e) => setForgotEmail(e.target.value)}
+                    placeholder="you@denisawa.co.ke"
+                    className="h-11 w-full rounded-lg border border-[var(--a-border)] bg-[var(--a-subtle)] px-3.5 text-sm text-[var(--a-ink)] placeholder:text-[var(--a-placeholder)] focus:border-[#E8510A] focus:outline-none focus:ring-2 focus:ring-[#E8510A]/20"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={forgotSubmitting}
+                  className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#E8510A] text-sm font-bold text-white transition-colors hover:bg-[#c94508] disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {forgotSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
+                  Send reset link
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setForgotMode(false);
+                    setForgotError(null);
+                  }}
+                  className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#E8510A] hover:underline"
+                >
+                  <ArrowLeft className="h-3.5 w-3.5" /> Back to sign in
+                </button>
+              </form>
+            </>
+          ) : (
+            <>
+              <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+                <div>
+                  <label htmlFor="email" className="mb-1.5 block text-[13px] font-semibold text-[var(--a-ink2)]">
+                    Email
+                  </label>
+                  <input
+                    id="email"
+                    type="email"
+                    autoComplete="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="you@denisawa.co.ke"
+                    className="h-11 w-full rounded-lg border border-[var(--a-border)] bg-[var(--a-subtle)] px-3.5 text-sm text-[var(--a-ink)] placeholder:text-[var(--a-placeholder)] focus:border-[#E8510A] focus:outline-none focus:ring-2 focus:ring-[#E8510A]/20"
+                  />
+                </div>
 
-            <div>
-              <label htmlFor="password" className="mb-1.5 block text-[13px] font-semibold text-[var(--a-ink2)]">
-                Password
-              </label>
-              <input
-                id="password"
-                type="password"
-                autoComplete="current-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="h-11 w-full rounded-lg border border-[var(--a-border)] bg-[var(--a-subtle)] px-3.5 text-sm text-[var(--a-ink)] placeholder:text-[var(--a-placeholder)] focus:border-[#E8510A] focus:outline-none focus:ring-2 focus:ring-[#E8510A]/20"
-              />
-            </div>
+                <div>
+                  <label htmlFor="password" className="mb-1.5 block text-[13px] font-semibold text-[var(--a-ink2)]">
+                    Password
+                  </label>
+                  <input
+                    id="password"
+                    type="password"
+                    autoComplete="current-password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="h-11 w-full rounded-lg border border-[var(--a-border)] bg-[var(--a-subtle)] px-3.5 text-sm text-[var(--a-ink)] placeholder:text-[var(--a-placeholder)] focus:border-[#E8510A] focus:outline-none focus:ring-2 focus:ring-[#E8510A]/20"
+                  />
+                </div>
 
-            <button
-              type="submit"
-              disabled={submitting}
-              className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#E8510A] text-sm font-bold text-white transition-colors hover:bg-[#c94508] disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
-              Sign in
-            </button>
-          </form>
+                <div className="flex items-center justify-between">
+                  <button
+                    type="button"
+                    onClick={() => setForgotMode(true)}
+                    className="text-[13px] font-semibold text-[#E8510A] hover:underline"
+                  >
+                    Forgot password?
+                  </button>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#E8510A] text-sm font-bold text-white transition-colors hover:bg-[#c94508] disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
+                  <Lock className="h-4 w-4" />
+                  Sign in
+                </button>
+              </form>
+            </>
+          )}
         </div>
 
         <div className="mt-6 flex items-center justify-center gap-2 text-xs text-[var(--a-muted)]">

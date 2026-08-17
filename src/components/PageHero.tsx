@@ -80,7 +80,7 @@ export function PageHero({
               </Reveal>
             )}
             <Reveal delay={80}>
-              <h1 className={cn('hero-display text-h1', dark ? 'text-white' : 'text-foreground')}>{title}</h1>
+              <h1 className={cn('hero-display', dark ? 'text-white text-h1' : 'text-foreground text-h1')}>{title}</h1>
             </Reveal>
             {subtitle && (
               <Reveal delay={160}>

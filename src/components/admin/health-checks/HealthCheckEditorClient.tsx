@@ -4,20 +4,24 @@ import * as React from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { FileDown, FileText, Loader2, Save } from 'lucide-react';
+import { FileDown, FileText, FolderOpen, Image as ImageIcon, Loader2, Save, X } from 'lucide-react';
 import { adminDownload, adminFetch, adminPut } from '@/lib/admin-client';
 import { AdminCard, AsyncButton, ErrorBanner, Field, Loading, PageHeader, Toggle } from '@/components/admin/ui';
+import { StorageImagePicker } from '@/components/admin/StorageImagePicker';
 
 interface CheckDetail {
   id: string;
   name: string;
   slug: string;
   description: string | null;
+  image_url: string | null;
   estimated_minutes: number | null;
   tags: string[];
   is_active: boolean;
   sort_order: number;
   section_count: number;
+  detailed_price: number | null;
+  detailed_call_price: number | null;
 }
 
 const INPUT_CLASS =
@@ -45,10 +49,14 @@ export function HealthCheckEditorClient() {
   const [name, setName] = React.useState('');
   const [slug, setSlug] = React.useState('');
   const [description, setDescription] = React.useState('');
+  const [imageUrl, setImageUrl] = React.useState('');
   const [estimatedMinutes, setEstimatedMinutes] = React.useState<string>('');
   const [tags, setTags] = React.useState('');
   const [isActive, setIsActive] = React.useState(true);
   const [sortOrder, setSortOrder] = React.useState<string>('0');
+  const [detailedPrice, setDetailedPrice] = React.useState<string>('');
+  const [detailedCallPrice, setDetailedCallPrice] = React.useState<string>('');
+  const [imagePickerOpen, setImagePickerOpen] = React.useState(false);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -60,10 +68,13 @@ export function HealthCheckEditorClient() {
         setName(row.name);
         setSlug(row.slug);
         setDescription(row.description ?? '');
+        setImageUrl(row.image_url ?? '');
         setEstimatedMinutes(row.estimated_minutes?.toString() ?? '');
         setTags(row.tags.join(', '));
         setIsActive(row.is_active);
         setSortOrder(row.sort_order.toString());
+        setDetailedPrice(row.detailed_price?.toString() ?? '');
+        setDetailedCallPrice(row.detailed_call_price?.toString() ?? '');
       } catch (e) {
         if (!cancelled) setError(e instanceof Error ? e.message : 'Failed to load health check.');
       }
@@ -87,6 +98,7 @@ export function HealthCheckEditorClient() {
         name: name.trim(),
         slug: slugTouched ? slug.trim() : undefined,
         description: description.trim() || null,
+        image_url: imageUrl.trim() || null,
         estimated_minutes: estimatedMinutes ? Number(estimatedMinutes) : null,
         tags: tags
           .split(',')
@@ -94,6 +106,8 @@ export function HealthCheckEditorClient() {
           .filter(Boolean),
         is_active: isActive,
         sort_order: Number(sortOrder || 0),
+        detailed_price: detailedPrice ? Number(detailedPrice) : 0,
+        detailed_call_price: detailedCallPrice ? Number(detailedCallPrice) : 0,
       });
       toast.success('Health check saved');
       setSlugTouched(false);
@@ -193,6 +207,52 @@ export function HealthCheckEditorClient() {
               <Field label="Tags" hint="Comma-separated assessment areas, e.g. Financial, Cashflow." className="sm:col-span-2">
                 <input className={INPUT_CLASS} value={tags} onChange={(e) => setTags(e.target.value)} placeholder="Financial, Operations, Governance" />
               </Field>
+              <Field
+                label="Cover image"
+                hint="Select an image from storage — shown on the public intro page."
+                className="sm:col-span-2"
+              >
+                <div className="flex items-start gap-4">
+                  <div className="relative h-28 w-44 flex-shrink-0 overflow-hidden rounded-lg border border-[var(--a-border)] bg-[var(--a-subtle)]">
+                    {imageUrl ? (
+                      <>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={imageUrl} alt="Health check cover" className="h-full w-full object-cover" />
+                        <button
+                          type="button"
+                          onClick={() => setImageUrl('')}
+                          title="Remove image"
+                          className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-[#111111]/70 text-white transition-colors hover:bg-red-600"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </>
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-[var(--a-placeholder)]">
+                        <ImageIcon className="h-7 w-7" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setImagePickerOpen(true)}
+                      className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-[var(--a-border)] bg-[var(--a-card)] px-3.5 text-[13px] font-semibold text-[var(--a-text)] transition-colors hover:border-[#E8510A]/40 hover:text-[#E8510A]"
+                    >
+                      <FolderOpen className="h-4 w-4" /> Browse storage
+                    </button>
+                    {imageUrl && (
+                      <button
+                        type="button"
+                        onClick={() => setImageUrl('')}
+                        className="text-left text-xs font-medium text-red-600 hover:underline"
+                      >
+                        Remove image
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </Field>
               <Field label="Description" className="sm:col-span-2">
                 <textarea
                   rows={4}
@@ -223,6 +283,39 @@ export function HealthCheckEditorClient() {
             </div>
           </AdminCard>
 
+          <AdminCard
+            title="Pricing (KES)"
+            subtitle="Charged when visitors choose a paid report type."
+          >
+            <div className="space-y-4">
+              <Field label="Detailed report price" hint="Shown to visitors as the paid Detailed option.">
+                <input
+                  className={INPUT_CLASS}
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  value={detailedPrice}
+                  onChange={(e) => setDetailedPrice(e.target.value)}
+                  placeholder="0"
+                />
+              </Field>
+              <Field label="Detailed + Advisory Call price" hint="Requires the visitor's WhatsApp number.">
+                <input
+                  className={INPUT_CLASS}
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  value={detailedCallPrice}
+                  onChange={(e) => setDetailedCallPrice(e.target.value)}
+                  placeholder="0"
+                />
+              </Field>
+              <p className="text-xs text-[var(--a-muted)]">
+                Set to 0 to hide the paid option and offer only the free summary.
+              </p>
+            </div>
+          </AdminCard>
+
           <AdminCard title="Sections">
             <div className="space-y-2 text-sm text-[var(--a-text2)]">
               <p>
@@ -244,6 +337,15 @@ export function HealthCheckEditorClient() {
           </AdminCard>
         </div>
       </div>
+
+      <StorageImagePicker
+        open={imagePickerOpen}
+        onClose={() => setImagePickerOpen(false)}
+        onSelect={(publicUrl) => {
+          setImageUrl(publicUrl);
+          setImagePickerOpen(false);
+        }}
+      />
     </>
   );
 }

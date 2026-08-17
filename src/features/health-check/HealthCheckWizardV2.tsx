@@ -35,11 +35,15 @@ interface CheckInfo {
   description: string | null;
   estimated_minutes: number | null;
   tags: string[];
+  detailed_price: number | null;
+  detailed_call_price: number | null;
 }
 
 type Answer = string | string[];
 
-type Phase = 'loading' | 'details' | 'questions' | 'submitting' | 'generating' | 'done' | 'error';
+type Phase = 'loading' | 'details' | 'questions' | 'submitting' | 'generating' | 'payment' | 'done' | 'error';
+
+type ReportSelection = 'summary' | 'detailed' | 'detailed_call';
 
 const INPUT_CLASS =
   'h-12 w-full rounded-lg border border-card-border bg-background px-4 text-[15px] text-foreground placeholder:text-muted-foreground/60 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20';
@@ -166,6 +170,21 @@ export function HealthCheckWizardV2({ slug }: { slug: string }) {
   const [email, setEmail] = React.useState('');
   const [whatsapp, setWhatsapp] = React.useState('');
   const [preferredDelivery, setPreferredDelivery] = React.useState<'email' | 'whatsapp' | 'both'>('email');
+  const [reportSelection, setReportSelection] = React.useState<ReportSelection>('summary');
+
+  // Payment state for paid reports.
+  const [paymentAmount, setPaymentAmount] = React.useState(0);
+  const [paymentPhone, setPaymentPhone] = React.useState('');
+  const [paymentState, setPaymentState] = React.useState<'idle' | 'init' | 'pending' | 'paid' | 'error'>('idle');
+  const [paymentError, setPaymentError] = React.useState<string | null>(null);
+  const [pendingReportUrl, setPendingReportUrl] = React.useState<string | null>(null);
+  const paymentPollRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
+
+  React.useEffect(() => {
+    return () => {
+      if (paymentPollRef.current) clearInterval(paymentPollRef.current);
+    };
+  }, []);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -241,6 +260,10 @@ export function HealthCheckWizardV2({ slug }: { slug: string }) {
       setError('Please enter a valid WhatsApp number (e.g. +254700000000).');
       return;
     }
+    if (reportSelection === 'detailed_call' && !whatsapp.trim()) {
+      setError('A WhatsApp number is required for the Detailed + Advisory Call option so we can schedule your call.');
+      return;
+    }
 
     setPhase('submitting');
     try {
@@ -254,6 +277,7 @@ export function HealthCheckWizardV2({ slug }: { slug: string }) {
           email: email.trim(),
           whatsapp: whatsapp.trim(),
           preferred_delivery: preferredDelivery,
+          report_selection: reportSelection,
         }),
       });
       const body = await res.json();
@@ -331,15 +355,90 @@ export function HealthCheckWizardV2({ slug }: { slug: string }) {
       const res = await fetch(`/api/health-check/${sessionId}/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ report_type: 'summary' }),
+        body: JSON.stringify({ report_type: reportSelection === 'summary' ? 'summary' : 'detailed' }),
       });
       const body = await res.json();
       if (!res.ok) throw new Error(body.error ?? 'Report generation failed.');
+      if (body.requires_payment) {
+        setPaymentAmount(Number(body.payment_amount ?? 0));
+        setPendingReportUrl(body.report_url ?? null);
+        setPaymentPhone(whatsapp.trim());
+        setPaymentState('idle');
+        setPhase('payment');
+        return;
+      }
       setPhase('done');
       router.push(body.report_url);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Report generation failed. Please try again.');
       setPhase('questions');
+    }
+  };
+
+  const startPayment = async () => {
+    if (!sessionId) return;
+    setPaymentState('init');
+    setPaymentError(null);
+    const phone = (paymentPhone || whatsapp).trim();
+    try {
+      const res = await fetch('/api/payments/mpesa/stkpush', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: sessionId, phone: phone || undefined }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body.error ?? 'Payment request failed.');
+      setPaymentState(body.simulate ? 'pending' : 'pending');
+      if (!body.simulate) {
+        if (paymentPollRef.current) clearInterval(paymentPollRef.current);
+        paymentPollRef.current = setInterval(async () => {
+          const st = await fetch(`/api/payments/mpesa/status?session_id=${sessionId}`).catch(() => null);
+          const sb = await st?.json().catch(() => ({}));
+          if (sb?.payment_status === 'paid') {
+            if (paymentPollRef.current) clearInterval(paymentPollRef.current);
+            void finishPaid();
+          }
+        }, 3000);
+      }
+    } catch (e) {
+      setPaymentState('error');
+      setPaymentError(e instanceof Error ? e.message : 'Payment request failed.');
+    }
+  };
+
+  const confirmPayment = async () => {
+    if (!sessionId) return;
+    setPaymentState('pending');
+    setPaymentError(null);
+    try {
+      const res = await fetch('/api/payments/mpesa/confirm', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: sessionId }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body.error ?? 'Payment confirmation failed.');
+      setPaymentState('paid');
+    } catch (e) {
+      setPaymentState('error');
+      setPaymentError(e instanceof Error ? e.message : 'Payment confirmation failed.');
+    }
+  };
+
+  const finishPaid = async () => {
+    if (!sessionId) return;
+    try {
+      const res = await fetch('/api/payments/mpesa/confirm', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: sessionId }),
+      });
+      const body = await res.json().catch(() => ({}));
+      setPaymentState('paid');
+      if (body.report_url) setPendingReportUrl(body.report_url);
+    } catch {
+      setPaymentState('error');
+      setPaymentError('Payment confirmed, but we could not load your report. Check your email/WhatsApp shortly.');
     }
   };
 
@@ -404,6 +503,60 @@ export function HealthCheckWizardV2({ slug }: { slug: string }) {
             <div>
               <label className="mb-1.5 block text-[13px] font-semibold text-foreground">WhatsApp number</label>
               <input className={INPUT_CLASS} type="tel" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} placeholder="+254 700 000 000" />
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-[13px] font-semibold text-foreground">Report type</label>
+              <div className="space-y-2">
+                <button
+                  type="button"
+                  onClick={() => setReportSelection('summary')}
+                  className={cn(
+                    'flex w-full items-center justify-between rounded-lg border px-4 py-3 text-left text-sm transition-colors',
+                    reportSelection === 'summary' ? 'border-brand bg-brand/5' : 'border-card-border hover:border-brand/30'
+                  )}
+                >
+                  <span>
+                    <span className="font-semibold text-foreground">Free Summary</span>
+                    <span className="block text-xs text-muted-foreground">Your summary diagnostic report — free.</span>
+                  </span>
+                  <span className="font-semibold text-growth">KES 0</span>
+                </button>
+                {check?.detailed_price != null && check.detailed_price > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setReportSelection('detailed')}
+                    className={cn(
+                      'flex w-full items-center justify-between rounded-lg border px-4 py-3 text-left text-sm transition-colors',
+                      reportSelection === 'detailed' ? 'border-brand bg-brand/5' : 'border-card-border hover:border-brand/30'
+                    )}
+                  >
+                    <span>
+                      <span className="font-semibold text-foreground">Full Detailed Report</span>
+                      <span className="block text-xs text-muted-foreground">Prioritised recommendations and a deeper analysis.</span>
+                    </span>
+                    <span className="font-semibold text-brand">KES {check.detailed_price.toLocaleString()}</span>
+                  </button>
+                )}
+                {check?.detailed_call_price != null && check.detailed_call_price > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setReportSelection('detailed_call')}
+                    className={cn(
+                      'flex w-full items-center justify-between rounded-lg border px-4 py-3 text-left text-sm transition-colors',
+                      reportSelection === 'detailed_call' ? 'border-brand bg-brand/5' : 'border-card-border hover:border-brand/30'
+                    )}
+                  >
+                    <span>
+                      <span className="font-semibold text-foreground">Detailed + Advisory Call</span>
+                      <span className="block text-xs text-muted-foreground">
+                        Full detailed report plus a call with our advisory team. WhatsApp number required.
+                      </span>
+                    </span>
+                    <span className="font-semibold text-brand">KES {check.detailed_call_price.toLocaleString()}</span>
+                  </button>
+                )}
+              </div>
             </div>
 
             <div>
@@ -518,13 +671,86 @@ export function HealthCheckWizardV2({ slug }: { slug: string }) {
     );
   }
 
+  /* ── Payment (paid reports) ─────────────────────────────────────────────── */
+  if (phase === 'payment') {
+    const isCall = reportSelection === 'detailed_call';
+    return (
+      <div className="mx-auto max-w-xl">
+        <div className="rounded-lg border border-card-border bg-card p-6 shadow-card sm:p-8">
+          <h2 className="font-display text-xl font-semibold text-foreground">Complete payment to unlock your report</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Your detailed report is ready. Once payment is confirmed it will be sent to you{isCall ? ' and an advisor will call you shortly' : ''}.
+          </p>
+
+          <div className="mt-5 flex items-center justify-between rounded-lg border border-card-border bg-bgalt px-4 py-3">
+            <span className="text-sm text-foreground">Amount due</span>
+            <span className="font-display text-lg font-bold text-brand">KES {paymentAmount.toLocaleString()}</span>
+          </div>
+
+          <div className="mt-4">
+            <label className="mb-1.5 block text-[13px] font-semibold text-foreground">M-Pesa phone number</label>
+            <input
+              className={INPUT_CLASS}
+              type="tel"
+              value={paymentPhone}
+              onChange={(e) => setPaymentPhone(e.target.value)}
+              placeholder="+254 700 000 000"
+              disabled={paymentState === 'pending'}
+            />
+            <p className="mt-1 text-xs text-muted-foreground">You'll receive an STK push prompt to approve the payment.</p>
+          </div>
+
+          {paymentError && (
+            <div className="mt-4 rounded-lg border border-red-500/20 bg-red-500/5 px-4 py-3 text-sm text-red-600">{paymentError}</div>
+          )}
+
+          {paymentState === 'paid' ? (
+            <div className="mt-6 rounded-lg border border-growth/30 bg-growth/5 px-4 py-4">
+              <p className="font-semibold text-growth">Payment confirmed — thank you!</p>
+              <p className="mt-0.5 text-sm text-muted-foreground">
+                {isCall ? 'Your detailed report is on its way and an advisor will contact you shortly.' : 'Your detailed report is on its way.'}
+              </p>
+              {pendingReportUrl && (
+                <Button asChild size="lg" className="mt-4 w-full">
+                  <a href={pendingReportUrl}>View detailed report</a>
+                </Button>
+              )}
+            </div>
+          ) : paymentState === 'pending' ? (
+            <div className="mt-6 flex flex-col items-center gap-3">
+              <Loader2 className="h-7 w-7 animate-spin text-brand" />
+              <p className="text-sm text-muted-foreground">Waiting for payment…</p>
+              <button
+                type="button"
+                onClick={() => void confirmPayment()}
+                className="text-sm font-semibold text-brand hover:underline"
+              >
+                I've paid — confirm payment
+              </button>
+            </div>
+          ) : (
+            <Button
+              size="lg"
+              className="mt-6 w-full"
+              onClick={() => void startPayment()}
+              disabled={paymentState === 'init'}
+            >
+              {paymentState === 'init' ? <Loader2 className="h-4 w-4 animate-spin" /> : <MessageCircle className="h-4 w-4" />}
+              {paymentState === 'init' ? 'Sending M-Pesa prompt…' : 'Pay with M-Pesa'}
+            </Button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   /* ── Submitting / generating ──────────────────────────────────────────── */
   return (
     <div className="flex flex-col items-center justify-center gap-5 py-24 text-center">
       <Loader2 className="h-10 w-10 animate-spin text-brand" />
       <div>
         <p className="font-display text-xl font-semibold text-foreground">
-          {phase === 'generating' ? 'Claude AI is analysing your answers…' : 'Saving your answers…'}
+          {phase === 'generating' ? 'Deni Sawa Partners is analysing your answers…' : 'Saving your answers…'}
         </p>
         <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
           {phase === 'generating'

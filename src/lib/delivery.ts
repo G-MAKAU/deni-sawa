@@ -8,7 +8,7 @@ interface DeliveryResult {
 }
 
 function siteUrl() {
-  return process.env.NEXT_PUBLIC_SITE_URL ?? 'https://deni-sawa.com';
+  return process.env.NEXT_PUBLIC_SITE_URL ?? 'https://denisawa.co.ke';
 }
 
 async function getCheckName(supabase: SupabaseClient, checkId: string): Promise<string> {

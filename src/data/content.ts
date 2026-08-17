@@ -1,3 +1,5 @@
+import { learningPrograms, learningPathways } from '@/data/site';
+
 export const business = {
   name: 'Deni Sawa',
   fullName: 'Deni Sawa — Debt Management',
@@ -290,68 +292,81 @@ export const debtPainPoints = [
   'Business & SME debt distress', 'Mortgage & personal loan burden', 'Payday loan cycles',
 ];
 
-export const aiSystemPrompt = `You are the Deni Sawa AI assistant. Deni Sawa is a Social Enterprise in Kenya that offers practical one-on-one advisory and management services for debt reduction and financial freedom.
+export const learningProgrammesLine = `${learningPrograms[0]?.title ?? 'Executive Finance for Non-Finance Leaders'}${
+  learningPrograms[0]?.format ? ` (${learningPrograms[0].format})` : ''
+} plus pathways in ${learningPathways
+  .filter((p) => !p.soon)
+  .map((p) => p.title)
+  .join(', ') || 'Business Recovery, Governance and Financial Resilience'}`;
 
-Key information:
-- Services: Debt Management, Financial Coaching, Financial Literacy, Corporate Financial Wellness, Business Advisory, Money Mindset
-- Programs: Starter (12 weeks), Standard (24 weeks), Solid (48 weeks)
-- Contact: advisory@denisawa.co.ke, +254 702 448 601
-- Vision: To be an international benchmark in the field of financial solutions provision
-- Mission: To work professionally and ethically, delivering quality services for the provision of viable, successful and sustainable financial solutions
-- We are Christian-based, with principles in line with Biblical teachings of service to God and humankind
-- Strategic partners: well-seasoned bankers with experience in banking, debt management, finance, management, risk management, trade finance, capital raising
-- First consultation is free; programme pricing is transparent and shared during the consultation
-- All client information is strictly confidential and never shared without consent
-- Structured programmes run 12-48 weeks; many clients feel relief from the very first session
-- When a user wants to book a consultation, a booking form opens in the chat — encourage them to fill it in (full name, phone or email, service of interest, preferred date and time), confirm their details, and reassure them a team member will reach out to confirm
+export const aiSystemPrompt = `You are the Deni Sawa Partners concierge — the articulate, quietly confident voice of a premium advisory firm. You guide visitors with polish, warmth and precision.
 
-Be warm, professional, and encouraging. Keep responses concise (under 150 words). If someone needs detailed personal advice, encourage them to book a consultation. Never give specific financial advice — always recommend speaking with our advisors for personalised guidance.`;
+THE FIRM
+Deni Sawa Partners is an AI-enabled advisory and fractional business support firm helping organisations and professionals move from Special Situations to Best-in-Class. Based in Nairobi, Kenya.
+
+WHAT WE OFFER
+- Business Support: Fractional CFO, Fractional CEO, Governance & Business Controls, Growth & Business Development, and Special Situations Support (distress, debt pressure, restructuring and recovery).
+- Health Checks: the Business Health Check and the Professional Financial Health Check — free, AI-powered assessments that turn your answers into a personalised diagnostic report with prioritised recommendations.
+- Learning: ${learningProgrammesLine}.
+- The SpecialSit Network (SS-N): a curated peer community for founders, professionals and investors.
+- The Deni Sawa Method (DENIS): Diagnose, Evaluate, Negotiate, Implement, Sustain.
+
+CONTACT
+advisory@denisawa.co.ke · +254 702 448 601 · www.denisawa.co.ke
+
+HOW TO TALK
+- Sound elegant, professional and gently confident — the calm tone of a senior advisor. Never salesy, never robotic.
+- Keep replies concise (under 130 words), well-structured and effortless to scan.
+- Open warmly and close with one graceful invitation or a crisp question.
+- When someone shares a symptom (cashflow pressure, debt stress, governance gaps, growth stalls), name it precisely, then point them to the right first step — usually the relevant Health Check.
+- If a user wants to book or talk to an advisor, the chat opens a booking form — encourage them to complete it (name, phone or email, service of interest, preferred date and time).
+- Never give specific financial or legal advice. Never promise results or guarantees. Always steer towards a Health Check or a consultation.`;
 
 export const faqAnswers = [
   {
+    title: 'What is the Business Health Check?',
+    keywords: ['business health check', 'business assessment', 'business check', 'health check business'],
+    answer: `The Business Health Check is a free, AI-powered assessment of your business across financial health, operations, governance, cashflow and growth readiness. It takes about 20 minutes, and your answers are turned into a personalised diagnostic report with prioritised recommendations.`,
+  },
+  {
+    title: 'How does the Professional Financial Health Check work?',
+    keywords: ['professional health check', 'personal finances', 'personal assessment', 'financial health check'],
+    answer: `The Professional Financial Health Check is a confidential review of your personal financial position — debt, cashflow, savings and resilience. Answer a short structured set of questions and receive an AI-generated report with a prioritised action plan for your situation.`,
+  },
+  {
+    title: 'What services does Deni Sawa Partners offer?',
+    keywords: ['service', 'services', 'offer', 'cfo', 'ceo', 'governance', 'advisory'],
+    answer: `We provide fractional and part-time senior support: Fractional CFO, Fractional CEO, Governance & Business Controls, Growth & Business Development, and Special Situations Support for distress, debt pressure and restructuring. Every engagement starts with diagnosis — often the relevant Health Check.`,
+  },
+  {
     title: 'Is my information confidential?',
-    keywords: ['confident', 'privacy', 'private', 'discreet', 'secret', 'data'],
-    answer: `Absolutely. Everything you share with Deni Sawa is strictly confidential. We handle your information professionally and ethically, and it is used only to support your journey to financial freedom — never shared without your consent.`,
-  },
-  {
-    title: 'How much does counselling cost?',
-    keywords: ['cost', 'price', 'fee', 'fees', 'charge', 'pricing', 'expensive', 'how much', 'pay', 'afford'],
-    answer: `Your first consultation is free. Programme pricing depends on the package and your personal situation, so our team gives you transparent, no-obligation pricing during your consultation — you'll know exactly what to expect before you commit.`,
-  },
-  {
-    title: 'What do I need to prepare for a session?',
-    keywords: ['prepare', 'bring', 'documents', 'session', 'ready', 'before'],
-    answer: `Just bring an open mind. If you can, have a simple summary of your income, monthly expenses, and your debts (who you owe, roughly how much, and the interest rates). If you don't have everything handy, don't worry — we'll guide you through it.`,
-  },
-  {
-    title: 'How soon can I expect results?',
-    keywords: ['how soon', 'how long', 'results', 'expect', 'timeline', 'timeframe', 'when', 'progress'],
-    answer: `Every situation is different, but our structured programmes run from 12 to 48 weeks. Many clients feel relief from the very first session, and with consistent follow-through you can expect meaningful, lasting progress as your plan is executed.`,
-  },
-  {
-    title: 'Do you serve businesses too?',
-    keywords: ['business', 'sme', 'company', 'corporate', 'organisation', 'organization', 'workforce', 'employees'],
-    answer: `Yes. We offer Corporate Financial Wellness programmes to empower your workforce, and Business Advisory for SMEs and entrepreneurs — covering governance, investor readiness, and business process re-engineering.`,
+    keywords: ['confident', 'privacy', 'private', 'confidential', 'discreet', 'data'],
+    answer: `Absolutely. Everything you share is strictly confidential and used only to support your assessment and engagement. We never share your information without consent.`,
   },
   {
     title: 'How do I book a consultation?',
-    keywords: ['book', 'appointment', 'schedule', 'reserve', 'sign up', 'consult', 'register'],
-    answer: `You can book right here in the chat — a booking form will open for you to complete. You can also reach us at advisory@denisawa.co.ke or +254 702 448 601. Your first consultation is free.`,
+    keywords: ['book', 'appointment', 'schedule', 'reserve', 'consult', 'contact', 'talk'],
+    answer: `You can book right here in the chat — a booking form will open for you to complete. You can also reach us at advisory@denisawa.co.ke or +254 702 448 601.`,
   },
   {
-    title: 'What debt management services do you offer?',
-    keywords: ['debt management', 'debt', 'services', 'service', 'reduce', 'overwhelmed', 'loans'],
-    answer: `Our Debt Management Service provides professional one-on-one advisory with structured repayment plans and creditor negotiation support. We offer three programmes — Starter (12 weeks), Standard (24 weeks), and Solid (48 weeks) — guided by seasoned banking experts with a caring, ethical approach.`,
+    title: 'What is the Deni Sawa Method?',
+    keywords: ['method', 'approach', 'how you work', 'process', 'deni sawa method'],
+    answer: `The Deni Sawa Method (DENIS) is our five-discipline framework: Diagnose, Evaluate, Negotiate, Implement, Sustain. It moves organisations from instability to sustained best-in-class performance — in sequence, not in a scramble.`,
   },
   {
-    title: 'What programmes do you offer?',
-    keywords: ['programme', 'program', 'package', 'offer', 'courses', 'options'],
-    answer: `We offer three programmes:\n\n• Starter Package (12 weeks) — dedicated advisory with coaching\n• Standard Package (24 weeks) — enhanced coaching and monitoring\n• Solid Package (48 weeks) — full-spectrum advisory, governance and funding support\n\nYour first consultation is free, and we'll help you choose the right fit.`,
+    title: 'Tell me about the learning programmes',
+    keywords: ['learning', 'programme', 'program', 'course', 'executive finance', 'study', 'train'],
+    answer: `${learningPrograms[0]?.title ?? 'Executive Finance for Non-Finance Leaders'} is our flagship programme — a ${
+      learningPrograms[0]?.format ?? 'cohort programme'
+    } for leaders who want financial intelligence behind their decisions. We also offer learning pathways in ${learningPathways
+      .filter((p) => !p.soon)
+      .map((p) => p.title)
+      .join(', ')}.`,
   },
   {
-    title: 'What is your approach to financial coaching?',
-    keywords: ['approach', 'coaching', 'coach', 'counselling', 'counseling', 'sessions'],
-    answer: `Our coaching is personal, practical and judgement-free. You're paired one-on-one with experienced advisors who take time to understand your situation, help you build a realistic plan, and stay with you through check-ins and accountability. It's grounded in Biblical principles of service — no pressure, no judgement.`,
+    title: 'What is the SpecialSit Network?',
+    keywords: ['network', 'specialsit', 'community', 'peer', 'join the network'],
+    answer: `The SpecialSit Network (SS-N) is a curated peer community for founders, professionals and investors navigating complex situations — candid forums, mentorship from seasoned operators, investor connections and accountability.`,
   },
 ];
 

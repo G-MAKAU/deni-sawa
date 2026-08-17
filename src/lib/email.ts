@@ -38,7 +38,7 @@ export interface EmailSendResult {
 }
 
 function resolveSiteUrl() {
-  return process.env.NEXT_PUBLIC_SITE_URL ?? 'https://deni-sawa.com';
+  return process.env.NEXT_PUBLIC_SITE_URL ?? 'https://denisawa.co.ke';
 }
 
 /** Replace {{variable_name}} tokens with values from `variables`. */
@@ -135,9 +135,12 @@ export function buildBrandedEmailHtml(bodyHtml: string): string {
 
 /** Sends email via Nodemailer + domain SMTP. Best-effort — never throws. */
 export async function sendEmail(payload: EmailSendPayload): Promise<EmailSendResult> {
-  const host = process.env.SMTP_HOST;
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASSWORD;
+  // EMAIL_* are the canonical names; SMTP_* are kept as a legacy fallback.
+  const host = process.env.EMAIL_HOST ?? process.env.SMTP_HOST;
+  const user = process.env.EMAIL_USER ?? process.env.SMTP_USER;
+  const pass = process.env.EMAIL_PASS ?? process.env.SMTP_PASSWORD;
+  const port = Number(process.env.EMAIL_PORT ?? process.env.SMTP_PORT ?? 587);
+  const secure = (process.env.EMAIL_SECURE ?? process.env.SMTP_SECURE ?? '').toLowerCase() === 'true';
 
   if (!host || !user || !pass) {
     return { ok: false, error: 'SMTP is not configured.' };
@@ -146,15 +149,15 @@ export async function sendEmail(payload: EmailSendPayload): Promise<EmailSendRes
   try {
     const transporter = nodemailer.createTransport({
       host,
-      port: Number(process.env.SMTP_PORT ?? 587),
-      secure: process.env.SMTP_SECURE === 'true',
+      port,
+      secure,
       auth: { user, pass },
     });
 
     const info = await transporter.sendMail({
       from: {
         name: payload.fromName ?? process.env.SMTP_FROM_NAME ?? 'Deni Sawa Partners',
-        address: payload.fromEmail ?? process.env.SMTP_FROM_EMAIL ?? 'noreply@deni-sawa.com',
+        address: payload.fromEmail ?? process.env.SMTP_FROM_EMAIL ?? 'noreply@denisawa.co.ke',
       },
       replyTo: payload.replyTo,
       to: payload.toName ? `"${payload.toName}" <${payload.to}>` : payload.to,

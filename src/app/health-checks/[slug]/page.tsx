@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowRight, ClipboardCheck, Clock, Sparkles, ShieldCheck } from 'lucide-react';
+import { ArrowRight, ClipboardCheck, Clock, Sparkles, ShieldCheck, SquareCheckBig } from 'lucide-react';
 import { site } from '@/data/site';
 import { getServiceClient } from '@/lib/supabase/service';
 import { PageHero } from '@/components/PageHero';
@@ -15,7 +15,7 @@ async function getCheckIntro(slug: string) {
     const supabase = getServiceClient();
     const { data: check, error } = await supabase
       .from('health_checks')
-      .select('id, name, description, estimated_minutes, tags, is_active')
+      .select('id, name, description, image_url, estimated_minutes, tags, is_active')
       .eq('slug', slug)
       .eq('is_active', true)
       .maybeSingle();
@@ -34,9 +34,11 @@ async function getCheckIntro(slug: string) {
     return {
       name: check.name as string,
       description: (check.description as string | null) ?? '',
+      image_url: (check.image_url as string | null) ?? null,
       estimated_minutes: (check.estimated_minutes as number | null) ?? 15,
       tags: (check.tags as string[]) ?? [],
       question_count: count ?? 0,
+      section_count: (sections ?? []).length,
     };
   } catch {
     return null;
@@ -67,7 +69,7 @@ export default async function CheckIntroPage({ params }: { params: Promise<{ slu
         subtitle={intro.description}
         crumbs={[{ label: 'Health Checks', href: '/health-checks' }, { label: intro.name }]}
         image={{
-          src: slug.startsWith('business') ? '/images/business-check.jpg' : '/images/professional-check.jpg',
+          src: intro.image_url ?? (slug.startsWith('business') ? '/images/business-check.jpg' : '/images/professional-check.jpg'),
           alt: intro.name,
         }}
       >
@@ -87,13 +89,13 @@ export default async function CheckIntroPage({ params }: { params: Promise<{ slu
               {intro.tags.length > 0 ? (
                 intro.tags.map((area) => (
                   <li key={area} className="card-elevated flex items-start gap-3 p-5 text-[15px] font-medium text-foreground">
-                    <Sparkles className="mt-0.5 h-5 w-5 flex-shrink-0 text-brand" strokeWidth={1.8} />
+                    <SquareCheckBig className="mt-0.5 h-5 w-5 flex-shrink-0 text-growth" strokeWidth={1.8} />
                     {area}
                   </li>
                 ))
               ) : (
                 <li className="card-elevated flex items-start gap-3 p-5 text-[15px] font-medium text-foreground">
-                  <Sparkles className="mt-0.5 h-5 w-5 flex-shrink-0 text-brand" strokeWidth={1.8} />
+                  <SquareCheckBig className="mt-0.5 h-5 w-5 flex-shrink-0 text-growth" strokeWidth={1.8} />
                   A structured, AI-powered diagnostic assessment.
                 </li>
               )}
@@ -104,7 +106,7 @@ export default async function CheckIntroPage({ params }: { params: Promise<{ slu
             <SectionHeading align="left" eyebrow="Before you start" title="What to expect" />
             <div className="space-y-4">
               {[
-                { icon: ClipboardCheck, title: `${intro.question_count} questions, one at a time`, text: 'A structured flow with a progress bar — you can pause and resume.' },
+                { icon: ClipboardCheck, title: `${intro.question_count} questions in ${intro.section_count} sections`, text: 'Answered section by section, with a progress bar — you can pause and resume.' },
                 { icon: Clock, title: `${intro.estimated_minutes} minutes`, text: 'Answer honestly — the diagnosis is only as good as the inputs.' },
                 { icon: Sparkles, title: 'AI-generated report', text: 'Claude AI structures your findings into a readable diagnostic report.' },
                 { icon: ShieldCheck, title: 'Confidential and private', text: 'Your responses and report are never shared. Reports are private and unique to you.' },

@@ -15,7 +15,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 
     const { data: check, error: checkError } = await supabase
       .from('health_checks')
-      .select('id, slug, name, description, estimated_minutes, tags')
+      .select('id, slug, name, description, estimated_minutes, tags, detailed_price, detailed_call_price')
       .eq('slug', slug)
       .eq('is_active', true)
       .maybeSingle();

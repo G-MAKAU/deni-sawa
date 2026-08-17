@@ -30,7 +30,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     const { data: session } = await supabase
       .from('health_check_sessions')
-      .select('id, health_check_id, full_name, email, whatsapp, preferred_delivery, is_complete')
+      .select('id, health_check_id, full_name, business_name, email, whatsapp, preferred_delivery, is_complete, report_selection, payment_status')
       .eq('id', sessionId)
       .maybeSingle();
     if (!session) return NextResponse.json({ error: 'Session not found.' }, { status: 404 });
@@ -38,12 +38,17 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ error: 'Session is not complete.' }, { status: 422 });
     }
 
-    const result = await runReportGeneration(supabase, session, parsed.data.report_type);
+    const selection = (session.report_selection as 'summary' | 'detailed' | 'detailed_call' | null | undefined) ?? 'summary';
+    const paidSelection = selection === 'detailed' || selection === 'detailed_call';
+    const paid = session.payment_status === 'paid';
+    const skipDelivery = paidSelection && !paid;
+
+    const result = await runReportGeneration(supabase, session, parsed.data.report_type, { skipDelivery });
 
     return NextResponse.json({
       report: result.report,
       regenerated: result.regenerated,
-      report_url: `${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://deni-sawa.com'}/health-checks/report/${result.report.report_url_token}`,
+      report_url: `${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://denisawa.co.ke'}/health-checks/report/${result.report.report_url_token}`,
     });
   } catch (error) {
     return jsonAdminWriteError(error, 'Failed to generate report');

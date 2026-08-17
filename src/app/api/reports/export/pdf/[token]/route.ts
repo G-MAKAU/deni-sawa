@@ -27,7 +27,21 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
     const checkType = check?.slug?.startsWith('professional') ? 'professional' : 'business';
     const title = check?.name ?? 'Health Check Report';
 
-    const model = lexicalStateToModel(report.lexical_state, checkType, title);
+    const session = Array.isArray(report.session) ? report.session[0] : report.session;
+    const { data: prompt } = await supabase
+      .from('health_check_report_prompts')
+      .select('header_lexical, footer_lexical')
+      .eq('health_check_id', (session as { health_check_id?: string } | undefined)?.health_check_id ?? '')
+      .eq('report_type', report.report_type)
+      .maybeSingle();
+
+    const model = lexicalStateToModel(
+      report.lexical_state,
+      checkType,
+      title,
+      (prompt as { header_lexical?: unknown } | null)?.header_lexical as Record<string, unknown> | string | null | undefined,
+      (prompt as { footer_lexical?: unknown } | null)?.footer_lexical as Record<string, unknown> | string | null | undefined
+    );
 
     const buffer = await renderToBuffer(HealthReportDocument({ model }));
 

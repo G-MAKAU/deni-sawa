@@ -40,6 +40,11 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
     const supabase = adminWriteClient(context);
 
+    // A user can never change their own role (prevents self-promotion/demotion).
+    if (parsed.data.role && parsed.data.role !== context.currentAdmin.role && id === context.currentAdmin.id) {
+      return NextResponse.json({ error: 'You cannot change your own role.' }, { status: 422 });
+    }
+
     // Protect against demoting the last super_admin.
     if (parsed.data.role && parsed.data.role !== 'super_admin') {
       const { count } = await supabase
@@ -71,6 +76,13 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     }
 
     const supabase = adminWriteClient(context);
+
+    // Never allow the last remaining team member to be removed.
+    const { count } = await supabase.from('admin_users').select('id', { count: 'exact', head: true });
+    if (count !== null && count <= 1) {
+      return NextResponse.json({ error: 'The last team member cannot be removed.' }, { status: 422 });
+    }
+
     const { error } = await supabase.from('admin_users').delete().eq('id', id);
     if (error) throw error;
 

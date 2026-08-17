@@ -292,7 +292,7 @@ create table if not exists public.email_templates (
   body_lexical         jsonb not null,
   body_html            text,
   from_name            text not null default 'Deni Sawa Partners',
-  from_email           citext not null default 'noreply@deni-sawa.com',
+  from_email           citext not null default 'noreply@denisawa.co.ke',
   reply_to             citext,
   is_active            boolean not null default true,
   available_variables  text[] not null default '{}',

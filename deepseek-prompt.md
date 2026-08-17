@@ -169,9 +169,9 @@ SMTP_SECURE=false
 SMTP_USER=
 SMTP_PASSWORD=
 SMTP_FROM_NAME=Deni Sawa Partners
-SMTP_FROM_EMAIL=noreply@deni-sawa.com
+SMTP_FROM_EMAIL=noreply@denisawa.co.ke
 NEXT_PUBLIC_GA_MEASUREMENT_ID=
-NEXT_PUBLIC_SITE_URL=https://deni-sawa.com
+NEXT_PUBLIC_SITE_URL=https://denisawa.co.ke
 
 SEO — EVERY PAGE
 

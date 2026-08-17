@@ -3,11 +3,12 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Moon, Sun } from 'lucide-react';
+import { Moon, Sun, Settings } from 'lucide-react';
 import { createBrowserClient } from '@/lib/supabase/browser';
 import { getAdminToken, adminFetch } from '@/lib/admin-client';
 import { Toaster } from 'sonner';
 import { cn } from '@/lib/utils';
+import { AccountModal } from '@/components/admin/AccountModal';
 
 type RoleTone = 'orange' | 'green' | 'blue' | 'grey';
 
@@ -26,6 +27,7 @@ const ROLE_STYLES: Record<RoleTone, string> = {
 };
 
 interface AdminIdentity {
+  id: string;
   email: string;
   full_name: string;
   role: string;
@@ -157,6 +159,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   const [admin, setAdmin] = React.useState<AdminIdentity | null>(null);
   const [drawerOpen, setDrawerOpen] = React.useState(false);
   const [signingOut, setSigningOut] = React.useState(false);
+  const [accountOpen, setAccountOpen] = React.useState(false);
   const [dark, setDark] = React.useState(false);
 
   // Sync the toggle with the site-wide theme applied by ThemeProvider.
@@ -287,18 +290,34 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 
             {admin ? (
               <div className="flex items-center gap-2.5">
-                <div className="hidden text-right sm:block">
-                  <p className="text-[13px] font-semibold leading-tight text-[var(--a-ink2)]">{admin.full_name}</p>
-                  <p className="text-[11px] text-[var(--a-muted)]">{admin.email}</p>
-                </div>
-                <span
-                  className={cn(
-                    'rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider',
-                    ROLE_STYLES[ROLE_TONES[admin.role] ?? 'grey']
-                  )}
+                <button
+                  type="button"
+                  onClick={() => setAccountOpen(true)}
+                  className="flex items-center gap-2.5 rounded-lg px-2 py-1 text-left transition-colors hover:bg-[var(--a-subtle)]"
+                  title="Account settings"
                 >
-                  {admin.role.replace('_', ' ')}
-                </span>
+                  <div className="hidden text-right sm:block">
+                    <p className="text-[13px] font-semibold leading-tight text-[var(--a-ink2)]">{admin.full_name}</p>
+                    <p className="text-[11px] text-[var(--a-muted)]">{admin.email}</p>
+                  </div>
+                  <span
+                    className={cn(
+                      'rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider',
+                      ROLE_STYLES[ROLE_TONES[admin.role] ?? 'grey']
+                    )}
+                  >
+                    {admin.role.replace('_', ' ')}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAccountOpen(true)}
+                  aria-label="Account settings"
+                  title="My account"
+                  className="flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--a-border)] bg-[var(--a-card)] text-[var(--a-text)] transition-colors hover:border-[#E8510A]/40 hover:text-[#E8510A]"
+                >
+                  <Settings className="h-4 w-4" />
+                </button>
                 <button
                   type="button"
                   onClick={handleLogout}
@@ -317,6 +336,13 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 
         <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8">{children}</main>
       </div>
+
+      <AccountModal
+        open={accountOpen}
+        onClose={() => setAccountOpen(false)}
+        admin={admin}
+        onNameUpdated={(fullName) => setAdmin((prev) => (prev ? { ...prev, full_name: fullName } : prev))}
+      />
     </div>
   );
 }

@@ -10,12 +10,16 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       settings: {
-        siteUrl: process.env.NEXT_PUBLIC_SITE_URL ?? 'https://deni-sawa.com',
+        siteUrl: process.env.NEXT_PUBLIC_SITE_URL ?? 'https://denisawa.co.ke',
         smtp: {
-          configured: Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASSWORD),
-          host: process.env.SMTP_HOST ?? null,
+          configured: Boolean(
+            (process.env.EMAIL_HOST ?? process.env.SMTP_HOST) &&
+              (process.env.EMAIL_USER ?? process.env.SMTP_USER) &&
+              (process.env.EMAIL_PASS ?? process.env.SMTP_PASSWORD)
+          ),
+          host: process.env.EMAIL_HOST ?? process.env.SMTP_HOST ?? null,
           fromName: process.env.SMTP_FROM_NAME ?? 'Deni Sawa Partners',
-          fromEmail: process.env.SMTP_FROM_EMAIL ?? 'noreply@deni-sawa.com',
+          fromEmail: process.env.SMTP_FROM_EMAIL ?? 'noreply@denisawa.co.ke',
         },
         whatsapp: {
           provider: process.env.WHATSAPP_PROVIDER ?? 'twilio',

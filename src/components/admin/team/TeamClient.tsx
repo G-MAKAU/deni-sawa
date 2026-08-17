@@ -30,7 +30,7 @@ const INPUT_CLASS =
 export function TeamClient() {
   const confirm = useConfirm();
 
-  const [me, setMe] = React.useState<{ role: string } | null>(null);
+  const [me, setMe] = React.useState<{ id?: string; role: string } | null>(null);
   const [members, setMembers] = React.useState<TeamMember[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
@@ -184,8 +184,10 @@ export function TeamClient() {
                     <Td>
                       <select
                         value={member.role}
+                        disabled={member.id === me?.id}
                         onChange={(e) => handleUpdate(member, { role: e.target.value as TeamMember['role'] })}
-                        className="h-9 rounded-lg border border-[var(--a-border)] bg-[var(--a-card)] px-2 text-[13px] font-semibold text-[var(--a-text)] focus:border-[#E8510A] focus:outline-none"
+                        title={member.id === me?.id ? 'You cannot change your own role' : undefined}
+                        className="h-9 rounded-lg border border-[var(--a-border)] bg-[var(--a-card)] px-2 text-[13px] font-semibold text-[var(--a-text)] focus:border-[#E8510A] focus:outline-none disabled:cursor-not-allowed disabled:opacity-40"
                       >
                         <option value="super_admin">super_admin</option>
                         <option value="admin">admin</option>
@@ -204,8 +206,16 @@ export function TeamClient() {
                       <button
                         type="button"
                         onClick={() => handleDelete(member)}
+                        disabled={member.id === me?.id || members.length <= 1}
+                        title={
+                          member.id === me?.id
+                            ? 'You cannot delete your own account'
+                            : members.length <= 1
+                              ? 'The last team member cannot be removed'
+                              : 'Remove'
+                        }
                         aria-label="Remove"
-                        className="rounded-md p-1.5 text-[var(--a-muted)] hover:bg-red-500/10 hover:text-red-600"
+                        className="rounded-md p-1.5 text-[var(--a-muted)] hover:bg-red-500/10 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-[var(--a-muted)]"
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
@@ -244,7 +254,7 @@ export function TeamClient() {
           </div>
           <div>
             <label className="mb-1.5 block text-[13px] font-semibold text-[var(--a-ink2)]">Email</label>
-            <input className={INPUT_CLASS} type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="you@deni-sawa.com" />
+            <input className={INPUT_CLASS} type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="you@denisawa.co.ke" />
           </div>
           <div>
             <label className="mb-1.5 block text-[13px] font-semibold text-[var(--a-ink2)]">Role</label>

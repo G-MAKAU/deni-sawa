@@ -9,6 +9,10 @@ const nextConfig = {
     dangerouslyAllowSVG: true,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
     formats: ['image/avif', 'image/webp'],
+    remotePatterns: [
+      // Supabase Storage public objects (health check covers, blog images, etc.)
+      { protocol: 'https', hostname: '*.supabase.co', pathname: '/storage/**' },
+    ],
   },
   async redirects() {
     return [

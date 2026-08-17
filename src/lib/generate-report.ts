@@ -8,6 +8,7 @@ interface SessionLike {
   id: string;
   health_check_id: string;
   full_name: string;
+  business_name?: string | null;
   preferred_delivery: string;
 }
 
@@ -89,7 +90,7 @@ export async function runReportGeneration(
   supabase: SupabaseClient,
   session: SessionLike,
   reportType: ReportType,
-  options: { force?: boolean } = {}
+  options: { force?: boolean; skipDelivery?: boolean } = {}
 ): Promise<GenerateResult> {
   // Return the existing report unless we're forcing a regenerate.
   if (!options.force) {
@@ -127,17 +128,30 @@ export async function runReportGeneration(
     )
     .join('\n\n');
 
-  const userContent = `The user completed the "${checkName}". Here are their answers:\n\n${qaText}`;
+  const userContent = `The user completed the "${checkName}". Today's date is ${new Date().toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  })}. Respondent details: full name "${session.full_name}"${
+    session.business_name ? `, business name "${session.business_name}"` : ''
+  }. Here are their answers:\n\n${qaText}\n\nPREMIUM REPORT FORMAT — use every formatting tool to craft an elegant, professional report:\n- Clear heading hierarchy: H1 for the report title, H2 for each major section, H3 for sub-findings.\n- Bold key figures, ratings and important terms for emphasis.\n- Bullet lists for findings and numbered lists for sequential steps.\n- Quote blocks for priority callouts and advisor notes.\n- Callout blocks for recommendations and "why it matters" highlights.\n- Horizontal dividers between major sections for clean visual separation.\n- Add a relevant link where it genuinely adds value.\n- Keep the tone premium, polished and easy to scan — never cramped or cluttered.\n\nOutput format: Return ONLY a valid Lexical EditorState JSON object — no prose, no markdown fences. IMPORTANT: do NOT use Lexical "table" nodes (the renderer does not support AI-generated tables) — present tabular information (score tables, comparisons, milestones) as tidy bullet lists or short labeled lines instead. Ensure strictly valid JSON: every key and string value double-quoted, no trailing commas.`;
 
   const provider = (prompt?.provider as ReportProvider | undefined) ?? 'anthropic';
   let generated;
+  let generationError: string | null = null;
   if (prompt) {
-    generated = await generateReportForProvider(provider, {
-      systemPrompt: prompt.system_prompt,
-      model: prompt.model,
-      maxTokens: prompt.max_tokens,
-      userContent,
-    });
+    try {
+      generated = await generateReportForProvider(provider, {
+        systemPrompt: prompt.system_prompt,
+        model: prompt.model,
+        maxTokens: prompt.max_tokens,
+        userContent,
+      });
+    } catch (error) {
+      // The AI provider failed — surface the reason and fall back gracefully.
+      generationError = error instanceof Error ? error.message : String(error);
+      console.error('Report generation failed:', generationError);
+    }
   }
 
   let state: Record<string, unknown>;
@@ -151,7 +165,9 @@ export async function runReportGeneration(
     tokensUsed = generated.tokensUsed ?? null;
     generationSeconds = generated.generationSeconds;
   } else {
-    // Graceful fallback so the flow never hard-fails.
+    // Graceful fallback so the flow never hard-fails. Label it clearly so a
+    // fallback report is never mistaken for a real AI report.
+    modelUsed = 'fallback';
     state = buildFallbackReport({
       title: `${checkName} — ${reportType === 'summary' ? 'Summary' : 'Detailed'} Report`,
       recipientName: session.full_name,
@@ -179,6 +195,7 @@ export async function runReportGeneration(
           model_used: modelUsed,
           tokens_used: tokensUsed,
           generation_seconds: generationSeconds,
+          generation_error: generationError,
           delivery_status: 'pending',
         })
         .eq('id', current.id)
@@ -200,6 +217,7 @@ export async function runReportGeneration(
         model_used: modelUsed,
         tokens_used: tokensUsed,
         generation_seconds: generationSeconds,
+        generation_error: generationError,
         is_paid: reportType === 'detailed' ? false : true,
       })
       .select()
@@ -208,10 +226,13 @@ export async function runReportGeneration(
     report = data;
   }
 
-  // ── Delivery based on session.preferred_delivery ────────────────────────
-  const delivery = session.preferred_delivery as 'email' | 'whatsapp' | 'both';
-  if (delivery === 'email' || delivery === 'both') await deliverReportByEmail(supabase, report.id);
-  if (delivery === 'whatsapp' || delivery === 'both') await deliverReportByWhatsApp(supabase, report.id);
+  // ── Delivery based on session.preferred_delivery (skipped for unpaid paid
+  //    reports — the payment confirm flow triggers delivery once paid) ───────
+  if (!options.skipDelivery) {
+    const delivery = session.preferred_delivery as 'email' | 'whatsapp' | 'both';
+    if (delivery === 'email' || delivery === 'both') await deliverReportByEmail(supabase, report.id);
+    if (delivery === 'whatsapp' || delivery === 'both') await deliverReportByWhatsApp(supabase, report.id);
+  }
 
   return { report: report as GenerateResult['report'], regenerated: true };
 }

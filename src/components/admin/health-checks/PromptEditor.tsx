@@ -5,16 +5,19 @@ import { useParams } from 'next/navigation';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { Loader2, RotateCcw, Save } from 'lucide-react';
-import { adminFetch, adminPut } from '@/lib/admin-client';
+import { adminFetch, adminPost, adminPut } from '@/lib/admin-client';
 import { useConfirm } from '@/components/admin/confirm';
 import { LexicalEditor } from '@/features/lexical/LexicalEditor';
 import { AdminCard, AsyncButton, ErrorBanner, Field, Loading, PageHeader } from '@/components/admin/ui';
+import { StorageImagePicker } from '@/components/admin/StorageImagePicker';
 import { cn } from '@/lib/utils';
 
 interface PromptRow {
   report_type: 'summary' | 'detailed';
   system_prompt: string;
   system_prompt_lexical: Record<string, unknown> | null;
+  header_lexical: Record<string, unknown> | null;
+  footer_lexical: Record<string, unknown> | null;
   provider: 'anthropic' | 'google';
   model: string;
   max_tokens: number;
@@ -59,10 +62,17 @@ export function PromptEditor() {
 
   const [summaryState, setSummaryState] = React.useState<Record<string, unknown> | null>(null);
   const [detailedState, setDetailedState] = React.useState<Record<string, unknown> | null>(null);
+  const [summaryHeader, setSummaryHeader] = React.useState<Record<string, unknown> | null>(null);
+  const [summaryFooter, setSummaryFooter] = React.useState<Record<string, unknown> | null>(null);
+  const [detailedHeader, setDetailedHeader] = React.useState<Record<string, unknown> | null>(null);
+  const [detailedFooter, setDetailedFooter] = React.useState<Record<string, unknown> | null>(null);
   const [provider, setProvider] = React.useState<'anthropic' | 'google'>('anthropic');
   const [model, setModel] = React.useState<string>('claude-sonnet-4-6');
   const [maxTokens, setMaxTokens] = React.useState<string>('4000');
   const [saving, setSaving] = React.useState(false);
+  const [imageTarget, setImageTarget] = React.useState<'header' | 'footer' | null>(null);
+  const [pickerOpen, setPickerOpen] = React.useState(false);
+  const browseResolverRef = React.useRef<((url: string | null) => void) | null>(null);
 
   const [models, setModels] = React.useState<Record<'anthropic' | 'google', string[]>>(FALLBACK_MODELS);
 
@@ -97,6 +107,10 @@ export function PromptEditor() {
         const detailed = rows.find((p) => p.report_type === 'detailed');
         setSummaryState(summary?.system_prompt_lexical ?? (summary ? plainTextToLexicalState(summary.system_prompt) : null));
         setDetailedState(detailed?.system_prompt_lexical ?? (detailed ? plainTextToLexicalState(detailed.system_prompt) : null));
+        setSummaryHeader(summary?.header_lexical ?? null);
+        setSummaryFooter(summary?.footer_lexical ?? null);
+        setDetailedHeader(detailed?.header_lexical ?? null);
+        setDetailedFooter(detailed?.footer_lexical ?? null);
         setProvider(activeTab === 'summary' ? (summary?.provider ?? 'anthropic') : (detailed?.provider ?? 'anthropic'));
         setModel(activeTab === 'summary' ? summary?.model ?? 'claude-sonnet-4-6' : detailed?.model ?? 'claude-sonnet-4-6');
         setMaxTokens(
@@ -133,6 +147,8 @@ export function PromptEditor() {
       const { prompt } = await adminPut<{ prompt: PromptRow }>(`/api/admin/health-checks/${checkId}/prompts`, {
         report_type: activeTab,
         system_prompt_lexical: state,
+        header_lexical: (activeTab === 'summary' ? summaryHeader : detailedHeader) ?? null,
+        footer_lexical: (activeTab === 'summary' ? summaryFooter : detailedFooter) ?? null,
         provider,
         model,
         max_tokens: Number(maxTokens),
@@ -144,6 +160,22 @@ export function PromptEditor() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const uploadHeaderImage = async (file: File): Promise<string> => {
+    const form = new FormData();
+    form.append('file', file);
+    form.append('folder', 'reports');
+    const data = await adminPost<{ file: { publicUrl: string } }>('/api/admin/storage', form);
+    return data.file.publicUrl;
+  };
+
+  const openHeaderImagePicker = (target: 'header' | 'footer'): Promise<string | null> => {
+    setImageTarget(target);
+    setPickerOpen(true);
+    return new Promise((resolve) => {
+      browseResolverRef.current = resolve;
+    });
   };
 
   const handleRollback = async () => {
@@ -309,6 +341,65 @@ export function PromptEditor() {
           </div>
         </div>
       )}
+
+      {/* Custom Header & Footer */}
+      {!isLocked && (
+        <div className="mt-6 grid gap-6">
+          <AdminCard
+            title="Custom header"
+            subtitle="Rendered above the report body. Add your logo, business name or links — images are supported."
+          >
+            <LexicalEditor
+              key={`header-${activeTab}`}
+              state={(activeTab === 'summary' ? summaryHeader : detailedHeader) ?? undefined}
+              onChange={(state) =>
+                activeTab === 'summary'
+                  ? setSummaryHeader(state as Record<string, unknown>)
+                  : setDetailedHeader(state as Record<string, unknown>)
+              }
+              onUploadImage={uploadHeaderImage}
+              onBrowseImage={() => openHeaderImagePicker('header')}
+              placeholder="Branded header — logo, tagline, links…"
+              className="min-h-[220px]"
+            />
+          </AdminCard>
+
+          <AdminCard
+            title="Custom footer"
+            subtitle="Rendered below the report body — contact details, confidentiality note or links."
+          >
+            <LexicalEditor
+              key={`footer-${activeTab}`}
+              state={(activeTab === 'summary' ? summaryFooter : detailedFooter) ?? undefined}
+              onChange={(state) =>
+                activeTab === 'summary'
+                  ? setSummaryFooter(state as Record<string, unknown>)
+                  : setDetailedFooter(state as Record<string, unknown>)
+              }
+              onUploadImage={uploadHeaderImage}
+              onBrowseImage={() => openHeaderImagePicker('footer')}
+              placeholder="Contact block, confidentiality note, links…"
+              className="min-h-[220px]"
+            />
+          </AdminCard>
+        </div>
+      )}
+
+      <StorageImagePicker
+        open={pickerOpen}
+        onClose={() => {
+          browseResolverRef.current?.(null);
+          browseResolverRef.current = null;
+          setPickerOpen(false);
+          setImageTarget(null);
+        }}
+        onSelect={(publicUrl) => {
+          browseResolverRef.current?.(publicUrl);
+          browseResolverRef.current = null;
+          setPickerOpen(false);
+          setImageTarget(null);
+        }}
+      />
     </>
   );
 }

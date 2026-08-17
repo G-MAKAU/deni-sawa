@@ -371,18 +371,141 @@
 
 /* Lexical image node */
 .ds-lexical-image {
+  position: relative;
   display: inline-block;
   max-width: 100%;
   margin: 0.5rem 0;
   vertical-align: middle;
+  border-radius: 0.375rem;
+  line-height: 0;
+  transition: box-shadow 0.15s ease;
 }
 .ds-lexical-image img {
   display: block;
   max-width: 100%;
   height: auto;
-  border-radius: 0.5rem;
-  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.08);
+  border-radius: 0.375rem;
 }
+.ds-lexical-image.ds-img-hover { box-shadow: 0 0 0 2px rgba(232, 81, 10, 0.45); }
+.ds-lexical-image.ds-img-selected { box-shadow: 0 0 0 2px #E8510A; }
+
+/* Resize handles + width badge */
+.ds-img-resize-handle {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  background: #ffffff;
+  border: 2px solid #E8510A;
+  border-radius: 3px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  z-index: 10;
+  touch-action: none;
+}
+.ds-img-resize-handle:hover { background: #E8510A; }
+.ds-img-width-badge {
+  position: absolute;
+  left: 50%;
+  bottom: -28px;
+  transform: translateX(-50%);
+  background: #111111;
+  color: #ffffff;
+  font-size: 11px;
+  line-height: 1;
+  padding: 3px 8px;
+  border-radius: 4px;
+  z-index: 10;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* ── Image layout modes (Word-style) ─────────────────────────────────────── */
+/* Positioning + stacking context so absolute (behind/front) images anchor to
+   the content area and negative z-index paints under the text. */
+.ds-lexical { position: relative; isolation: isolate; }
+
+.ds-lexical-image[data-layout='inline'] {
+  float: none;
+  position: relative;
+}
+
+.ds-lexical-image[data-layout='square-left'],
+.ds-lexical-image[data-layout='tight-left'] {
+  float: left;
+  margin-right: 1rem;
+}
+.ds-lexical-image[data-layout='square-right'],
+.ds-lexical-image[data-layout='tight-right'] {
+  float: right;
+  margin-left: 1rem;
+}
+
+/* Tight: wrap text around the image's alpha shape when the image is
+   transparent; otherwise this behaves like Square. */
+.ds-lexical-image[data-layout='tight-left'],
+.ds-lexical-image[data-layout='tight-right'] {
+  shape-outside: var(--img-src, none);
+}
+
+.ds-lexical-image[data-layout='center'] {
+  float: none;
+  position: relative;
+  display: block;
+  width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.ds-lexical-image[data-layout='behind'] {
+  float: none;
+  position: absolute;
+  z-index: -1;
+  pointer-events: none;
+}
+.ds-lexical-image[data-layout='front'] {
+  float: none;
+  position: absolute;
+  z-index: 10;
+}
+
+/* ── Premium report document styling (web report viewer) ─────────────────── */
+.report-doc .ds-lexical h1 {
+  font-family: var(--font-playfair), Georgia, serif;
+  font-size: 1.9rem;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+}
+.report-doc .ds-lexical h2 {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 1.02rem;
+  color: #E8510A;
+  padding-bottom: 0.45rem;
+  margin-top: 2rem;
+  border-bottom: 1px solid #EADCD2;
+}
+.report-doc .ds-lexical h3 {
+  font-size: 1.05rem;
+  color: #1A1A1A;
+}
+.report-doc .ds-lexical table th {
+  background: #FDF3EC;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 0.8rem;
+}
+.report-doc .ds-lexical blockquote {
+  border-left: 3px solid #E8510A;
+  background: #FDF3EC;
+}
+.report-doc .ds-lexical ul,
+.report-doc .ds-lexical ol {
+  margin: 0.75rem 0;
+}
+.report-doc .ds-lexical li {
+  margin-bottom: 0.25rem;
+}
+
+
 
 /* WhatsApp template body — {{variable}} highlight */
 .wa-body[contenteditable]:focus { outline: none; }
@@ -402,3 +525,12 @@
   font-size: 0.9em;
 }
 .wa-preview-text .wa-var { color: #c94508; background: rgba(232, 81, 10, 0.12); border-radius: 0.3rem; padding: 0 0.25rem; }
+
+/* Floating AI chat widget — message entrance animation */
+@keyframes chat-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-chat-in {
+  animation: chat-in 0.25s ease-out both;
+}
