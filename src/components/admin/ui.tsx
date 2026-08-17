@@ -209,17 +209,25 @@ export function Modal({
   );
 }
 
-export function Th({ children, className, align = 'left' }: { children?: React.ReactNode; className?: string; align?: 'left' | 'right' | 'center' }) {
+export function Th({ children, className, align = 'left', sortDirection }: { children?: React.ReactNode; className?: string; align?: 'left' | 'right' | 'center'; sortDirection?: 'asc' | 'desc' | null }) {
   return (
     <th
       className={cn(
-        'whitespace-nowrap px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--a-muted)]',
+        'relative whitespace-nowrap px-4 py-3.5 text-[11px] font-bold uppercase tracking-wider text-[var(--a-ink)] bg-[var(--a-subtle)] border-b border-[var(--a-border)] transition-colors',
+        'after:content-[""] after:absolute after:bottom-0 after:left-4 after:right-4 after:h-[1px] after:bg-gradient-to-r after:from-transparent after:via-[var(--a-border)] after:to-transparent',
         align === 'right' && 'text-right',
         align === 'center' && 'text-center',
         className
       )}
     >
-      {children}
+      <div className="flex items-center gap-1.5">
+        {children}
+        {sortDirection && (
+          <span className="ml-1 inline-flex text-[10px] text-[var(--a-muted)]">
+            {sortDirection === 'asc' ? '▲' : '▼'}
+          </span>
+        )}
+      </div>
     </th>
   );
 }
@@ -228,7 +236,7 @@ export function Td({ children, className, align = 'left' }: { children?: React.R
   return (
     <td
       className={cn(
-        'whitespace-nowrap px-4 py-3 text-sm text-[var(--a-ink2)]',
+        'whitespace-nowrap px-4 py-3 text-sm text-[var(--a-ink2)] border-b border-[var(--a-border-soft)] transition-colors',
         align === 'right' && 'text-right',
         align === 'center' && 'text-center',
         className

@@ -103,7 +103,7 @@ export function LexicalEditor({ state, onChange, placeholder = 'Start writing…
         <LinkPlugin />
         <ListPlugin />
         <TabIndentationPlugin />
-        <ElementStylePlugin />
+        <ElementStylePlugin state={state} />
         <CodeHighlightPlugin />
         <CheckListPlugin />
         <PastePlugin />

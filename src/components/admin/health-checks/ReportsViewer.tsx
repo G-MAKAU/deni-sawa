@@ -334,7 +334,7 @@ export function ReportsViewer() {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="border-b border-[var(--a-border-soft)] bg-[var(--a-subtle)]">
+              <thead className="bg-[var(--a-subtle)]">
                 {table.getHeaderGroups().map((headerGroup) => (
                   <tr key={headerGroup.id}>
                     {headerGroup.headers.map((header) => (

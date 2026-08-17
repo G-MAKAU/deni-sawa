@@ -12,15 +12,29 @@ export interface ReportTextRun {
   fontFamily?: string;
 }
 
+export interface ReportTableCell {
+  runs: ReportTextRun[];
+  text: string;
+  header: boolean;
+  backgroundColor?: string;
+}
+
+export interface ReportTableRow {
+  cells: ReportTableCell[];
+}
+
 export interface ReportBlock {
-  kind: 'heading' | 'paragraph' | 'quote' | 'callout' | 'list' | 'divider';
+  kind: 'heading' | 'paragraph' | 'quote' | 'callout' | 'list' | 'divider' | 'table';
   level?: 1 | 2 | 3;
   text?: string;
   runs?: ReportTextRun[];
   items?: string[];
+  listType?: 'bullet' | 'number' | 'check';
+  checked?: boolean[];
   tone?: 'brand' | 'growth' | 'dark';
   color?: string;
   backgroundColor?: string;
+  rows?: ReportTableRow[];
 }
 
 export interface ExportModel {
@@ -56,6 +70,7 @@ function collectText(node: Record<string, unknown> | null | undefined): ReportTe
     if (family) run.fontFamily = family.split(',')[0].trim().replace(/['"]/g, '');
     return [run];
   }
+  if (type === 'linebreak') return [{ text: '\n' }];
   if (Array.isArray(node.children)) {
     return node.children.flatMap((child) => collectText(child as Record<string, unknown>));
   }
@@ -75,7 +90,8 @@ function blockBackground(node: Record<string, unknown>): string | undefined {
 
 /**
  * Converts a serialized Lexical EditorState into a simple block model that
- * both the PDF and Word exporters can render with brand styling.
+ * both the PDF and Word exporters can render with brand styling. Handles every
+ * node the AI reports emit — including tables — so no content is dropped.
  */
 export function lexicalStateToModel(
   state: Record<string, unknown> | string,
@@ -113,17 +129,40 @@ export function lexicalStateToModel(
         backgroundColor: blockBackground(node),
       });
     } else if (type === 'quote') {
-      blocks.push({ kind: 'quote', text: textString(node) });
+      blocks.push({ kind: 'quote', text: textString(node), runs: collectText(node) });
     } else if (type === 'callout') {
-      blocks.push({ kind: 'callout', tone: (node.tone as ReportBlock['tone']) ?? 'brand', text: textString(node) });
+      blocks.push({ kind: 'callout', tone: (node.tone as ReportBlock['tone']) ?? 'brand', text: textString(node), runs: collectText(node) });
     } else if (type === 'list') {
-      const items = (node.children as Record<string, unknown>[] | undefined)?.map((item) =>
-        textString(item)
-      ) ?? [];
-      blocks.push({ kind: 'list', items });
-    } else if (type === 'divider') {
+      const listType = (node.listType as ReportBlock['listType']) ?? 'bullet';
+      const items = (node.children as Record<string, unknown>[] | undefined) ?? [];
+      blocks.push({
+        kind: 'list',
+        listType,
+        items: items.map((item) => textString(item)),
+        checked: items.map((item) => (item.checked as boolean | undefined) ?? false),
+      });
+    } else if (type === 'divider' || type === 'horizontalrule') {
       blocks.push({ kind: 'divider' });
-    } else if (type === 'root' || type === 'listitem') {
+    } else if (type === 'table') {
+      const rows: ReportTableRow[] = ((node.children as Record<string, unknown>[] | undefined) ?? []).map((row) => {
+        const cells: ReportTableCell[] = ((row.children as Record<string, unknown>[] | undefined) ?? []).map((cell) => ({
+          runs: collectText(cell),
+          text: textString(cell),
+          header: Number(cell.headerState ?? 0) > 0,
+          backgroundColor:
+            typeof cell.backgroundColor === 'string'
+              ? (cssColorToHex(cell.backgroundColor) ?? undefined)
+              : undefined,
+        }));
+        return { cells };
+      });
+      blocks.push({ kind: 'table', rows });
+    } else if (type === 'image') {
+      // Images reference external/site URLs that may not resolve in the
+      // exporter — drop them gracefully so the document never breaks.
+      const alt = typeof node.alt === 'string' ? node.alt : '';
+      if (alt) blocks.push({ kind: 'paragraph', text: `[Image: ${alt}]`, runs: [{ text: `[Image: ${alt}]` }] });
+    } else if (type === 'root' || type === 'listitem' || type === 'tablerow' || type === 'tablecell') {
       // recurse
       (node.children as Record<string, unknown>[] | undefined)?.forEach(convert);
     }

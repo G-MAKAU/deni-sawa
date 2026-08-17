@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { jsonrepair } from 'jsonrepair';
+import { withLexicalDesignSpec } from '@/lib/lexical-report-spec';
 
 export interface GenerateReportOptions {
   systemPrompt: string;
@@ -75,6 +76,7 @@ const ALLOWED_NODES = new Set([
   'callout',
   'divider',
   'link',
+  'image',
   'table',
   'tablerow',
   'tablecell',
@@ -83,6 +85,41 @@ const TEXT_KEYS = new Set(['text', 'link']);
 const LEAF_KEYS = new Set(['divider']);
 const HEADING_TAGS = new Set(['h1', 'h2', 'h3', 'h4', 'h5', 'h6']);
 const LIST_TYPES = new Set(['bullet', 'number', 'check']);
+const IMAGE_LAYOUTS = new Set(['inline', 'square-left', 'square-right', 'tight-left', 'tight-right', 'center', 'behind', 'front']);
+
+/** CSS properties an AI report may set, so styling stays premium but safe. */
+const ALLOWED_STYLE_PROPS = new Set([
+  'color',
+  'background-color',
+  'font-size',
+  'font-family',
+  'font-weight',
+  'font-style',
+  'text-decoration',
+  'text-align',
+  'line-height',
+  'letter-spacing',
+  'padding',
+  'margin',
+  'border-radius',
+]);
+
+/** Whitelists a CSS declaration block — drops anything unsafe (url(), scripts, braces). */
+function sanitizeStyle(style: unknown): string {
+  if (typeof style !== 'string' || !style.trim()) return '';
+  const out: string[] = [];
+  for (const decl of style.split(';')) {
+    const idx = decl.indexOf(':');
+    if (idx === -1) continue;
+    const prop = decl.slice(0, idx).trim().toLowerCase();
+    const value = decl.slice(idx + 1).trim();
+    if (!ALLOWED_STYLE_PROPS.has(prop)) continue;
+    if (!value || /url\s*\(|expression\s*\(|javascript:/i.test(value)) continue;
+    if (/[{}<>]/.test(value)) continue;
+    out.push(`${prop}: ${value}`);
+  }
+  return out.join('; ');
+}
 
 /** Recursively whitelist a parsed Lexical tree so only known nodes survive. */
 function sanitizeNode(node: unknown): unknown | null {
@@ -97,11 +134,25 @@ function sanitizeNode(node: unknown): unknown | null {
       detail: 0,
       format: typeof n.format === 'number' ? n.format : 0,
       mode: 'normal',
-      style: typeof n.style === 'string' ? n.style : '',
+      style: sanitizeStyle(n.style),
       text: n.text,
       type,
       version: 1,
       ...(type === 'link' && typeof n.url === 'string' ? { url: n.url, rel: 'noreferrer', target: '_blank' } : {}),
+    };
+  }
+
+  if (type === 'image') {
+    const src = typeof n.src === 'string' ? n.src.trim() : '';
+    // Only site-relative or http(s) URLs are valid for a rendered report.
+    if (!/^(https?:\/\/|\/)/i.test(src)) return null;
+    return {
+      alt: typeof n.alt === 'string' ? n.alt.slice(0, 200) : '',
+      src,
+      width: typeof n.width === 'number' && n.width > 0 && n.width <= 4000 ? n.width : null,
+      layout: typeof n.layout === 'string' && IMAGE_LAYOUTS.has(n.layout) ? n.layout : 'inline',
+      type: 'image',
+      version: 1,
     };
   }
 
@@ -110,10 +161,24 @@ function sanitizeNode(node: unknown): unknown | null {
 
   const children = Array.isArray(n.children) ? n.children.map(sanitizeNode).filter(Boolean) : [];
   if (type === 'root') return { children, direction: 'ltr', format: '', indent: 0, type: 'root', version: 1 };
-  if (type === 'listitem') return { children, direction: 'ltr', format: '', indent: 0, type: 'listitem', value: 1, version: 1 };
+  if (type === 'listitem') {
+    // Preserve `checked` so checklist items keep their checkbox glyph.
+    const checked = typeof n.checked === 'boolean' ? n.checked : undefined;
+    return {
+      children,
+      direction: 'ltr',
+      format: '',
+      indent: 0,
+      style: sanitizeStyle(n.style),
+      type: 'listitem',
+      value: typeof n.value === 'number' ? n.value : 1,
+      version: 1,
+      ...(checked !== undefined ? { checked } : {}),
+    };
+  }
   if (type === 'heading') {
     const tag = typeof n.tag === 'string' && HEADING_TAGS.has(n.tag) ? n.tag : 'h2';
-    return { children, direction: 'ltr', format: '', indent: 0, tag, type: 'heading', version: 1 };
+    return { children, direction: 'ltr', format: '', indent: 0, style: sanitizeStyle(n.style), tag, type: 'heading', version: 1 };
   }
   if (type === 'list') {
     const listType = typeof n.listType === 'string' && LIST_TYPES.has(n.listType) ? n.listType : 'bullet';
@@ -134,18 +199,42 @@ function sanitizeNode(node: unknown): unknown | null {
     return { children, direction: 'ltr', format: '', indent: 0, tone, type: 'callout', version: 1 };
   }
   if (type === 'table') {
-    // Gemini often emits empty Lexical tables — drop them so they don't render
-    // as blank boxes; the model is instructed to use lists/paragraphs instead.
     if (children.length === 0) return null;
-    return { children, direction: 'ltr', format: '', indent: 0, type: 'table', version: 1 };
+    const colWidths = Array.isArray(n.colWidths) && n.colWidths.every((w) => typeof w === 'number') ? n.colWidths : null;
+    return {
+      children,
+      direction: 'ltr',
+      format: '',
+      indent: 0,
+      type: 'table',
+      version: 1,
+      ...(colWidths ? { colWidths } : {}),
+    };
   }
   if (type === 'tablerow') {
     if (children.length === 0) return null;
     return { children, direction: 'ltr', format: '', indent: 0, type: 'tablerow', version: 1 };
   }
   if (type === 'tablecell') {
+    // Lexical requires a block element inside a cell — wrap bare text in a paragraph.
+    const BLOCK_TYPES = new Set(['paragraph', 'heading', 'list', 'quote', 'callout', 'code']);
+    const cellChildren = children.some((c) => BLOCK_TYPES.has((c as Record<string, unknown>).type as string))
+      ? children
+      : [
+          {
+            children,
+            direction: 'ltr',
+            format: '',
+            indent: 0,
+            style: '',
+            textFormat: 0,
+            textStyle: '',
+            type: 'paragraph',
+            version: 1,
+          },
+        ];
     return {
-      children,
+      children: cellChildren,
       colSpan: typeof n.colSpan === 'number' ? n.colSpan : 1,
       rowSpan: typeof n.rowSpan === 'number' ? n.rowSpan : 1,
       headerState: typeof n.headerState === 'number' ? n.headerState : 0,
@@ -157,7 +246,17 @@ function sanitizeNode(node: unknown): unknown | null {
       backgroundColor: typeof n.backgroundColor === 'string' ? n.backgroundColor : null,
     };
   }
-  return { children, direction: 'ltr', format: '', indent: 0, textFormat: 0, textStyle: '', type: nodeType, version: 1 };
+  return {
+    children,
+    direction: 'ltr',
+    format: '',
+    indent: 0,
+    style: sanitizeStyle(n.style),
+    textFormat: 0,
+    textStyle: '',
+    type: nodeType,
+    version: 1,
+  };
 }
 
 /** Validate and normalise parsed JSON into a safe Lexical EditorState. */
@@ -316,7 +415,7 @@ export async function generateReportWithClaude(options: GenerateReportOptions): 
     const message = await anthropic.messages.create({
       model,
       max_tokens: maxTokens,
-      system: options.systemPrompt,
+      system: withLexicalDesignSpec(options.systemPrompt),
       messages: [{ role: 'user', content: options.userContent }],
     });
 
@@ -369,7 +468,7 @@ export async function generateReportWithGemini(options: GenerateReportOptions): 
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            systemInstruction: { parts: [{ text: options.systemPrompt }] },
+            systemInstruction: { parts: [{ text: withLexicalDesignSpec(options.systemPrompt) }] },
             contents: [{ role: 'user', parts: [{ text: options.userContent + attempt.suffix }] }],
             generationConfig: { maxOutputTokens: maxTokens, temperature: 0.6 },
           }),
@@ -465,7 +564,7 @@ export async function generateReportWithOpenRouter(options: GenerateReportOption
         body: JSON.stringify({
           model,
           messages: [
-            { role: 'system', content: options.systemPrompt },
+            { role: 'system', content: withLexicalDesignSpec(options.systemPrompt) },
             { role: 'user', content: options.userContent + attempt.suffix },
           ],
           max_tokens: affordableTokens,

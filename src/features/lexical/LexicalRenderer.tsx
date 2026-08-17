@@ -49,7 +49,7 @@ export function LexicalRenderer({ state, className }: LexicalRendererProps) {
           <HistoryPlugin />
           <LinkPlugin />
           <ListPlugin />
-          <ElementStylePlugin />
+          <ElementStylePlugin state={state} />
           <CodeHighlightPlugin />
           <TablePlugin />
           <HorizontalRulePlugin />

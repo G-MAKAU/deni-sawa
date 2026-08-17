@@ -522,21 +522,22 @@
   color: #E8510A;
   padding-bottom: 0.45rem;
   margin-top: 2rem;
-  border-bottom: 1px solid #EADCD2;
+  border-bottom: 1px solid var(--card-border);
 }
 .report-doc .ds-lexical h3 {
   font-size: 1.05rem;
-  color: #1A1A1A;
+  color: var(--text);
 }
 .report-doc .ds-lexical table th {
-  background: #FDF3EC;
+  background: rgba(232, 81, 10, 0.1);
+  color: var(--text);
   text-transform: uppercase;
   letter-spacing: 0.04em;
   font-size: 0.8rem;
 }
 .report-doc .ds-lexical blockquote {
   border-left: 3px solid #E8510A;
-  background: #FDF3EC;
+  background: rgba(232, 81, 10, 0.08);
 }
 .report-doc .ds-lexical ul,
 .report-doc .ds-lexical ol {
