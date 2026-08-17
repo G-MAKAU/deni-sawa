@@ -106,10 +106,10 @@ export default async function HomePage() {
               <div className="absolute -right-6 top-10 h-36 w-36 rounded-full border border-brand/25" />
               <div className="absolute -bottom-5 -left-5 h-28 w-28 rounded-lg bg-growth/10" />
 
-              <div className="relative aspect-[4/5] lg:h-full lg:w-full lg:aspect-auto">
+              <div className="relative aspect-[3/2] lg:aspect-auto lg:h-full lg:w-full">
                 <Image
-                  src="/images/hero-1.jpg"
-                  alt="Deni Sawa Partners advisory team in session"
+                  src="/images/hero-1.webp"
+                  alt="Deni Sawa Partners concluding a business advisory agreement"
                   fill
                   priority
                   sizes="(min-width: 1024px) 50vw, 100vw"

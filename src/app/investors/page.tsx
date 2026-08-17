@@ -144,7 +144,7 @@ export default function InvestorsPage() {
         </div>
       </section>
 
-      <MediaBand src="/images/hero-1.jpg" alt="Investor boardroom session" caption="Rigour, visibility, representation" height="md" />
+      <MediaBand src="/images/hero-1.webp" alt="Investor boardroom session" caption="Rigour, visibility, representation" height="md" />
 
       <section className="hero-pattern section-pad bg-navy text-white">
         <div className="container-lux">

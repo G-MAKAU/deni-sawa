@@ -23,20 +23,13 @@ function useScrollDirection(pathname?: string) {
   const [hidden, setHidden] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const lastY = useRef(0);
-  // Cooldowns so a state change (which animates over ~300ms) is never reversed
-  // by a rapid follow-up scroll event near a threshold — this is what caused the
-  // top contact bar to flicker when easing back toward the top of the page.
-  const lastScrolledToggle = useRef(0);
-  const lastHiddenToggle = useRef(0);
 
   // On page navigation the scroll position resets to the top, so the contact
-  // bar must re-appear even though this component persists across routes.
+  // bar and navbar must re-appear even though this component persists across routes.
   useEffect(() => {
     setHidden(false);
     setScrolled(false);
     lastY.current = window.scrollY;
-    lastScrolledToggle.current = 0;
-    lastHiddenToggle.current = 0;
   }, [pathname]);
 
   useEffect(() => {
@@ -46,34 +39,22 @@ function useScrollDirection(pathname?: string) {
       ticking = true;
       window.requestAnimationFrame(() => {
         const y = window.scrollY;
-        const now = Date.now();
 
-        // Hysteresis so the compact/normal nav does not flicker near the threshold,
-        // plus a ~300ms cooldown matching the contact-bar transition duration.
-        if (y > 40) {
-          if (now - lastScrolledToggle.current >= 300) {
-            lastScrolledToggle.current = now;
-            setScrolled(true);
-          }
-        } else if (y < 20) {
-          if (now - lastScrolledToggle.current >= 300) {
-            lastScrolledToggle.current = now;
-            setScrolled(false);
-          }
-        }
+        // At/near the very top everything is always fully shown — this guarantees
+        // the contact bar and navbar reappear on scroll-to-top regardless of
+        // scroll-event timing (previously the cooldown could strand them hidden).
+        if (y <= 24) {
+          setScrolled(false);
+          setHidden(false);
+        } else {
+          // Hysteresis band (24–48px) so the compact/normal nav does not flicker
+          // when hovering around the threshold.
+          if (y > 48) setScrolled(true);
 
-        // Hide only on a meaningful downward scroll; show on any upward scroll.
-        const delta = y - lastY.current;
-        if (delta > 4 && y > 140) {
-          if (now - lastHiddenToggle.current >= 300) {
-            lastHiddenToggle.current = now;
-            setHidden(true);
-          }
-        } else if (delta < -4) {
-          if (now - lastHiddenToggle.current >= 300) {
-            lastHiddenToggle.current = now;
-            setHidden(false);
-          }
+          // Hide only on a meaningful downward scroll; show on any upward scroll.
+          const delta = y - lastY.current;
+          if (delta > 4 && y > 140) setHidden(true);
+          else if (delta < -4) setHidden(false);
         }
 
         lastY.current = y;

@@ -39,14 +39,14 @@ export const navLinks = [
 
 export const heroImages = {
   main: '/Slider1-denisawa.png',
-  small1: '/images/hero-1.jpg',
+  small1: '/images/hero-1.webp',
   small2: '/images/hero-2.jpg',
   small3: '/images/hero-3.jpg',
   small4: '/images/hero-4.jpg',
 };
 
 export const aboutImages = {
-  header: '/images/hero-1.jpg',
+  header: '/images/hero-1.webp',
   visual: '/images/hero-4.jpg',
   story: '/images/hero-3.jpg',
   team: '/images/hero-2.jpg',
