@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { site, capabilities, services, audiences, healthChecks, methodSteps, journeyStages, conversionSteps, networkBenefits } from '@/data/site';
 import { Reveal } from '@/components/Reveal';
+import { HealthScoreCard } from '@/components/HealthScoreCard';
 import { SectionHeading } from '@/components/SectionHeading';
 import { CTASection } from '@/components/CTASection';
 import { MediaBand } from '@/components/MediaBand';
@@ -41,6 +42,7 @@ const serviceIcons = {
   'fractional-cfo': LineChart,
   'fractional-ceo': Briefcase,
   'governance-controls': ShieldCheck,
+  'growth-support': TrendingUp,
   'special-situations': LifeBuoy,
 } as const;
 
@@ -124,44 +126,7 @@ export default async function HomePage() {
               </div>
 
               {/* Floating Health Score card */}
-              <div className="absolute bottom-4 left-4 lg:-left-10 lg:bottom-10 w-72 rounded-xl border border-card-border bg-card p-5 shadow-2xl shadow-black/40">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-semibold text-brand">Business Health Score</p>
-                  <span className="rounded-full bg-brand/15 px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-widest text-foreground">
-                    AI
-                  </span>
-                </div>
-
-                <div className="mt-3 flex items-end gap-1.5">
-                  <span className="font-display text-5xl font-bold leading-none text-brand">72</span>
-                  <span className="mb-1 text-sm text-growth">/100</span>
-                  <span className="ml-auto mb-0.5 inline-flex items-center gap-1 rounded-full bg-growth/15 px-2 py-0.5 text-[10px] font-semibold text-growth">
-                    <TrendingUp className="h-3 w-3" /> Improving
-                  </span>
-                </div>
-
-                {/* Gauge */}
-                <div className="relative mt-4 h-2 w-full rounded-full bg-foreground/10">
-                  <div className="h-full w-[72%] rounded-full bg-gradient-to-r from-brand to-growth" />
-                  <span
-                    className="absolute -top-[3px] h-4 w-1 rounded-full bg-foreground shadow-[0_0_6px_rgba(0,0,0,0.4)]"
-                    style={{ left: '72%' }}
-                  />
-                </div>
-                <div className="mt-1.5 flex justify-between font-mono text-[9px] uppercase tracking-wider text-muted-foreground">
-                  <span>Fragile</span>
-                  <span>Stable</span>
-                  <span>Resilient</span>
-                </div>
-
-                <Link
-                  href="/health-checks"
-                  className="mt-4 flex items-center justify-between rounded-lg border border-brand/30 bg-brand/10 px-3 py-2.5 text-xs font-semibold text-foreground transition-colors hover:border-brand/50 hover:bg-brand/20"
-                >
-                  Free AI Diagnostic
-                  <ArrowRight className="h-3.5 w-3.5 text-brand" />
-                </Link>
-              </div>
+              <HealthScoreCard className="absolute bottom-4 left-4 lg:-left-10 lg:bottom-10" />
             </Reveal>
           </div>
         </div>
@@ -192,7 +157,58 @@ export default async function HomePage() {
             subtitle="A seasoned operating bench for organisations that need boardroom capability without boardroom payroll."
           />
 
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+          {/* Featured — Growth & Business Development */}
+          <Reveal className="h-full">
+            {(() => {
+              const featured = services.find((s) => s.slug === 'growth-support')!;
+              const FeaturedIcon = TrendingUp;
+              return (
+                <Link
+                  href={`/business-support/${featured.slug}`}
+                  className="card-elevated group relative flex flex-col overflow-hidden p-0 lg:flex-row"
+                >
+                  <div className="flex flex-1 flex-col p-8 lg:p-10">
+                    <span className="mb-5 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-growth/10 text-growth transition-colors group-hover:bg-growth group-hover:text-white">
+                      <FeaturedIcon className="h-6 w-6" strokeWidth={1.8} />
+                    </span>
+                    <h3 className="text-h2 font-semibold text-foreground">
+                      {featured.title.split(' / ')[0]}
+                    </h3>
+                    <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-muted-foreground">
+                      {featured.short}
+                    </p>
+                    <div className="mt-6 flex flex-wrap gap-2">
+                      {featured.capabilities.slice(0, 3).map((cap) => (
+                        <span
+                          key={cap}
+                          className="rounded-badge border border-card-border bg-bgalt px-3 py-1 text-xs text-foreground"
+                        >
+                          {cap}
+                        </span>
+                      ))}
+                    </div>
+                    <span className="mt-7 inline-flex items-center gap-1.5 text-sm font-semibold text-growth transition-colors group-hover:text-growth-600">
+                      Explore Growth & Business Development
+                      <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                    </span>
+                  </div>
+                  <div className="flex items-center bg-gradient-to-br from-growth/10 to-brand/10 p-8 lg:w-80 lg:p-10">
+                    <div className="rounded-xl border border-card-border bg-card p-6 shadow-lg">
+                      <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+                        Growth Path
+                      </p>
+                      <p className="mt-3 text-sm leading-relaxed text-foreground">
+                        Revenue optimisation, business model review, strategic partnerships and
+                        investor readiness — a deliberate path to sustainable expansion.
+                      </p>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })()}
+          </Reveal>
+
+          <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
             {services
               .filter((s) => s.slug !== 'growth-support')
               .map((service, i) => {

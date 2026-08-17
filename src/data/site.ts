@@ -74,6 +74,8 @@ export interface Service {
   short: string;
   icon: string;
   positioning: string;
+  whoFor: string;
+  howWeWork: string[];
   capabilities: string[];
   outcomes: string[];
 }
@@ -86,6 +88,13 @@ export const services: Service[] = [
     icon: 'LineChart',
     positioning:
       'Most businesses do not need a full-time CFO — they need the discipline of one. We step in on a part-time, senior basis to bring financial visibility, controls and decision-grade reporting to your leadership team.',
+    whoFor:
+      'Founders and CEOs who have outgrown spreadsheet accounting, need decision-grade numbers and want CFO-level discipline without the full-time payroll cost.',
+    howWeWork: [
+      'Assess the current finance function, reporting and controls',
+      'Design the cashflow, budgeting and reporting rhythm that fits your stage',
+      'Embed a fractional finance lead who trains and upgrades your team as they go',
+    ],
     capabilities: [
       'Financial visibility and management reporting',
       'Cashflow management and forecasting',
@@ -107,6 +116,13 @@ export const services: Service[] = [
     icon: 'Briefcase',
     positioning:
       'Founders often reach a stage where the business outgrows its current leadership structure. A fractional CEO provides senior strategic leadership — planning, execution and accountability — without the full-time cost.',
+    whoFor:
+      'Founders hitting a growth ceiling, boards between permanent appointments, and businesses that need senior operational leadership with clear accountability.',
+    howWeWork: [
+      'Clarify strategy, priorities and the decisions that matter',
+      'Build the operating rhythm — reviews, KPIs and accountability',
+      'Drive execution alongside your team until the structure holds on its own',
+    ],
     capabilities: [
       'Strategic planning and business performance',
       'Growth execution and operational accountability',
@@ -128,6 +144,13 @@ export const services: Service[] = [
     icon: 'ShieldCheck',
     positioning:
       'Investors, banks and partners underwrite governance. We build the structures, policies and control systems that protect value, reduce risk and make your business bankable.',
+    whoFor:
+      'Businesses preparing for funding, acquisition or due diligence, and organisations that need credible structure for banks, investors and regulators.',
+    howWeWork: [
+      'Benchmark current governance, policies and controls against best practice',
+      'Design the framework — board rhythm, KPIs, risk controls and reporting',
+      'Embed it with your team so it operates without constant hand-holding',
+    ],
     capabilities: [
       'Governance structures and board support',
       'Policies, procedures and accountability systems',
@@ -149,6 +172,13 @@ export const services: Service[] = [
     icon: 'TrendingUp',
     positioning:
       'Growth is a discipline, not an accident. We review your business model, sharpen your revenue engine and build the partnerships and investor story required to fund and sustain expansion.',
+    whoFor:
+      'Businesses with a proven model that want deliberate, sustainable growth — through sharper revenue, stronger partnerships and investor-ready positioning.',
+    howWeWork: [
+      'Review the business model, pricing and revenue economics',
+      'Identify the highest-leverage growth moves and partnerships',
+      'Build the investor story and readiness that funds the next stage',
+    ],
     capabilities: [
       'Growth strategy and revenue optimisation',
       'Business model review and redesign',
@@ -170,6 +200,13 @@ export const services: Service[] = [
     icon: 'LifeBuoy',
     positioning:
       'When a business faces financial distress, clarity and speed decide the outcome. We bring bankers-grade experience to debt pressure, cashflow crisis, underperformance and restructuring — stabilising first, then rebuilding.',
+    whoFor:
+      'Businesses under financial distress or debt pressure, and stakeholders who need a credible, realistic plan when time is against them.',
+    howWeWork: [
+      'Stabilise the situation — cash, creditors and immediate risk',
+      'Negotiate a realistic plan with lenders and stakeholders',
+      'Rebuild performance and governance to prevent regression',
+    ],
     capabilities: [
       'Financial distress and debt pressure management',
       'Cashflow crisis stabilisation',

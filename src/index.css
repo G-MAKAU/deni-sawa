@@ -174,7 +174,7 @@
 
   /* Eyebrow label — JetBrains Mono data-label */
   .eyebrow {
-    @apply inline-flex items-center gap-2 font-mono text-[11px] font-semibold uppercase tracking-[0.18em];
+    @apply inline-flex items-center gap-2 font-mono text-inherit font-semibold uppercase tracking-[0.18em];
   }
   .eyebrow-brand { @apply text-brand; }
   .eyebrow-growth { @apply text-growth; }
@@ -228,6 +228,37 @@
      light mode as they do in dark mode (scoped — only where this modifier is used). */
   .card-dark-panel.card-dark-panel--consistent {
     background: rgba(255, 255, 255, 0.04);
+  }
+
+  /* Interactive Business Health Score range slider */
+  .hs-range {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 8px;
+    border-radius: 9999px;
+    background:
+      linear-gradient(90deg, #E8510A 0%, #5A9E28 var(--hs-pct, 72%), rgba(127, 127, 127, 0.15) var(--hs-pct, 72%)) !important;
+    outline: none;
+  }
+  .hs-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 9999px;
+    background: var(--hs-thumb, #5A9E28);
+    border: 2px solid #ffffff;
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
+    cursor: pointer;
+  }
+  .hs-range::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border-radius: 9999px;
+    background: var(--hs-thumb, #5A9E28);
+    border: 2px solid #ffffff;
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
+    cursor: pointer;
   }
 
   /* Horizontal divider with brand accent */

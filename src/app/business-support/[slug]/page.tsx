@@ -24,10 +24,26 @@ export async function generateMetadata({
   const { slug } = await params;
   const service = services.find((s) => s.slug === slug);
   if (!service) return {};
+  const name = service.title.split(' / ')[0];
   return {
-    title: `${service.title.split(' / ')[0]} | Business Support | Deni Sawa Partners`,
-    description: service.short,
+    title: `${name} | Business Support | Deni Sawa Partners`,
+    description: `${service.short} ${name} by Deni Sawa Partners — ${service.whoFor}`,
+    keywords: [
+      name.toLowerCase(),
+      'business support',
+      'fractional leadership',
+      'business advisory',
+      'financial leadership',
+      ...service.capabilities.slice(0, 3).map((c) => c.toLowerCase()),
+    ].join(', '),
     alternates: { canonical: `${site.url}/business-support/${service.slug}` },
+    openGraph: {
+      title: `${name} | Deni Sawa Partners`,
+      description: service.short,
+      url: `${site.url}/business-support/${service.slug}`,
+      type: 'website',
+      siteName: site.name,
+    },
   };
 }
 
@@ -116,6 +132,29 @@ export default async function ServiceDetailPage({
               </Link>
             </div>
           </aside>
+        </div>
+      </section>
+
+      {/* Who it's for + How we engage */}
+      <section className="section-pad bg-bgalt">
+        <div className="container-lux grid gap-12 lg:grid-cols-2">
+          <Reveal>
+            <SectionHeading align="left" eyebrow="A good fit when…" title="Who this is for" />
+            <p className="mt-4 max-w-xl text-lg leading-relaxed text-muted-foreground">{service.whoFor}</p>
+          </Reveal>
+          <Reveal delay={80}>
+            <SectionHeading align="left" eyebrow="How we work" title="How we engage" />
+            <ol className="mt-6 space-y-4">
+              {service.howWeWork.map((step, i) => (
+                <li key={step} className="flex items-start gap-4">
+                  <span className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border border-brand/30 bg-brand/10 font-mono text-xs font-bold text-brand">
+                    {String(i + 1).padStart(2, '0')}
+                  </span>
+                  <p className="text-[15px] leading-relaxed text-foreground">{step}</p>
+                </li>
+              ))}
+            </ol>
+          </Reveal>
         </div>
       </section>
 
