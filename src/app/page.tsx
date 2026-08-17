@@ -108,7 +108,7 @@ export default async function HomePage() {
 
               <div className="relative aspect-[3/2] lg:aspect-auto lg:h-full lg:w-full">
                 <Image
-                  src="/images/hero-1.webp"
+                  src="/images/hero-1.jpg"
                   alt="Deni Sawa Partners concluding a business advisory agreement"
                   fill
                   priority
@@ -124,10 +124,10 @@ export default async function HomePage() {
               </div>
 
               {/* Floating Health Score card */}
-              <div className="absolute bottom-4 left-4 lg:-left-10 lg:bottom-10 w-72 rounded-xl border border-white/10 bg-charcoal/90 p-5 shadow-2xl shadow-black/40 backdrop-blur-md">
+              <div className="absolute bottom-4 left-4 lg:-left-10 lg:bottom-10 w-72 rounded-xl border border-card-border bg-card p-5 shadow-2xl shadow-black/40">
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-semibold text-brand">Business Health Score</p>
-                  <span className="rounded-full bg-brand/15 px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-widest text-charcoal">
+                  <span className="rounded-full bg-brand/15 px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-widest text-foreground">
                     AI
                   </span>
                 </div>
@@ -141,14 +141,14 @@ export default async function HomePage() {
                 </div>
 
                 {/* Gauge */}
-                <div className="relative mt-4 h-2 w-full rounded-full bg-white/10">
+                <div className="relative mt-4 h-2 w-full rounded-full bg-foreground/10">
                   <div className="h-full w-[72%] rounded-full bg-gradient-to-r from-brand to-growth" />
                   <span
-                    className="absolute -top-[3px] h-4 w-1 rounded-full bg-white shadow-[0_0_6px_rgba(255,255,255,0.6)]"
+                    className="absolute -top-[3px] h-4 w-1 rounded-full bg-foreground shadow-[0_0_6px_rgba(0,0,0,0.4)]"
                     style={{ left: '72%' }}
                   />
                 </div>
-                <div className="mt-1.5 flex justify-between font-mono text-[9px] uppercase tracking-wider text-charcoal">
+                <div className="mt-1.5 flex justify-between font-mono text-[9px] uppercase tracking-wider text-muted-foreground">
                   <span>Fragile</span>
                   <span>Stable</span>
                   <span>Resilient</span>
@@ -156,7 +156,7 @@ export default async function HomePage() {
 
                 <Link
                   href="/health-checks"
-                  className="mt-4 flex items-center justify-between rounded-lg border border-brand/30 bg-brand/10 px-3 py-2.5 text-xs font-semibold text-white transition-colors hover:border-brand/50 hover:bg-brand/20"
+                  className="mt-4 flex items-center justify-between rounded-lg border border-brand/30 bg-brand/10 px-3 py-2.5 text-xs font-semibold text-foreground transition-colors hover:border-brand/50 hover:bg-brand/20"
                 >
                   Free AI Diagnostic
                   <ArrowRight className="h-3.5 w-3.5 text-brand" />
@@ -283,7 +283,7 @@ export default async function HomePage() {
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             {[healthChecks.business, healthChecks.professional].map((check, i) => (
               <Reveal key={check.slug} delay={i * 80} className="h-full">
-                <div className="card-dark-panel flex h-full flex-col">
+                <div className="card-dark-panel card-dark-panel--consistent flex h-full flex-col">
                   <h3 className="text-h3 font-semibold text-white">{check.title}</h3>
                   <p className="mt-3 flex-1 leading-relaxed text-white/65">{check.subtitle}</p>
                   <div className="mt-6 flex flex-wrap gap-2">

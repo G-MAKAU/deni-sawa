@@ -224,6 +224,11 @@
     transform: translateY(-2px);
     box-shadow: 0 10px 36px rgba(0, 0, 0, 0.35);
   }
+  /* Homepage health-check cards: render the same subtle light-tinted panel in
+     light mode as they do in dark mode (scoped — only where this modifier is used). */
+  .card-dark-panel.card-dark-panel--consistent {
+    background: rgba(255, 255, 255, 0.04);
+  }
 
   /* Horizontal divider with brand accent */
   .divider-brand { @apply h-px w-full bg-card-border; }
