@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Clock, ArrowRight } from 'lucide-react';
+import { Clock, ArrowRight, Calendar } from 'lucide-react';
 import { BlogCoverImage } from '@/components/blog/BlogCoverImage';
 
 export interface BlogPostCard {
@@ -31,24 +31,28 @@ export function formatReadTime(minutes?: number | null) {
 
 export function BlogCard({ post, featured = false }: { post: BlogPostCard; featured?: boolean }) {
   return (
-    <Link href={`/blog/${post.slug}`} className="group block h-full">
-      <article className="card-elevated flex h-full flex-col overflow-hidden !p-0">
-        <BlogCoverImage
-          src={post.cover_image_url}
-          alt={post.title}
-          className="aspect-video"
-          fallbackTextSize={featured ? 'text-6xl' : 'text-4xl'}
-          overlay={
-            featured ? (
-              <span className="absolute left-4 top-4 rounded-full bg-brand px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-white shadow-brand-sm">
-                Featured
-              </span>
-            ) : undefined
-          }
-        />
+    <Link href={`/about/blog/${post.slug}`} className="group flex h-full flex-col">
+      <article className="card-elevated relative flex h-full flex-col overflow-hidden !p-0">
+        <div className="relative overflow-hidden">
+          <BlogCoverImage
+            src={post.cover_image_url}
+            alt={post.title}
+            className="aspect-video"
+            fallbackTextSize={featured ? 'text-6xl' : 'text-4xl'}
+            overlay={
+              featured ? (
+                <span className="absolute left-4 top-4 rounded-full bg-brand px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-white shadow-brand-sm">
+                  Featured
+                </span>
+              ) : undefined
+            }
+          />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-ink-950/30 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+        </div>
+
         <div className="flex flex-1 flex-col p-6">
-          <div className="mb-3 flex items-center gap-3">
-            <span className="rounded-full bg-brand/10 px-3 py-1 text-xs font-semibold text-brand">
+          <div className="mb-3 flex flex-wrap items-center gap-3">
+            <span className="rounded-full bg-brand/10 px-3 py-1 text-xs font-semibold text-brand transition-colors duration-300 group-hover:bg-brand group-hover:text-white">
               {post.primary_category ?? 'General'}
             </span>
             <span className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -64,7 +68,10 @@ export function BlogCard({ post, featured = false }: { post: BlogPostCard; featu
           <p className="mb-4 line-clamp-3 text-sm leading-relaxed text-muted-foreground">{post.excerpt}</p>
 
           <div className="mt-auto flex items-center justify-between border-t border-border pt-4">
-            <span className="text-xs text-muted-foreground">{formatPublishedDate(post.published_at)}</span>
+            <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Calendar className="h-3 w-3" />
+              {formatPublishedDate(post.published_at)}
+            </span>
             <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand transition-all duration-300 group-hover:gap-2.5">
               Read Article
               <ArrowRight className="h-4 w-4" />

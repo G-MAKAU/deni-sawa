@@ -49,7 +49,7 @@ export function ServicesNavItem({ active, currentSlug }: ServicesNavItemProps) {
               href="/services"
               className="inline-flex items-center gap-1 text-sm font-bold text-brand transition-all duration-300 hover:gap-2"
             >
-              All Services <ArrowRight className="h-3.5 w-3.5" />
+              Business Support <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
 

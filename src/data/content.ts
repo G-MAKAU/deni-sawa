@@ -33,7 +33,7 @@ export const navLinks = [
   { label: 'About', href: '/about', active: true },
   { label: 'Services', href: '/services', active: true },
   { label: 'Academy', href: '/academy', active: true },
-  { label: 'Blog', href: '/blog', active: true },
+  { label: 'Blog', href: '/about/blog', active: true },
   { label: 'Contact', href: '/contact', active: true },
 ];
 

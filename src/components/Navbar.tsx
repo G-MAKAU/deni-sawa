@@ -19,10 +19,25 @@ function isActive(href: string | undefined, pathname: string): boolean {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-function useScrollDirection() {
+function useScrollDirection(pathname?: string) {
   const [hidden, setHidden] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const lastY = useRef(0);
+  // Cooldowns so a state change (which animates over ~300ms) is never reversed
+  // by a rapid follow-up scroll event near a threshold — this is what caused the
+  // top contact bar to flicker when easing back toward the top of the page.
+  const lastScrolledToggle = useRef(0);
+  const lastHiddenToggle = useRef(0);
+
+  // On page navigation the scroll position resets to the top, so the contact
+  // bar must re-appear even though this component persists across routes.
+  useEffect(() => {
+    setHidden(false);
+    setScrolled(false);
+    lastY.current = window.scrollY;
+    lastScrolledToggle.current = 0;
+    lastHiddenToggle.current = 0;
+  }, [pathname]);
 
   useEffect(() => {
     let ticking = false;
@@ -31,15 +46,35 @@ function useScrollDirection() {
       ticking = true;
       window.requestAnimationFrame(() => {
         const y = window.scrollY;
+        const now = Date.now();
 
-        // Hysteresis so the compact/normal nav does not flicker near the threshold.
-        if (y > 40) setScrolled(true);
-        else if (y < 20) setScrolled(false);
+        // Hysteresis so the compact/normal nav does not flicker near the threshold,
+        // plus a ~300ms cooldown matching the contact-bar transition duration.
+        if (y > 40) {
+          if (now - lastScrolledToggle.current >= 300) {
+            lastScrolledToggle.current = now;
+            setScrolled(true);
+          }
+        } else if (y < 20) {
+          if (now - lastScrolledToggle.current >= 300) {
+            lastScrolledToggle.current = now;
+            setScrolled(false);
+          }
+        }
 
         // Hide only on a meaningful downward scroll; show on any upward scroll.
         const delta = y - lastY.current;
-        if (delta > 4 && y > 140) setHidden(true);
-        else if (delta < -4) setHidden(false);
+        if (delta > 4 && y > 140) {
+          if (now - lastHiddenToggle.current >= 300) {
+            lastHiddenToggle.current = now;
+            setHidden(true);
+          }
+        } else if (delta < -4) {
+          if (now - lastHiddenToggle.current >= 300) {
+            lastHiddenToggle.current = now;
+            setHidden(false);
+          }
+        }
 
         lastY.current = y;
         ticking = false;
@@ -67,7 +102,7 @@ function ScrollProgress() {
 
 export function Navbar() {
   const pathname = usePathname();
-  const { hidden, scrolled } = useScrollDirection();
+  const { hidden, scrolled } = useScrollDirection(pathname);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [mobileOpen, setMobileOpen] = useState<string | null>(null);

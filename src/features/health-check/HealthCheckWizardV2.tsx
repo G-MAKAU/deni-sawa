@@ -679,7 +679,7 @@ export function HealthCheckWizardV2({ slug }: { slug: string }) {
         <div className="rounded-lg border border-card-border bg-card p-6 shadow-card sm:p-8">
           <h2 className="font-display text-xl font-semibold text-foreground">Complete payment to unlock your report</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Your detailed report is ready. Once payment is confirmed it will be sent to you{isCall ? ' and an advisor will call you shortly' : ''}.
+            Your detailed report will be generated once payment is confirmed and sent to you{isCall ? ' — an advisor will then call you shortly' : ''}.
           </p>
 
           <div className="mt-5 flex items-center justify-between rounded-lg border border-card-border bg-bgalt px-4 py-3">

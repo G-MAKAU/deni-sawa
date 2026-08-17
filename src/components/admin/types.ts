@@ -16,6 +16,7 @@ export interface AdminPost {
   categoryId?: string | null;
   contentMarkdown?: string;
   contentHtml?: string;
+  contentLexical?: Record<string, unknown> | null;
   readingMinutes?: number;
   seoTitle?: string;
   seoDescription?: string;

@@ -57,7 +57,7 @@ export function Resources() {
                 </div>
                 <h3 className="font-heading text-2xl lg:text-3xl font-bold leading-tight mb-4 group-hover:text-brand transition-colors duration-300">{featured.title}</h3>
                 <p className="text-base text-muted-foreground leading-relaxed mb-6">{featured.excerpt}</p>
-                <a href="/blog" className="inline-flex items-center gap-2 text-sm font-semibold text-brand transition-all duration-300 hover:gap-3">Read Article<ArrowRight className="h-4 w-4" /></a>
+                <a href="/about/blog" className="inline-flex items-center gap-2 text-sm font-semibold text-brand transition-all duration-300 hover:gap-3">Read Article<ArrowRight className="h-4 w-4" /></a>
               </div>
             </div>
           </Reveal>

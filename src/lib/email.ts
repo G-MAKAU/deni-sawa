@@ -133,43 +133,118 @@ export function buildBrandedEmailHtml(bodyHtml: string): string {
   }
 }
 
-/** Sends email via Nodemailer + domain SMTP. Best-effort — never throws. */
-export async function sendEmail(payload: EmailSendPayload): Promise<EmailSendResult> {
-  // EMAIL_* are the canonical names; SMTP_* are kept as a legacy fallback.
+export interface SmtpStatus {
+  ok: boolean;
+  error?: string;
+  host?: string;
+  port?: number;
+  secure?: boolean;
+  user?: string;
+}
+
+/** Reads the SMTP connection settings from env. EMAIL_* are canonical; SMTP_* legacy. */
+export function smtpConfig() {
   const host = process.env.EMAIL_HOST ?? process.env.SMTP_HOST;
   const user = process.env.EMAIL_USER ?? process.env.SMTP_USER;
   const pass = process.env.EMAIL_PASS ?? process.env.SMTP_PASSWORD;
   const port = Number(process.env.EMAIL_PORT ?? process.env.SMTP_PORT ?? 587);
   const secure = (process.env.EMAIL_SECURE ?? process.env.SMTP_SECURE ?? '').toLowerCase() === 'true';
+  return { host, user, pass, port, secure };
+}
 
+let smtpTransporter: ReturnType<typeof nodemailer.createTransport> | null = null;
+let smtpChecked: string | null = null;
+
+/** Verifies the SMTP connection and caches the result (per host/user). Never throws. */
+export async function verifySmtpConnection(): Promise<SmtpStatus> {
+  const { host, user, pass, port, secure } = smtpConfig();
+  if (!host || !user || !pass) {
+    return { ok: false, error: 'SMTP is not configured.', host, port, secure, user };
+  }
+
+  const cacheKey = `${host}:${port}:${user}`;
+  if (smtpTransporter && smtpChecked === cacheKey) {
+    return { ok: true, host, port, secure, user };
+  }
+
+  const transporter = nodemailer.createTransport({ host, port, secure, auth: { user, pass } });
+  try {
+    await transporter.verify();
+    smtpTransporter = transporter;
+    smtpChecked = cacheKey;
+    return { ok: true, host, port, secure, user };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown SMTP error';
+    try {
+      transporter.close();
+    } catch {
+      /* ignore */
+    }
+    return { ok: false, error: message, host, port, secure, user };
+  }
+}
+
+/** True for transient SMTP errors worth retrying (network/TLS issues, not auth rejections). */
+function isTransientSmtpError(error: unknown): boolean {
+  const message = (error instanceof Error ? error.message : String(error)).toLowerCase();
+  if (message.includes('535') || message.includes('authentication') || message.includes('invalid login')) return false;
+  return (
+    message.includes('econn') ||
+    message.includes('etimedout') ||
+    message.includes('eai') ||
+    message.includes('socket') ||
+    message.includes('tls') ||
+    message.includes('ssl') ||
+    message.includes('530')
+  );
+}
+
+/** Sends email via Nodemailer + domain SMTP. Best-effort — never throws. */
+export async function sendEmail(payload: EmailSendPayload): Promise<EmailSendResult> {
+  const { host, user, pass, port, secure } = smtpConfig();
   if (!host || !user || !pass) {
     return { ok: false, error: 'SMTP is not configured.' };
   }
 
+  const transporter = smtpTransporter && smtpChecked === `${host}:${port}:${user}` ? smtpTransporter : nodemailer.createTransport({ host, port, secure, auth: { user, pass } });
+
   try {
-    const transporter = nodemailer.createTransport({
-      host,
-      port,
-      secure,
-      auth: { user, pass },
-    });
-
-    const info = await transporter.sendMail({
-      from: {
-        name: payload.fromName ?? process.env.SMTP_FROM_NAME ?? 'Deni Sawa Partners',
-        address: payload.fromEmail ?? process.env.SMTP_FROM_EMAIL ?? 'noreply@denisawa.co.ke',
-      },
-      replyTo: payload.replyTo,
-      to: payload.toName ? `"${payload.toName}" <${payload.to}>` : payload.to,
-      subject: payload.subject,
-      html: payload.html,
-    });
-
-    return { ok: true, messageId: info.messageId };
+    await transporter.verify();
+    if (!smtpTransporter) {
+      smtpTransporter = transporter;
+      smtpChecked = `${host}:${port}:${user}`;
+    }
   } catch (error) {
-    console.error('sendEmail failed:', error);
-    return { ok: false, error: error instanceof Error ? error.message : 'Unknown SMTP error' };
+    const message = error instanceof Error ? error.message : 'Unknown SMTP error';
+    console.error(`SMTP verify failed (${user}@${host}:${port}):`, message);
+    return { ok: false, error: `SMTP connection failed: ${message}` };
   }
+
+  const attemptSend = async (): Promise<EmailSendResult> => {
+    try {
+      const info = await transporter.sendMail({
+        from: {
+          name: payload.fromName ?? process.env.SMTP_FROM_NAME ?? 'Deni Sawa Partners',
+          address: payload.fromEmail ?? process.env.SMTP_FROM_EMAIL ?? 'noreply@denisawa.co.ke',
+        },
+        replyTo: payload.replyTo,
+        to: payload.toName ? `"${payload.toName}" <${payload.to}>` : payload.to,
+        subject: payload.subject,
+        html: payload.html,
+      });
+      return { ok: true, messageId: info.messageId };
+    } catch (error) {
+      return { ok: false, error: error instanceof Error ? error.message : 'Unknown SMTP error' };
+    }
+  };
+
+  const first = await attemptSend();
+  if (first.ok || !isTransientSmtpError(first.error)) return first;
+
+  const retry = await attemptSend();
+  if (retry.ok) return retry;
+  console.error('sendEmail failed (after retry):', retry.error);
+  return retry;
 }
 
 async function logEmail(

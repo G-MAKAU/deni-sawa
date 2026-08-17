@@ -82,7 +82,13 @@ function nodeToHtml(node: JsonNode, isListItemChild = false): string {
     case 'image': {
       const src = typeof node.src === 'string' ? node.src : '';
       const alt = typeof node.alt === 'string' ? node.alt : '';
-      return `<img src="${escapeHtml(src)}" alt="${escapeHtml(alt)}" />`;
+      const layout = typeof node.layout === 'string' ? node.layout : 'inline';
+      const width = typeof node.width === 'number' ? node.width : null;
+      // Wrap in the layout span and carry width + layout so the published page
+      // renders the image exactly as designed (float/size/center), not full-width.
+      const imgStyle = width ? ` style="width:${width}px"` : '';
+      const srcForShape = escapeHtml(src).replace(/&quot;/g, "'");
+      return `<span class="ds-lexical-image" data-layout="${escapeHtml(layout)}" style="--img-src:url('${srcForShape}')"><img src="${escapeHtml(src)}" alt="${escapeHtml(alt)}"${imgStyle} /></span>`;
     }
     case 'callout': {
       const tone = node.tone === 'growth' || node.tone === 'dark' ? String(node.tone) : 'brand';

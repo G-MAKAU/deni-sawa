@@ -322,10 +322,11 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                   type="button"
                   onClick={handleLogout}
                   disabled={signingOut}
-                  className="flex h-9 items-center gap-1.5 rounded-lg border border-[var(--a-border)] bg-[var(--a-card)] px-3 text-[12px] font-semibold text-[var(--a-text)] transition-colors hover:border-[#E8510A]/40 hover:text-[#E8510A] disabled:opacity-50"
+                  title="Logout"
+                  className="flex h-9 items-center justify-center gap-1.5 rounded-lg border border-[var(--a-border)] bg-[var(--a-card)] px-2 text-[12px] font-semibold text-[var(--a-text)] transition-colors hover:border-[#E8510A]/40 hover:text-[#E8510A] disabled:opacity-50 md:px-3"
                 >
                   {signingOut ? '…' : <IconLogout className="h-3.5 w-3.5" />}
-                  Logout
+                  <span className="hidden md:inline">Logout</span>
                 </button>
               </div>
             ) : (

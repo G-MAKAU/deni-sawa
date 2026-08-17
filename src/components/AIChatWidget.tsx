@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { MessageCircle, X, Send, Sparkles, Loader2, Lightbulb, MessagesSquare, ArrowUpRight, Calendar, CheckCircle2, Phone, Mail, RefreshCw } from 'lucide-react';
+import { MessageCircle, X, Send, Sparkles, Loader2, Lightbulb, MessagesSquare, ArrowUpRight, ArrowUp, Calendar, CheckCircle2, Phone, Mail, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { business, aiSystemPrompt, services, programs } from '@/data/content';
 import { learningPrograms } from '@/data/site';
@@ -115,6 +115,7 @@ export function AIChatWidget() {
   const [loading, setLoading] = useState(false);
   const [teaserVisible, setTeaserVisible] = useState(false);
   const [booking, setBooking] = useState<BookingState>(initialBooking);
+  const [showScrollTop, setShowScrollTop] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -165,6 +166,16 @@ export function AIChatWidget() {
     const t = setTimeout(() => setTeaserVisible(false), 12000);
     return () => clearTimeout(t);
   }, [teaserVisible]);
+
+  // Show the scroll-to-top button once the page is scrolled down.
+  useEffect(() => {
+    const onScroll = () => setShowScrollTop(window.scrollY > 400);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -304,6 +315,23 @@ export function AIChatWidget() {
           </span>
           <span className="text-sm font-semibold text-foreground">How can we help you today?</span>
           <ArrowUpRight className="h-4 w-4 text-muted-foreground transition-all duration-300 group-hover:text-brand" />
+        </button>
+      </div>
+
+      {/* Scroll to top — sits to the left of the chat toggle, appears on scroll */}
+      <div
+        className={cn(
+          'fixed bottom-6 right-[88px] z-50 transition-all duration-300',
+          showScrollTop ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-2 opacity-0'
+        )}
+      >
+        <button
+          onClick={scrollToTop}
+          className="flex h-14 w-14 items-center justify-center rounded-md border border-card-border bg-card text-foreground/70 shadow-soft-xl transition-all duration-300 hover:border-brand/40 hover:text-brand active:scale-90"
+          aria-label="Scroll to top"
+          title="Scroll to top"
+        >
+          <ArrowUp className="h-5 w-5" />
         </button>
       </div>
 

@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getServiceClient } from '@/lib/supabase/service';
+import { runReportGeneration } from '@/lib/generate-report';
 
 export const dynamic = 'force-dynamic';
+export const maxDuration = 120;
 
 const schema = z.object({
   session_id: z.string().uuid(),
@@ -12,8 +14,10 @@ const schema = z.object({
 
 /**
  * Upgrades an existing summary session to a paid plan (used from the summary
- * report viewer). Sets the report selection + price and marks payment pending;
- * the client then initiates the M-Pesa STK push.
+ * report viewer). The detailed report is GENERATED FIRST so it is ready the
+ * moment payment is confirmed — the user pays to view, never the reverse.
+ * Sets the report selection + price and marks payment pending; the client then
+ * initiates the M-Pesa STK push.
  */
 export async function POST(request: Request) {
   let body: unknown;
@@ -31,7 +35,7 @@ export async function POST(request: Request) {
     const supabase = getServiceClient();
     const { data: session } = await supabase
       .from('health_check_sessions')
-      .select('id, whatsapp, health_check_id, payment_status')
+      .select('id, whatsapp, health_check_id, payment_status, full_name, business_name, preferred_delivery')
       .eq('id', parsed.data.session_id)
       .maybeSingle();
     if (!session) return NextResponse.json({ error: 'Session not found.' }, { status: 404 });
@@ -72,6 +76,10 @@ export async function POST(request: Request) {
         payment_status: 'pending',
       })
       .eq('id', session.id);
+
+    // Generate the detailed report NOW (deferred delivery until paid) so the
+    // user pays to view it — the report is always ready when payment clears.
+    await runReportGeneration(supabase, session, 'detailed', { skipDelivery: true });
 
     return NextResponse.json({ ok: true, amount, requires_call: isCall, whatsapp: whatsapp ?? null });
   } catch (error) {

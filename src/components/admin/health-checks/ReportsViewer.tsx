@@ -8,7 +8,7 @@ import {
   flexRender,
   type ColumnDef,
 } from '@tanstack/react-table';
-import { Eye, Loader2, RefreshCw } from 'lucide-react';
+import { Columns, Eye, Loader2, RefreshCw, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { adminFetch, adminPut } from '@/lib/admin-client';
 import { useConfirm } from '@/components/admin/confirm';
@@ -53,6 +53,10 @@ export function ReportsViewer() {
   const [total, setTotal] = React.useState(0);
   const [reportType, setReportType] = React.useState('all');
   const [delivery, setDelivery] = React.useState('all');
+  const [search, setSearch] = React.useState('');
+  const [searchQuery, setSearchQuery] = React.useState('');
+  const [columnVisibility, setColumnVisibility] = React.useState<Record<string, boolean>>({});
+  const [showColumns, setShowColumns] = React.useState(false);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [canTogglePaid, setCanTogglePaid] = React.useState(false);
@@ -62,12 +66,13 @@ export function ReportsViewer() {
   const [detailLoading, setDetailLoading] = React.useState(false);
   const [regeneratingId, setRegeneratingId] = React.useState<string | null>(null);
 
-  const load = React.useCallback(async (targetPage: number, type: string, del: string) => {
+  const load = React.useCallback(async (targetPage: number, type: string, del: string, q: string) => {
     setLoading(true);
     try {
       const params = new URLSearchParams({ page: String(targetPage), pageSize: String(PAGE_SIZE) });
       if (type !== 'all') params.set('report_type', type);
       if (del !== 'all') params.set('delivery', del);
+      if (q) params.set('search', q);
       const { reports: rows, pagination } = await adminFetch<{ reports: ReportRow[]; pagination: { total: number } }>(
         `/api/admin/health-checks/reports?${params.toString()}`
       );
@@ -81,8 +86,16 @@ export function ReportsViewer() {
   }, []);
 
   React.useEffect(() => {
-    void load(page, reportType, delivery);
-  }, [load, page, reportType, delivery]);
+    const t = window.setTimeout(() => {
+      setSearchQuery(search);
+      setPage(1);
+    }, 300);
+    return () => window.clearTimeout(t);
+  }, [search]);
+
+  React.useEffect(() => {
+    void load(page, reportType, delivery, searchQuery);
+  }, [load, page, reportType, delivery, searchQuery]);
 
   React.useEffect(() => {
     adminFetch<{ admin: { role: string } }>('/api/admin/me')
@@ -126,7 +139,7 @@ export function ReportsViewer() {
       });
       if (!ok) return;
       toast.success('Report regenerated and delivery re-triggered');
-      void load(page, reportType, delivery);
+      void load(page, reportType, delivery, searchQuery);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Failed to regenerate report.');
     } finally {
@@ -203,9 +216,16 @@ export function ReportsViewer() {
   const table = useReactTable({
     data: reports,
     columns,
+    state: { columnVisibility },
+    onColumnVisibilityChange: setColumnVisibility,
     getCoreRowModel: getCoreRowModel(),
     manualPagination: true,
   });
+
+  const toggleableColumns = React.useMemo(
+    () => ['session_name', 'check_name', 'report_type', 'created_at', 'is_paid', 'delivery_status'],
+    []
+  );
 
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
@@ -218,7 +238,66 @@ export function ReportsViewer() {
         subtitle="Generated reports. Payment status can be toggled by super admins and admins."
         crumbs={[{ label: 'Health Checks', href: '/admin/health-checks' }, { label: 'Reports' }]}
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--a-muted)]" />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search name, business, check…"
+                className="h-9 w-64 rounded-lg border border-[var(--a-border)] bg-[var(--a-card)] pl-9 pr-3 text-sm placeholder:text-[var(--a-muted)] focus:border-[#E8510A] focus:outline-none"
+              />
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => setSearch('')}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-[var(--a-muted)] hover:text-[var(--a-ink)]"
+                  aria-label="Clear search"
+                >
+                  <span className="text-base leading-none">×</span>
+                </button>
+              )}
+            </div>
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setShowColumns((v) => !v)}
+                className="flex h-9 items-center gap-1.5 rounded-lg border border-[var(--a-border)] bg-[var(--a-card)] px-3 text-sm font-semibold text-[var(--a-ink2)] hover:bg-[var(--a-hover)]"
+              >
+                <Columns className="h-3.5 w-3.5" /> Columns
+              </button>
+              {showColumns && (
+                <>
+                  <div className="fixed inset-0 z-20" onClick={() => setShowColumns(false)} />
+                  <div className="absolute right-0 top-11 z-30 w-52 rounded-lg border border-[var(--a-border)] bg-[var(--a-card)] p-2 shadow-[0_8px_24px_rgba(0,0,0,0.12)]">
+                    <p className="px-2 pb-1 pt-1 text-[10px] font-bold uppercase tracking-wider text-[var(--a-muted)]">Show columns</p>
+                    {toggleableColumns.map((colId) => {
+                      const column = table.getColumn(colId);
+                      if (!column) return null;
+                      const label = {
+                        session_name: 'Name',
+                        check_name: 'Check',
+                        report_type: 'Type',
+                        created_at: 'Generated',
+                        is_paid: 'Paid',
+                        delivery_status: 'Delivery',
+                      }[colId];
+                      return (
+                        <label key={colId} className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm text-[var(--a-ink2)] hover:bg-[var(--a-hover)]">
+                          <input
+                            type="checkbox"
+                            checked={column.getIsVisible()}
+                            onChange={column.getToggleVisibilityHandler()}
+                            className="h-3.5 w-3.5 accent-[#E8510A]"
+                          />
+                          {label}
+                        </label>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+            </div>
             <select
               value={reportType}
               onChange={(e) => {

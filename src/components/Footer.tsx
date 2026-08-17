@@ -21,7 +21,7 @@ const columns = [
       { label: 'Investors', href: '/investors' },
       { label: 'SpecialSit Network', href: '/specialsit-network' },
       { label: 'The Deni Sawa Method™', href: '/deni-sawa-method' },
-      { label: 'Blog & Insights', href: '/blog' },
+      { label: 'Blog & Insights', href: '/about/blog' },
     ],
   },
   {
@@ -73,7 +73,10 @@ export function Footer() {
           {/* Brand column */}
           <div className="lg:col-span-2 lg:pr-12">
             <Logo color />
-            <p className="mt-6 max-w-sm text-[15px] leading-relaxed text-white/45">
+            <p className="mt-1 text-sm ml-8 font-semibold uppercase tracking-widest text-brand">
+              Partners
+            </p>
+            <p className="mt-3 max-w-sm text-[15px] leading-relaxed text-white/80">
               AI-enabled advisory and fractional business support helping organisations move from
               Special Situations to Best-in-Class performance.
             </p>
@@ -116,7 +119,7 @@ export function Footer() {
                   rel="noopener noreferrer"
                   aria-label={ariaLabel}
                   className={cn(
-                    'group flex h-11 w-11 items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.02] text-white/60 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md',
+                    'group flex h-11 w-11 items-center justify-center rounded-none border border-white/[0.08] bg-white/[0.02] text-white transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md',
                     hoverClass
                   )}
                 >
@@ -126,7 +129,7 @@ export function Footer() {
               <a
                 href={`mailto:${site.email}`}
                 aria-label="Email"
-                className="group flex h-11 w-11 items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.02] text-white/60 transition-all duration-300 hover:-translate-y-0.5 hover:border-growth/40 hover:bg-growth/10 hover:text-growth hover:shadow-md"
+                className="group flex h-11 w-11 items-center justify-center rounded-md border border-white/[0.08] bg-white/[0.02] text-white/60 transition-all duration-300 hover:-translate-y-0.5 hover:border-growth/40 hover:bg-growth/10 hover:text-growth hover:shadow-md"
               >
                 <Mail className="h-[18px] w-[18px]" />
               </a>
@@ -136,7 +139,7 @@ export function Footer() {
           {/* Link columns */}
           {columns.map((col) => (
             <nav key={col.title} aria-label={col.title}>
-              <h4 className="font-mono text-[11px] font-semibold uppercase tracking-[0.22em] text-white/35">
+              <h4 className="font-mono text-[11px] font-semibold uppercase tracking-[0.22em] text-white">
                 {col.title}
               </h4>
               <ul className="mt-6 space-y-4">
@@ -160,7 +163,7 @@ export function Footer() {
       {/* Bottom bar */}
       <div className="border-t border-white/[0.06]">
         <div className="container-lux flex flex-col items-center justify-between gap-4 py-6 sm:flex-row">
-          <p className="text-[13px] text-white/35">
+          <p className="text-[13px] text-white">
             © {new Date().getFullYear()} {site.name}. All rights reserved.
           </p>
           <div className="flex items-center gap-8">

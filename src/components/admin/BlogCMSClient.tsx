@@ -34,6 +34,10 @@ export function BlogCMSClient() {
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [activeTab, setActiveTab] = useState<'posts' | 'editor' | 'settings'>('posts');
+  const POST_PAGE_SIZE = 10;
+  const [postPage, setPostPage] = useState(1);
+  const [postTotal, setPostTotal] = useState(0);
+  const [postPages, setPostPages] = useState(1);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -83,42 +87,51 @@ export function BlogCMSClient() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const loadPosts = useCallback(async () => {
-    const token = await getToken();
-    if (!token) return;
+  const loadPosts = useCallback(
+    async (page = 1) => {
+      const token = await getToken();
+      if (!token) return;
 
-    const response = await fetch('/api/admin/blog/posts', { headers: { Authorization: `Bearer ${token}` } });
-    if (!response.ok) {
-      const data = await response.json().catch(() => ({}));
-      throw new Error(data.error || 'Failed to fetch posts');
-    }
+      const response = await fetch(`/api/admin/blog/posts?page=${page}&limit=${POST_PAGE_SIZE}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || 'Failed to fetch posts');
+      }
 
-    const { posts: data } = await response.json();
+      const { posts: data, pagination } = await response.json();
 
-    const formatted: AdminPost[] = (data ?? []).map((p: Record<string, unknown>) => ({
-      id: String(p.id),
-      title: String(p.title ?? ''),
-      slug: String(p.slug ?? ''),
-      excerpt: (p.excerpt as string) || '',
-      status: (p.status as AdminPost['status']) ?? 'draft',
-      isFeatured: Boolean(p.featured),
-      authorName: getEmbeddedField(p.author as Record<string, unknown>, 'full_name') || 'Unassigned',
-      categoryName: getEmbeddedField(p.category as Record<string, unknown>, 'name') || 'Uncategorized',
-      publishedAt: (p.published_at as string | null) ?? null,
-      updatedAt: String(p.updated_at ?? new Date().toISOString()),
-      featuredImageUrl: (p.cover_image_url as string | null) ?? null,
-      authorId: (p.author_id as string | null) ?? undefined,
-      categoryId: (p.primary_category_id as string | null) ?? undefined,
-      contentMarkdown: (p.content_markdown as string) ?? '',
-      contentHtml: (p.content_html as string | null) ?? '',
-      readingMinutes: (p.reading_minutes as number | null) ?? undefined,
-      seoTitle: (p.seo_title as string | null) ?? '',
-      seoDescription: (p.seo_description as string | null) ?? '',
-      seoKeywords: (p.seo_keywords as string | null) ?? '',
-    }));
+      const formatted: AdminPost[] = (data ?? []).map((p: Record<string, unknown>) => ({
+        id: String(p.id),
+        title: String(p.title ?? ''),
+        slug: String(p.slug ?? ''),
+        excerpt: (p.excerpt as string) || '',
+        status: (p.status as AdminPost['status']) ?? 'draft',
+        isFeatured: Boolean(p.featured),
+        authorName: getEmbeddedField(p.author as Record<string, unknown>, 'full_name') || 'Unassigned',
+        categoryName: getEmbeddedField(p.category as Record<string, unknown>, 'name') || 'Uncategorized',
+        publishedAt: (p.published_at as string | null) ?? null,
+        updatedAt: String(p.updated_at ?? new Date().toISOString()),
+        featuredImageUrl: (p.cover_image_url as string | null) ?? null,
+        authorId: (p.author_id as string | null) ?? undefined,
+        categoryId: (p.primary_category_id as string | null) ?? undefined,
+        contentMarkdown: (p.content_markdown as string) ?? '',
+        contentHtml: (p.content_html as string | null) ?? '',
+        contentLexical: (p.content_lexical as Record<string, unknown> | null) ?? null,
+        readingMinutes: (p.reading_minutes as number | null) ?? undefined,
+        seoTitle: (p.seo_title as string | null) ?? '',
+        seoDescription: (p.seo_description as string | null) ?? '',
+        seoKeywords: (p.seo_keywords as string | null) ?? '',
+      }));
 
-    setPosts(formatted);
-  }, [getToken]);
+      setPosts(formatted);
+      setPostTotal(pagination?.total ?? formatted.length);
+      setPostPages(Math.max(1, pagination?.pages ?? 1));
+      setPostPage(Math.min(page, Math.max(1, pagination?.pages ?? 1)));
+    },
+    [getToken]
+  );
 
   const loadAuthors = useCallback(async () => {
     const token = await getToken();
@@ -229,7 +242,7 @@ export function BlogCMSClient() {
       throw new Error(errData.error || 'Failed to save post');
     }
 
-    await loadPosts();
+    await loadPosts(postPage);
     if (!isUpdate) {
       setIsCreating(false);
     }
@@ -352,7 +365,7 @@ export function BlogCMSClient() {
         </div>
         <div className="flex items-center gap-2">
           <a
-            href="/blog"
+            href="/about/blog"
             target="_blank"
             rel="noopener noreferrer"
             className="rounded-lg border border-[var(--a-border)] bg-[var(--a-card)] px-3.5 py-2 text-xs font-semibold text-[var(--a-text)] transition-colors hover:border-[#E8510A]/40 hover:text-[#E8510A]"
@@ -410,9 +423,34 @@ export function BlogCMSClient() {
             onNew={handleNewPost}
             onDelete={handleDelete}
           />
+          {postPages > 1 && (
+            <div className="flex items-center justify-between border-t border-[var(--a-border-soft)] px-4 py-3">
+              <p className="text-xs text-[var(--a-muted)]">
+                {postTotal.toLocaleString()} post{postTotal === 1 ? '' : 's'} · page {postPage} of {postPages}
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  disabled={postPage <= 1}
+                  onClick={() => loadPosts(postPage - 1)}
+                  className="rounded-md border border-[var(--a-border)] px-3 py-1.5 text-xs font-semibold text-[var(--a-text)] hover:border-[#E8510A]/40 disabled:opacity-40"
+                >
+                  Previous
+                </button>
+                <button
+                  type="button"
+                  disabled={postPage >= postPages}
+                  onClick={() => loadPosts(postPage + 1)}
+                  className="rounded-md border border-[var(--a-border)] px-3 py-1.5 text-xs font-semibold text-[var(--a-text)] hover:border-[#E8510A]/40 disabled:opacity-40"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       ) : showEditor ? (
-        <div className="h-[calc(100vh-260px)] min-h-[560px] overflow-hidden rounded-lg border border-[var(--a-border)] bg-[var(--a-card)] shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
+        <div className="h-[calc(125vh-110px)] min-h-[700px] overflow-hidden rounded-lg border border-[var(--a-border)] bg-[var(--a-card)] shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
           <BlogPostEditor
             key={selectedPost?.id ?? 'new'}
             post={selectedPost}
@@ -452,7 +490,7 @@ function LockIcon() {
 
 function EmptyState({ onNew }: { onNew: () => void }) {
   return (
-    <div className="flex h-full flex-col items-center justify-center px-8 text-center">
+    <div className="flex h-full flex-col items-center justify-center p-8 text-center">
       <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-ink-25 dark:bg-ink-800">
         <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-ink-500">
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />

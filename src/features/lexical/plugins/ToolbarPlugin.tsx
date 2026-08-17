@@ -22,6 +22,7 @@ import {
   INDENT_CONTENT_COMMAND,
   OUTDENT_CONTENT_COMMAND,
   type ElementNode,
+  type LexicalNode,
   type TextFormatType,
   type TextNode,
 } from 'lexical';
@@ -35,7 +36,8 @@ import {
   $isListNode,
 } from '@lexical/list';
 import { TOGGLE_LINK_COMMAND } from '@lexical/link';
-import { $createTableNodeWithDimensions, $isTableNode } from '@lexical/table';
+import { $createTableNodeWithDimensions, $isTableNode, $isTableSelection, $isTableCellNode, type TableCellNode } from '@lexical/table';
+import { $findMatchingParent } from '@lexical/utils';
 import { $createHorizontalRuleNode } from '@lexical/react/LexicalHorizontalRuleNode';
 import { $isImageNode, type ImageLayout } from '../nodes/ImageNode';
 import {
@@ -57,9 +59,13 @@ import {
   AlignCenter,
   AlignRight,
   AlignJustify,
+  AlignVerticalJustifyStart,
+  AlignVerticalJustifyCenter,
+  AlignVerticalJustifyEnd,
   Minus,
   MessageSquareQuote,
   Table as TableIcon,
+  Grid2X2,
   Indent,
   Outdent,
   Eraser,
@@ -136,6 +142,10 @@ interface ToolbarState {
   block: BlockFormat;
   textColor: string | null;
   blockBg: string | null;
+  /** Number of table cells selected (0 = no cell selection). */
+  cellCount: number;
+  /** Background colour of the first selected cell, normalised to hex. */
+  cellBg: string | null;
   canUndo: boolean;
   canRedo: boolean;
 }
@@ -151,6 +161,8 @@ const initialToolbar: ToolbarState = {
   block: 'paragraph',
   textColor: null,
   blockBg: null,
+  cellCount: 0,
+  cellBg: null,
   canUndo: false,
   canRedo: false,
 };
@@ -241,6 +253,45 @@ function getBlockBackground(selection: ReturnType<typeof $getSelection>): string
     return cssColorToHex(parseCssProperty(block.getStyle(), 'background-color') ?? '');
   } catch {
     return null;
+  }
+}
+
+/** Resolves the cell(s) under a selection: multi-cell TableSelection or a
+ *  single cell containing the caret. Returns the TableCellNodes. */
+function getSelectedCells(selection: ReturnType<typeof $getSelection>): TableCellNode[] {
+  try {
+    if ($isTableSelection(selection)) {
+      return selection.getNodes().filter($isTableCellNode) as TableCellNode[];
+    }
+    if ($isRangeSelection(selection)) {
+      const anchor = selection.anchor.getNode();
+      const cell = $isTableCellNode(anchor)
+        ? anchor
+        : $findMatchingParent(anchor, $isTableCellNode);
+      return cell ? [cell] : [];
+    }
+  } catch {
+    /* fall through */
+  }
+  return [];
+}
+
+/** Reads the background colour of the first selected cell, normalised to hex. */
+function getCellBackground(selection: ReturnType<typeof $getSelection>): string | null {
+  const cells = getSelectedCells(selection);
+  if (cells.length === 0) return null;
+  const first = cells[0].getBackgroundColor();
+  return first ? (cssColorToHex(first) ?? null) : null;
+}
+
+/** Walks every descendant text node of a node, calling cb for each. */
+function $forEachTextNode(node: LexicalNode, cb: (text: TextNode) => void): void {
+  if ($isTextNode(node)) {
+    cb(node);
+    return;
+  }
+  if ($isElementNode(node)) {
+    node.getChildren().forEach((child) => $forEachTextNode(child, cb));
   }
 }
 
@@ -472,6 +523,7 @@ export function ToolbarPlugin({
   const [varOpen, setVarOpen] = useState(false);
   const [imageMenuOpen, setImageMenuOpen] = useState(false);
   const [layoutOpen, setLayoutOpen] = useState(false);
+  const [vertOpen, setVertOpen] = useState(false);
   const [fontSizeOpen, setFontSizeOpen] = useState(false);
   const [fontFamilyOpen, setFontFamilyOpen] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -484,13 +536,17 @@ export function ToolbarPlugin({
   // Last valid selection, kept so colour applies work even if the toolbar
   // interaction briefly steals focus (e.g. the native colour picker dialog).
   const selectionRef = useRef<ReturnType<typeof $getSelection>>(null);
+  // Keys of the cells under the last selection — a resilient fallback so cell
+  // formatting always applies even if the live selection is null/cleared while
+  // the toolbar dropdown is open.
+  const cellKeysRef = useRef<Set<string> | null>(null);
 
   useEffect(() => {
     const updateToolbar = () => {
       editor.getEditorState().read(() => {
         try {
           const selection = $getSelection();
-          if ($isRangeSelection(selection)) selectionRef.current = selection;
+          if ($isRangeSelection(selection) || $isTableSelection(selection)) selectionRef.current = selection;
           const hasFormat = (type: TextFormatType) =>
             $isRangeSelection(selection) && selection.hasFormat(type);
 
@@ -521,7 +577,12 @@ export function ToolbarPlugin({
             block: getSelectionBlock(selection),
             textColor: getTextColor(selection),
             blockBg: getBlockBackground(selection),
+            cellCount: getSelectedCells(selection).length,
+            cellBg: getCellBackground(selection),
           }));
+
+          const selectedCells = getSelectedCells(selection);
+          cellKeysRef.current = selectedCells.length > 0 ? new Set(selectedCells.map((c) => c.getKey())) : null;
         } catch {
           // Never let a stale selection from a sibling editor crash the toolbar.
           setToolbar((prev) => ({ ...prev, block: 'paragraph' }));
@@ -665,10 +726,18 @@ export function ToolbarPlugin({
   const applyTextColor = useCallback(
     (color: string | null) => {
       editor.update(() => {
-        const current = $getSelection();
-        const selection =
-          $isRangeSelection(current) ? current : ($isRangeSelection(selectionRef.current) ? selectionRef.current : null);
+        const selection = $getSelection() ?? selectionRef.current;
         if (!selection) return;
+        const cells = getSelectedCells(selection);
+        if (cells.length > 0) {
+          cells.forEach((cell) =>
+            cell.getChildren().forEach((child) =>
+              $forEachTextNode(child, (t) => t.setStyle(setCssProperty(t.getStyle(), 'color', color)))
+            )
+          );
+          return;
+        }
+        if (!$isRangeSelection(selection)) return;
         $patchStyleText(selection, { color: color ? color : null });
       });
     },
@@ -693,13 +762,70 @@ export function ToolbarPlugin({
     [editor]
   );
 
+  /** Resolves the currently selected table cells, falling back to the keys
+   *  captured at selection time when the live selection is null/cleared. */
+  const resolveSelectedCells = () => {
+    const selection = $getSelection() ?? selectionRef.current;
+    let cells = selection ? getSelectedCells(selection) : [];
+    if (cells.length === 0 && cellKeysRef.current) {
+      cells = [...cellKeysRef.current]
+        .map((key) => $getNodeByKey(key))
+        .filter((n): n is TableCellNode => $isTableCellNode(n));
+    }
+    return cells;
+  };
+
+  /** Applies a background colour to every selected table cell (1..N). */
+  const applyCellBackground = useCallback(
+    (color: string | null) => {
+      editor.update(() => {
+        resolveSelectedCells().forEach((cell) => cell.setBackgroundColor(color));
+      });
+    },
+    [editor]
+  );
+
+  /** Horizontal text alignment for every selected cell. */
+  const applyCellAlignment = useCallback(
+    (align: 'left' | 'center' | 'right' | 'justify') => {
+      editor.update(() => {
+        resolveSelectedCells().forEach((cell) => {
+          cell.getChildren().forEach((block) => {
+            if ($isParagraphNode(block) || $isHeadingNode(block)) {
+              block.setStyle(setCssProperty(block.getStyle(), 'text-align', align));
+            }
+          });
+        });
+      });
+    },
+    [editor]
+  );
+
+  /** Vertical alignment for every selected cell. */
+  const applyCellVerticalAlign = useCallback(
+    (align: 'top' | 'middle' | 'bottom') => {
+      editor.update(() => {
+        resolveSelectedCells().forEach((cell) => cell.setVerticalAlign(align));
+      });
+    },
+    [editor]
+  );
+
   const applyFontSize = useCallback(
     (px: string) => {
       editor.update(() => {
-        const current = $getSelection();
-        const selection =
-          $isRangeSelection(current) ? current : ($isRangeSelection(selectionRef.current) ? selectionRef.current : null);
+        const selection = $getSelection() ?? selectionRef.current;
         if (!selection) return;
+        const cells = getSelectedCells(selection);
+        if (cells.length > 0) {
+          cells.forEach((cell) =>
+            cell.getChildren().forEach((child) =>
+              $forEachTextNode(child, (t) => t.setStyle(setCssProperty(t.getStyle(), 'font-size', `${px}px`)))
+            )
+          );
+          return;
+        }
+        if (!$isRangeSelection(selection)) return;
         $patchStyleText(selection, { 'font-size': px ? `${px}px` : null });
       });
     },
@@ -709,10 +835,18 @@ export function ToolbarPlugin({
   const applyFontFamily = useCallback(
     (family: string) => {
       editor.update(() => {
-        const current = $getSelection();
-        const selection =
-          $isRangeSelection(current) ? current : ($isRangeSelection(selectionRef.current) ? selectionRef.current : null);
+        const selection = $getSelection() ?? selectionRef.current;
         if (!selection) return;
+        const cells = getSelectedCells(selection);
+        if (cells.length > 0) {
+          cells.forEach((cell) =>
+            cell.getChildren().forEach((child) =>
+              $forEachTextNode(child, (t) => t.setStyle(setCssProperty(t.getStyle(), 'font-family', family)))
+            )
+          );
+          return;
+        }
+        if (!$isRangeSelection(selection)) return;
         $patchStyleText(selection, { 'font-family': family });
       });
     },
@@ -851,13 +985,14 @@ export function ToolbarPlugin({
         onChange={applyTextColor}
       />
 
-      {/* Block background (paragraphs & headings) */}
+      {/* Background colour — applies to the selected table cell(s) when inside
+          a table, otherwise to the current paragraph/heading block. */}
       <ColorControl
-        label="Background colour"
+        label={toolbar.cellCount > 0 ? `Cell background${toolbar.cellCount > 1 ? ` · ${toolbar.cellCount} cells` : ''}` : 'Background colour'}
         icon={<PaintBucket className="h-4 w-4" />}
-        value={toolbar.blockBg}
-        onChange={applyBlockBackground}
-        disabled={!['paragraph', 'h1', 'h2', 'h3'].includes(toolbar.block)}
+        value={toolbar.cellCount > 0 ? toolbar.cellBg : toolbar.blockBg}
+        onChange={toolbar.cellCount > 0 ? applyCellBackground : applyBlockBackground}
+        disabled={toolbar.cellCount === 0 && !['paragraph', 'h1', 'h2', 'h3'].includes(toolbar.block)}
       />
 
       {/* Font size */}
@@ -973,19 +1108,81 @@ export function ToolbarPlugin({
 
       <ToolbarSep />
 
-      {/* Alignment */}
-      <ToolbarButton onClick={() => editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, 'left')} title="Align left">
+      {/* Alignment (cell-aware: applies to every selected table cell) */}
+      <ToolbarButton
+        onClick={() => (toolbar.cellCount > 0 ? applyCellAlignment('left') : editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, 'left'))}
+        title={toolbar.cellCount > 0 ? 'Align cells left' : 'Align left'}
+      >
         <AlignLeft className="h-4 w-4" />
       </ToolbarButton>
-      <ToolbarButton onClick={() => editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, 'center')} title="Align center">
+      <ToolbarButton
+        onClick={() => (toolbar.cellCount > 0 ? applyCellAlignment('center') : editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, 'center'))}
+        title={toolbar.cellCount > 0 ? 'Align cells center' : 'Align center'}
+      >
         <AlignCenter className="h-4 w-4" />
       </ToolbarButton>
-      <ToolbarButton onClick={() => editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, 'right')} title="Align right">
+      <ToolbarButton
+        onClick={() => (toolbar.cellCount > 0 ? applyCellAlignment('right') : editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, 'right'))}
+        title={toolbar.cellCount > 0 ? 'Align cells right' : 'Align right'}
+      >
         <AlignRight className="h-4 w-4" />
       </ToolbarButton>
-      <ToolbarButton onClick={() => editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, 'justify')} title="Justify">
+      <ToolbarButton
+        onClick={() => (toolbar.cellCount > 0 ? applyCellAlignment('justify') : editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, 'justify'))}
+        title={toolbar.cellCount > 0 ? 'Justify cells' : 'Justify'}
+      >
         <AlignJustify className="h-4 w-4" />
       </ToolbarButton>
+
+      {/* Cell selection indicator + vertical alignment */}
+      {toolbar.cellCount > 0 && (
+        <div className="relative flex items-center gap-1 rounded-btn border border-brand/30 bg-brand/5 px-2 py-1">
+          <Grid2X2 className="h-3.5 w-3.5 text-brand" />
+          <span className="text-[11px] font-semibold text-brand">
+            {toolbar.cellCount === 1 ? '1 cell selected' : `${toolbar.cellCount} cells selected`}
+          </span>
+          <button
+            type="button"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              setVertOpen((o) => !o);
+            }}
+            title="Cell vertical alignment"
+            aria-label="Cell vertical alignment"
+            aria-expanded={vertOpen}
+            className="ml-1 flex h-6 w-6 items-center justify-center rounded-md text-brand transition-colors hover:bg-brand/15"
+          >
+            <AlignVerticalJustifyCenter className="h-3.5 w-3.5" />
+          </button>
+          {vertOpen && (
+            <>
+              <div className="fixed inset-0 z-10" onMouseDown={() => setVertOpen(false)} />
+              <div className="absolute right-0 top-full z-20 mt-1 w-40 rounded-lg border border-card-border bg-card p-1 shadow-card-hover">
+                {(
+                  [
+                    { value: 'top', label: 'Top', Icon: AlignVerticalJustifyStart },
+                    { value: 'middle', label: 'Middle', Icon: AlignVerticalJustifyCenter },
+                    { value: 'bottom', label: 'Bottom', Icon: AlignVerticalJustifyEnd },
+                  ] as const
+                ).map(({ value, label, Icon }) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      applyCellVerticalAlign(value);
+                      setVertOpen(false);
+                    }}
+                    className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs text-foreground transition-colors hover:bg-brand/10"
+                  >
+                    <Icon className="h-3.5 w-3.5" /> {label}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      )}
 
       <ToolbarSep />
 

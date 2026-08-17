@@ -112,6 +112,8 @@ export function EmailTemplateEditor() {
 
   React.useEffect(() => {
     let cancelled = false;
+    setLoading(true);
+    setBodyLexical(null);
     (async () => {
       try {
         const [templateResult, meResult] = await Promise.all([

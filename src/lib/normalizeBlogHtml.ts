@@ -32,13 +32,15 @@ export function normalizeBlogHtml(html: unknown): string | null {
 
   const sanitized = sanitizeHtml(trimmed, {
     allowedTags: [
-      'p', 'br', 'h1', 'h2', 'h3', 'h4', 'blockquote', 'pre', 'code',
-      'ul', 'ol', 'li', 'a', 'hr', 'img', 'table', 'thead', 'tbody', 'tr', 'th', 'td',
+      'p', 'br', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'pre', 'code',
+      'ul', 'ol', 'li', 'a', 'hr', 'img', 'span', 'table', 'thead', 'tbody', 'tr', 'th', 'td',
       'strong', 'em', 'u', 's',
     ],
     allowedAttributes: {
       a: ['href', 'target', 'rel'],
-      img: ['src', 'alt'],
+      img: ['src', 'alt', 'style', 'width'],
+      // ds-lexical-image wrapper carries the Word-style layout + size.
+      span: ['class', 'data-layout', 'style'],
       ul: ['data-checklist'],
       li: ['data-checked'],
     },

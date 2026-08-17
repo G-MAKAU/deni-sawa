@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { Bot, Database, Globe, Lock, Mail, MessageCircle, Phone, Server } from 'lucide-react';
+import { Bot, Database, Globe, Loader2, Lock, Mail, MessageCircle, Phone, Server } from 'lucide-react';
 import { adminFetch } from '@/lib/admin-client';
 import { site } from '@/data/site';
 import { socialLinks } from '@/components/SocialLinks';
@@ -27,6 +27,8 @@ export function SettingsClient() {
   const [data, setData] = React.useState<SettingsData | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
+  const [smtpTesting, setSmtpTesting] = React.useState(false);
+  const [smtpResult, setSmtpResult] = React.useState<{ ok: boolean; error?: string; host?: string | null; port?: number; user?: string } | null>(null);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -123,6 +125,32 @@ export function SettingsClient() {
               <p>
                 <span className="font-semibold text-[var(--a-ink2)]">From:</span> {settings.smtp.fromName} &lt;{settings.smtp.fromEmail}&gt;
               </p>
+              {smtpResult && (
+                <p className={cn('rounded-md px-2 py-1.5 text-xs font-medium', smtpResult.ok ? 'bg-[#5A9E28]/10 text-[#5A9E28]' : 'bg-red-500/10 text-red-600')}>
+                  {smtpResult.ok
+                    ? `SMTP connection OK (${smtpResult.host}:${smtpResult.port ?? '?'} as ${smtpResult.user ?? '?'})`
+                    : `SMTP connection FAILED: ${smtpResult.error ?? 'Unknown error'}`}
+                </p>
+              )}
+              <button
+                type="button"
+                onClick={async () => {
+                  setSmtpTesting(true);
+                  setSmtpResult(null);
+                  try {
+                    setSmtpResult(await adminFetch<{ ok: boolean; error?: string; host?: string | null; port?: number; user?: string }>('/api/admin/email/test'));
+                  } catch (e) {
+                    setSmtpResult({ ok: false, error: e instanceof Error ? e.message : 'Failed to run SMTP test.' });
+                  } finally {
+                    setSmtpTesting(false);
+                  }
+                }}
+                disabled={smtpTesting}
+                className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-[var(--a-border)] px-3 py-1.5 text-xs font-semibold text-[var(--a-ink2)] transition-colors hover:bg-[var(--a-hover)] disabled:opacity-50"
+              >
+                {smtpTesting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Server className="h-3.5 w-3.5" />}
+                {smtpTesting ? 'Testing…' : 'Test SMTP connection'}
+              </button>
             </div>
           </div>
         </AdminCard>

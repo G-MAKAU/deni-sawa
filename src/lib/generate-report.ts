@@ -197,6 +197,7 @@ export async function runReportGeneration(
           generation_seconds: generationSeconds,
           generation_error: generationError,
           delivery_status: 'pending',
+          created_at: new Date().toISOString(),
         })
         .eq('id', current.id)
         .select()

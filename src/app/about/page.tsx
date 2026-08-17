@@ -164,7 +164,7 @@ export default async function AboutPage() {
         title="Perspectives from the team"
         subtitle="Practical thinking on debt, financial coaching, corporate wellness and money mindset — written by the Deni Sawa advisory bench."
         posts={insights}
-        viewAllHref="/blog"
+        viewAllHref="/about/blog"
         viewAllLabel="View all articles"
         tone="alt"
       />

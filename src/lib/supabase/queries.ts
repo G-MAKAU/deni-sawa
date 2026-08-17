@@ -179,3 +179,47 @@ export const getLmsCourses = cacheFunction('lms-courses', fetchLmsCourses, {
   revalidate: 600,
   tags: ['academy'],
 });
+
+export interface BlogCommentSummary {
+  id: string;
+  post_slug: string;
+  post_title: string;
+  author_name: string;
+  content: string;
+  created_at: string;
+}
+
+async function fetchRecentBlogComments(limit = 5) {
+  const supabase = getSupabaseClient();
+
+  const { data, error } = await supabase
+    .from('blog_comments')
+    .select(
+      'id,author_name,content,created_at,blog_post:blog_posts!blog_comments_blog_post_id_fkey(slug,title)'
+    )
+    .eq('status', 'approved')
+    .order('created_at', { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    console.warn('getRecentBlogComments: supabase query failed:', error.message);
+    return [] as BlogCommentSummary[];
+  }
+
+  return (data ?? []).map((comment) => {
+    const post = (comment as unknown as { blog_post: { slug: string; title: string } | null }).blog_post;
+    return {
+      id: String(comment.id),
+      post_slug: post?.slug ?? '',
+      post_title: post?.title ?? 'Blog post',
+      author_name: String(comment.author_name),
+      content: String(comment.content),
+      created_at: String(comment.created_at),
+    };
+  });
+}
+
+export const getRecentBlogComments = cacheFunction('recent-blog-comments', fetchRecentBlogComments, {
+  revalidate: 300,
+  tags: ['blog'],
+});

@@ -470,6 +470,31 @@ export function SessionsViewer() {
               </div>
             )}
 
+            {detail.is_complete && reports.length > 0 && (
+              (() => {
+                const hasSummary = reports.some((r) => r.report_type === 'summary');
+                const hasDetailed = reports.some((r) => r.report_type === 'detailed');
+                if (hasSummary && hasDetailed) return null;
+                const missing = hasSummary ? 'detailed' : 'summary';
+                return (
+                  <div className="mt-3 flex flex-wrap items-center gap-3 rounded-lg border border-brand/25 bg-brand/5 px-4 py-3">
+                    <p className="text-sm text-[var(--a-text2)]">
+                      The {hasSummary ? 'detailed' : 'summary'} report hasn't been generated for this session yet.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => handleGenerateReport(missing)}
+                      disabled={generating}
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-[#E8510A] px-3.5 py-2 text-xs font-bold text-white transition-colors hover:bg-[#c94508] disabled:opacity-50"
+                    >
+                      {generating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-3.5 w-3.5" />}
+                      {generating ? 'Generating…' : `Generate ${missing} report`}
+                    </button>
+                  </div>
+                );
+              })()
+            )}
+
             {detail.is_complete && reports.length === 0 && (
               <div className="rounded-lg border border-amber-500/25 bg-amber-500/5 px-4 py-3 text-sm text-amber-700">
                 <p className="font-semibold">No report was generated for this session.</p>

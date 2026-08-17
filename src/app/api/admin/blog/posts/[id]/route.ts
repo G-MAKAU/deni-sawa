@@ -1,6 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireBlogAdmin, jsonAdminError } from '../../../_auth';
 import { normalizeBlogHtml } from '@/lib/normalizeBlogHtml';
+import { lexicalStateToHtml } from '@/lib/lexical-state-to-html';
+
+/** Canonical HTML: regenerate from the stored Lexical state with Lexical's own
+ *  serializer (lossless — tables, images, custom nodes), sanitized for storage. */
+function resolveContentHtml(body: Record<string, unknown>): string | null {
+  if (body.contentLexical && typeof body.contentLexical === 'object') {
+    try {
+      return normalizeBlogHtml(lexicalStateToHtml(body.contentLexical as Record<string, unknown>));
+    } catch (error) {
+      console.error('lexicalStateToHtml failed (falling back to client HTML):', error);
+    }
+  }
+  return normalizeBlogHtml(typeof body.contentHtml === 'string' ? body.contentHtml : '');
+}
 
 export async function PUT(
   request: NextRequest,
@@ -18,7 +32,8 @@ export async function PUT(
         slug: typeof body.slug === 'string' ? body.slug.trim() : undefined,
         excerpt: typeof body.excerpt === 'string' ? body.excerpt.trim() : undefined,
         content_markdown: typeof body.contentMarkdown === 'string' ? body.contentMarkdown : undefined,
-        content_html: normalizeBlogHtml(body.contentHtml) ?? undefined,
+        content_html: resolveContentHtml(body) ?? undefined,
+        content_lexical: body.contentLexical && typeof body.contentLexical === 'object' ? body.contentLexical : undefined,
         status: body.status,
         featured: Boolean(body.isFeatured),
         published_at:

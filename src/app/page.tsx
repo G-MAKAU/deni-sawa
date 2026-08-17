@@ -383,7 +383,7 @@ export default async function HomePage() {
         title="Recent featured articles"
         subtitle="Guides, frameworks and practical financial tips from the Deni Sawa advisory team."
         posts={insights}
-        viewAllHref="/blog"
+        viewAllHref="/about/blog"
         viewAllLabel="Visit the blog"
       />
 

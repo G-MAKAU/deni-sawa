@@ -38,9 +38,11 @@ export async function markPaidAndDeliver(supabase: SupabaseClient, sessionId: st
 
   const delivery = (session.preferred_delivery ?? 'email') as 'email' | 'whatsapp' | 'both';
   let reportUrlToken: string | null = null;
+  let reportId: string | null = null;
 
   if (report) {
     // Report already generated (direct paid flow, delivery was deferred).
+    reportId = report.id;
     if (delivery === 'email' || delivery === 'both') await deliverReportByEmail(supabase, report.id);
     if (delivery === 'whatsapp' || delivery === 'both') await deliverReportByWhatsApp(supabase, report.id);
     reportUrlToken = report.report_url_token;
@@ -48,7 +50,12 @@ export async function markPaidAndDeliver(supabase: SupabaseClient, sessionId: st
     // Upgrade from summary: generate the detailed report now (which also
     // delivers it via the session's preferred channel).
     const result = await runReportGeneration(supabase, session, 'detailed');
+    reportId = result.report.id;
     reportUrlToken = result.report.report_url_token;
+  }
+
+  if (reportId) {
+    await supabase.from('health_check_reports').update({ is_paid: true }).eq('id', reportId);
   }
 
   // Detailed + Advisory Call → notify the admin once.

@@ -98,6 +98,7 @@ export function PromptEditor() {
 
   React.useEffect(() => {
     let cancelled = false;
+    setLoading(true);
     (async () => {
       try {
         const { prompts: rows } = await adminFetch<{ prompts: PromptRow[] }>(`/api/admin/health-checks/${checkId}/prompts`);

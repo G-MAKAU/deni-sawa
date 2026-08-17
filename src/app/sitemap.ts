@@ -8,12 +8,11 @@ export const dynamic = 'force-static';
 
 const staticRoutes: string[] = [
   '',
-  '/about',
+'/about',
   '/about/leadership',
   '/about/philosophy',
   '/about/experience',
-  '/academy',
-  '/blog',
+  '/about/blog',
   '/contact',
   '/deni-sawa-method',
   '/health-checks',
@@ -69,7 +68,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }
   posts.forEach((post) => {
     entries.push({
-      url: `${base}/blog/${post.slug}`,
+      url: `${base}/about/blog/${post.slug}`,
       lastModified: post.published_at ? new Date(post.published_at) : undefined,
       changeFrequency: 'weekly',
       priority: 0.8,

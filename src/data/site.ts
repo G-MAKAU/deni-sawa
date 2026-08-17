@@ -34,7 +34,7 @@ export const navItems: NavItem[] = [
     label: 'Services',
     href: '/business-support',
     children: [
-      { label: 'All Services', href: '/business-support', description: 'Explore every service area' },
+      { label: 'Business Support', href: '/business-support', description: 'Explore every service area' },
       { label: 'Fractional CFO', href: '/business-support/fractional-cfo', description: 'Financial leadership on demand' },
       { label: 'Fractional CEO', href: '/business-support/fractional-ceo', description: 'Strategic leadership and execution' },
       { label: 'Governance & Controls', href: '/business-support/governance-controls', description: 'Structures, policies and accountability' },
@@ -53,7 +53,7 @@ export const navItems: NavItem[] = [
       { label: 'Leadership', href: '/about/leadership', description: 'The team behind the method' },
       { label: 'Philosophy', href: '/about/philosophy', description: 'How we think and work' },
       { label: 'Experience', href: '/about/experience', description: 'Track record and credentials' },
-      { label: 'Blog & Insights', href: '/blog', description: 'Articles, guides and financial insights' },
+      { label: 'Blog & Insights', href: '/about/blog', description: 'Articles, guides and financial insights' },
     ],
   },
   { label: 'Contact', href: '/contact' },

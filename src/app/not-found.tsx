@@ -19,7 +19,7 @@ export default function NotFound() {
             <Link href="/" className="btn-brand text-sm">
               <Home className="h-4 w-4" /> Back to Home
             </Link>
-            <Link href="/blog" className="btn-brand-outline text-sm">
+            <Link href="/about/blog" className="btn-brand-outline text-sm">
               <Search className="h-4 w-4" /> Explore the Blog
             </Link>
             <Link href="/contact" className="inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold text-muted-foreground transition-colors hover:text-brand">

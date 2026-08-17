@@ -24,14 +24,17 @@ interface BreadcrumbsProps extends React.HTMLAttributes<HTMLElement> {
   backgroundImage?: string;
   /** Optional hero title shown above the crumbs when backgroundImage is set. */
   heading?: React.ReactNode;
+  /** Force the white-on-dark style (for breadcrumbs rendered on a dark hero). */
+  onDark?: boolean;
 }
 
 export function Breadcrumbs({
   items,
   showHome = true,
-  separator = <ArrowRight className="h-3.5 w-3.5 text-muted-foreground/60" />,
+  separator,
   backgroundImage,
   heading,
+  onDark = false,
   className,
   ...props
 }: BreadcrumbsProps) {
@@ -75,7 +78,13 @@ export function Breadcrumbs({
 
         return (
           <React.Fragment key={i}>
-            {i > 0 && separator}
+            {i > 0 &&
+              (separator ??
+                (dark ? (
+                  <ArrowRight className="h-3.5 w-3.5 text-white/40" />
+                ) : (
+                  <ArrowRight className="h-3.5 w-3.5 text-muted-foreground/60" />
+                )))}
             {node}
           </React.Fragment>
         );
@@ -108,5 +117,5 @@ export function Breadcrumbs({
     );
   }
 
-  return trail(false);
+  return trail(onDark);
 }

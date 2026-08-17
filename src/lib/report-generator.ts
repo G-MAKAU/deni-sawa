@@ -16,7 +16,26 @@ export interface GeneratedReport {
   generationSeconds: number;
 }
 
-export type ReportProvider = 'anthropic' | 'google';
+export type ReportProvider = 'anthropic' | 'google' | 'openrouter';
+
+/** True when a parsed EditorState actually contains readable content. */
+function stateHasContent(state: Record<string, unknown>): boolean {
+  const children = (state.root as Record<string, unknown> | undefined)?.children;
+  if (!Array.isArray(children) || children.length === 0) return false;
+  const countText = (node: unknown): number => {
+    if (!node || typeof node !== 'object') return 0;
+    const n = node as Record<string, unknown>;
+    if (n.type === 'text' && typeof n.text === 'string' && n.text.trim()) return 1;
+    return Array.isArray(n.children) ? n.children.reduce((sum, c) => sum + countText(c), 0) : 0;
+  };
+  return children.some((c) => countText(c) > 0);
+}
+
+/** Throws if a parsed state is empty so empty reports are never stored. */
+function assertStateHasContent(state: Record<string, unknown>): Record<string, unknown> {
+  if (!stateHasContent(state)) throw new Error('The model returned an empty report.');
+  return state;
+}
 
 /** Strip code fences and any surrounding prose, returning the JSON substring. */
 function extractJson(raw: string): string | null {
@@ -70,6 +89,8 @@ function sanitizeNode(node: unknown): unknown | null {
   if (!node || typeof node !== 'object') return null;
   const n = node as Record<string, unknown>;
   const type = typeof n.type === 'string' ? n.type : '';
+  // Gemini/OpenRouter emit aliases for nodes the renderer knows by other names.
+  const nodeType = type === 'block-quote' ? 'quote' : type === 'horizontalrule' ? 'divider' : type;
 
   if (TEXT_KEYS.has(type) && typeof n.text === 'string') {
     return {
@@ -84,8 +105,8 @@ function sanitizeNode(node: unknown): unknown | null {
     };
   }
 
-  if (!ALLOWED_NODES.has(type)) return null;
-  if (LEAF_KEYS.has(type)) return { children: [], direction: 'ltr', format: '', indent: 0, type, version: 1 };
+  if (!ALLOWED_NODES.has(nodeType)) return null;
+  if (LEAF_KEYS.has(nodeType)) return { children: [], direction: 'ltr', format: '', indent: 0, type: nodeType, version: 1 };
 
   const children = Array.isArray(n.children) ? n.children.map(sanitizeNode).filter(Boolean) : [];
   if (type === 'root') return { children, direction: 'ltr', format: '', indent: 0, type: 'root', version: 1 };
@@ -136,7 +157,7 @@ function sanitizeNode(node: unknown): unknown | null {
       backgroundColor: typeof n.backgroundColor === 'string' ? n.backgroundColor : null,
     };
   }
-  return { children, direction: 'ltr', format: '', indent: 0, textFormat: 0, textStyle: '', type, version: 1 };
+  return { children, direction: 'ltr', format: '', indent: 0, textFormat: 0, textStyle: '', type: nodeType, version: 1 };
 }
 
 /** Validate and normalise parsed JSON into a safe Lexical EditorState. */
@@ -307,7 +328,7 @@ export async function generateReportWithClaude(options: GenerateReportOptions): 
     const json = extractJson(text);
     if (!json) throw new Error('Claude did not return a valid JSON report.');
 
-    const state = validateLexicalState(parseJsonLenient(json));
+    const state = assertStateHasContent(validateLexicalState(parseJsonLenient(json)));
     return {
       state,
       model,
@@ -378,7 +399,7 @@ export async function generateReportWithGemini(options: GenerateReportOptions): 
       const json = extractJson(text);
       if (!json) throw new Error('Gemini did not return a valid JSON report.');
 
-      const state = validateLexicalState(parseJsonLenient(json));
+      const state = assertStateHasContent(validateLexicalState(parseJsonLenient(json)));
       return {
         state,
         model,
@@ -397,10 +418,111 @@ export async function generateReportWithGemini(options: GenerateReportOptions): 
   throw new Error('Gemini generation failed.');
 }
 
-/** Dispatches to the configured provider (anthropic | google). Throws on failure. */
+/** Dispatches to the configured provider (anthropic | google | openrouter). Throws on failure. */
 export function generateReportForProvider(
   provider: ReportProvider,
   options: GenerateReportOptions
 ): Promise<GeneratedReport> {
-  return provider === 'google' ? generateReportWithGemini(options) : generateReportWithClaude(options);
+  if (provider === 'google') return generateReportWithGemini(options);
+  if (provider === 'openrouter') return generateReportWithOpenRouter(options);
+  return generateReportWithClaude(options);
+}
+
+/**
+ * Generates a Lexical-state report via OpenRouter (OpenAI-compatible chat
+ * completions). Uses the configured OpenRouter model id (e.g.
+ * "google/gemini-2.5-flash"), so any provider's models are available without a
+ * per-vendor key. Retries once on failure; throws so callers can fall back.
+ */
+export async function generateReportWithOpenRouter(options: GenerateReportOptions): Promise<GeneratedReport> {
+  const apiKey = process.env.OPENROUTER_API_KEY;
+  if (!apiKey) throw new Error('OpenRouter API key is not configured.');
+
+  const startedAt = Date.now();
+  const model = options.model ?? process.env.OPENROUTER_MODEL ?? 'google/gemini-2.5-flash';
+  // Keep the request within typical credit balances — OpenRouter rejects large
+  // max_tokens with a 402 when the account can't afford them.
+  const maxTokens = Math.min(options.maxTokens ?? 4000, 16000);
+
+  const attempts: Array<{ suffix: string; label: string }> = [
+    { suffix: '', label: 'initial' },
+    {
+      suffix: '\n\nReminder: respond with strictly valid JSON only. Every key and value must be double-quoted (e.g. "type":"heading"). No comments, no trailing commas, no text outside the JSON.',
+      label: 'retry',
+    },
+  ];
+
+  let affordableTokens = maxTokens;
+
+  for (const attempt of attempts) {
+    try {
+      const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model,
+          messages: [
+            { role: 'system', content: options.systemPrompt },
+            { role: 'user', content: options.userContent + attempt.suffix },
+          ],
+          max_tokens: affordableTokens,
+          temperature: 0.6,
+        }),
+      });
+
+      if (!res.ok) {
+        let detail = '';
+        try {
+          const data = (await res.json()) as { error?: { message?: string } };
+          detail = data.error?.message ?? '';
+        } catch {
+          /* ignore */
+        }
+        // Insufficient credits — retry with the affordable output budget if the
+        // error tells us how much the account can cover.
+        if (res.status === 402) {
+          const match = detail.match(/can only afford\s+(\d+)/i);
+          const affordable = match ? Number(match[1]) : 0;
+          if (affordable > 0 && affordable < affordableTokens) {
+            affordableTokens = affordable;
+            console.warn(`OpenRouter insufficient credits — retrying with max_tokens=${affordable}`);
+            if (attempt.label === 'retry') {
+              throw new Error(`OpenRouter generation failed: ${detail}`);
+            }
+            continue;
+          }
+        }
+        throw new Error(`OpenRouter request failed (${res.status}${detail ? `): ${detail}` : ')'}`);
+      }
+
+      const data = (await res.json()) as {
+        choices?: Array<{ message?: { content?: string } }>;
+        usage?: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number };
+      };
+      const text = data.choices?.[0]?.message?.content?.trim() ?? '';
+      if (!text) throw new Error('OpenRouter returned an empty response.');
+
+      const json = extractJson(text);
+      if (!json) throw new Error('OpenRouter did not return a valid JSON report.');
+
+      const state = assertStateHasContent(validateLexicalState(parseJsonLenient(json)));
+      return {
+        state,
+        model,
+        tokensUsed: data.usage?.total_tokens ?? undefined,
+        generationSeconds: (Date.now() - startedAt) / 1000,
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (attempt.label === 'retry') {
+        throw new Error(`OpenRouter generation failed: ${message}`);
+      }
+      console.warn(`OpenRouter generation ${attempt.label} failed, retrying:`, message);
+    }
+  }
+
+  throw new Error('OpenRouter generation failed.');
 }

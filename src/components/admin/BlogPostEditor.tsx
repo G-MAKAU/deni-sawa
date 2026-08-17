@@ -8,6 +8,8 @@ import { LexicalEditor } from '@/features/lexical/LexicalEditor';
 import { htmlToLexicalState } from '@/features/lexical/htmlToState';
 import { lexicalToHtml } from '@/lib/lexical-to-html';
 import { lexicalToPlainText } from '@/lib/lexical-to-plaintext';
+import { BlogContentRenderer } from '@/components/blog/BlogContentRenderer';
+import { toast } from 'sonner';
 import { StoragePickerModal, type PickerFile } from '@/components/admin/storage/StoragePickerModal';
 import { type AdminPost, type Author, type Category, type PostStatus } from './types';
 import { cn } from '@/lib/utils';
@@ -92,14 +94,21 @@ export function BlogPostEditor({ post, authors, categories, onSave, onUploadImag
   const [lexicalState, setLexicalState] = useState<Record<string, unknown> | null>(null);
   const [htmlContent, setHtmlContent] = useState(post?.contentHtml ?? '');
   const [plainText, setPlainText] = useState(post?.contentMarkdown ?? '');
+  // Tracks which post's content has actually been converted and mounted into
+  // the Lexical editor, so switching posts never shows stale/empty content.
+  const [editorReadyId, setEditorReadyId] = useState<string | null>(null);
 
-  // Load the existing post HTML into the Lexical editor.
+  // Load the existing post content into the Lexical editor. The exact stored
+  // Lexical state is preferred (lossless); content_html is only a fallback for
+  // legacy posts saved before content_lexical existed.
   useEffect(() => {
     let cancelled = false;
+    setEditorReadyId(null);
     (async () => {
-      const state = await htmlToLexicalState(post?.contentHtml ?? '');
+      const state = post?.contentLexical ?? (await htmlToLexicalState(post?.contentHtml ?? ''));
       if (cancelled) return;
       setLexicalState(state);
+      setEditorReadyId(post?.id ?? 'new');
     })();
     return () => {
       cancelled = true;
@@ -150,6 +159,7 @@ export function BlogPostEditor({ post, authors, categories, onSave, onUploadImag
           featuredImageUrl: featuredImage,
           contentMarkdown: plainText,
           contentHtml: htmlContent,
+          contentLexical: lexicalState,
           readingMinutes: estimateReadingMinutes(),
           seoTitle,
           seoDescription,
@@ -160,6 +170,11 @@ export function BlogPostEditor({ post, authors, categories, onSave, onUploadImag
       );
       setSavedFlash(true);
       setTimeout(() => setSavedFlash(false), 2500);
+      toast.success(post?.id ? 'Post saved' : 'Post created');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Could not save the post.';
+      toast.error(`Save failed — ${message}`);
+      console.error('Blog save failed:', err);
     } finally {
       setIsSaving(false);
     }
@@ -250,7 +265,7 @@ export function BlogPostEditor({ post, authors, categories, onSave, onUploadImag
                     URL Slug <span className="text-brand">*</span>
                   </label>
                   <div className="flex items-center gap-1 rounded-lg border border-ink-200 bg-[var(--a-subtle)] px-3 py-2 dark:border-ink-700 dark:bg-ink-800">
-                    <span className="shrink-0 text-xs text-ink-400">/blog/</span>
+                    <span className="shrink-0 text-xs text-ink-400">/about/blog/</span>
                     <input
                       type="text"
                       value={slug}
@@ -444,29 +459,39 @@ export function BlogPostEditor({ post, authors, categories, onSave, onUploadImag
               <Eye size={11} /> Preview
             </button>
             <span className="ml-auto truncate text-[10px] text-ink-400">
-              /blog/{slug || 'post-slug'} · {plainText.split(/\s+/).filter(Boolean).length} words
+              /about/blog/{slug || 'post-slug'} · {plainText.split(/\s+/).filter(Boolean).length} words
             </span>
           </div>
 
           {/* Full-width editor / preview */}
-          <div className="min-h-0 flex-1 overflow-y-auto bg-[var(--a-card)] p-4 dark:bg-ink-950 sm:p-6">
+          <div className="min-h-0 flex-1 overflow-hidden bg-[var(--a-card)] p-4 dark:bg-ink-950 sm:p-6">
             {subTab === 'write' ? (
-              <LexicalEditor
-                key={post?.id ?? 'new'}
-                state={lexicalState ?? undefined}
-                onChange={handleEditorChange}
-                onUploadImage={onUploadImage}
-                onBrowseImage={() => openBrowse('content')}
-                placeholder="Start writing your article…"
-                className="min-h-[620px]"
-              />
+              editorReadyId === (post?.id ?? 'new') ? (
+                <LexicalEditor
+                  key={editorReadyId}
+                  state={lexicalState ?? undefined}
+                  onChange={handleEditorChange}
+                  onUploadImage={onUploadImage}
+                  onBrowseImage={() => openBrowse('content')}
+                  placeholder="Start writing your article…"
+                  fillHeight
+                  className="min-h-0"
+                />
+              ) : (
+                <div className="flex h-full min-h-[420px] items-center justify-center gap-2 text-sm text-ink-400">
+                  <Loader2 className="h-4 w-4 animate-spin" /> Loading content…
+                </div>
+              )
             ) : (
-              <article
-                className="prose mx-auto max-w-3xl dark:prose-invert"
-                dangerouslySetInnerHTML={{
-                  __html: htmlContent || '<p class="italic text-ink-400">No content yet — switch to Write to add content.</p>',
-                }}
-              />
+              <div className="h-full overflow-y-auto">
+                <BlogContentRenderer
+                  html={htmlContent}
+                  className="rounded-3xl border border-border bg-card p-6 shadow-soft sm:p-8 lg:p-12"
+                  emptyState={
+                    <p className="italic text-muted-foreground">No content yet — switch to Write to add content.</p>
+                  }
+                />
+              </div>
             )}
           </div>
         </div>

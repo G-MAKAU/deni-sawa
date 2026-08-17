@@ -54,6 +54,11 @@ interface LexicalEditorProps {
   onChange?: (state: unknown) => void;
   placeholder?: string;
   className?: string;
+  /** Max height of the scrollable editing area (default 760px). */
+  maxHeight?: string;
+  /** When true, the editor fills its parent's height and only the editing
+   *  area scrolls (no outer/page scrollbar). maxHeight is ignored. */
+  fillHeight?: boolean;
   /** Available {{variable}} names exposed via the toolbar "Insert variable" dropdown. */
   variables?: string[];
   /** When provided, the toolbar gains an "Insert image" button that uploads via this callback. */
@@ -63,15 +68,18 @@ interface LexicalEditorProps {
 }
 
 /** Full branded Lexical editor (playground-style) with toolbar, floating toolbar and rich plugins. */
-export function LexicalEditor({ state, onChange, placeholder = 'Start writing…', className, variables, onUploadImage, onBrowseImage }: LexicalEditorProps) {
+export function LexicalEditor({ state, onChange, placeholder = 'Start writing…', className, maxHeight = '760px', fillHeight = false, variables, onUploadImage, onBrowseImage }: LexicalEditorProps) {
   return (
-    <div className={cn('rounded-lg border border-card-border bg-card', className)}>
+    <div className={cn('rounded-lg border border-card-border bg-card', fillHeight && 'flex h-full min-h-0 flex-col', className)}>
       <LexicalComposer initialConfig={buildEditorConfig({ state, editable: true })}>
         {/* The toolbar has no overflow-hidden so its wrapped controls and
             dropdown menus are always visible, never clipped. */}
         <ToolbarPlugin variables={variables} onUploadImage={onUploadImage} onBrowseImage={onBrowseImage} />
-        <div className="overflow-hidden rounded-b-lg">
-          <div className="ds-lexical max-h-[520px] min-h-[220px] overflow-y-auto bg-background px-4 py-3">
+        <div className={cn('overflow-hidden rounded-b-lg', fillHeight && 'min-h-0 flex-1')}>
+          <div
+            className={cn('ds-lexical overflow-y-auto bg-background px-4 py-3', fillHeight ? 'min-h-0 h-full' : 'min-h-[220px]')}
+            style={fillHeight ? undefined : { maxHeight }}
+          >
             <RichTextPlugin
               contentEditable={
                 <ContentEditable

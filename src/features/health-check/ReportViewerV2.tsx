@@ -326,7 +326,7 @@ export function ReportViewerV2({ token }: { token: string }) {
 
           {upgradeState === 'initiating' && (
             <p className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin text-brand" /> Setting up payment…
+              <Loader2 className="h-4 w-4 animate-spin text-brand" /> Preparing your detailed report… this can take a minute.
             </p>
           )}
 
