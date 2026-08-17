@@ -130,6 +130,14 @@ export default async function HomePage() {
                 {/* Soft bottom vignette keeps the floating card readable */}
                 <div className="absolute inset-0 bg-gradient-to-t from-charcoal/75 via-transparent to-transparent" />
                 <div className="absolute inset-0 bg-gradient-to-t from-transparent via-transparent to-charcoal/25" />
+                {/* Caption — bottom right, matching MediaBand caption style */}
+                <div className="absolute bottom-0 right-0 bg-navy">
+                  <div className="px-5 py-3 sm:px-8">
+                    <p className="font-mono text-xs font-semibold uppercase tracking-[0.22em] text-white/80">
+                      Advisory · Governance · Capital
+                    </p>
+                  </div>
+                </div>
               </div>
             </Reveal>
           </div>
