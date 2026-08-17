@@ -101,7 +101,7 @@ export function BlogsList({ blogPosts }: BlogsListProps) {
     <>
       {/* Category filter with counts */}
       <Reveal>
-        <div className="mb-14 flex flex-wrap justify-center gap-2.5">
+        <div className="mb-14 grid grid-cols-2 gap-2.5 sm:flex sm:flex-wrap sm:justify-center">
           {categories.map((category) => {
             const active = selected === category.label;
             return (
@@ -111,7 +111,7 @@ export function BlogsList({ blogPosts }: BlogsListProps) {
                 onClick={() => setSelected(category.label)}
                 aria-pressed={active}
                 className={cn(
-                  'group inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold transition-all duration-300',
+                  'group inline-flex items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold transition-all duration-300 sm:justify-start',
                   active
                     ? 'bg-brand text-white shadow-brand-sm'
                     : 'border border-border bg-card text-muted-foreground hover:border-brand/40 hover:text-brand'

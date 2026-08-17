@@ -143,17 +143,19 @@ export function BlogComments({ slug }: { slug: string }) {
 
   return (
     <div id="comments" className="mt-12">
-      <div className="mb-8 flex items-center gap-3">
-        <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand/10 text-brand">
-          <MessageSquare className="h-5 w-5" />
-        </span>
-        <div>
-          <h3 className="font-heading text-xl font-bold text-foreground sm:text-2xl">
-            Comments <span className="text-brand">({comments.length})</span>
-          </h3>
-          <p className="text-sm text-muted-foreground">Join the conversation — share your thoughts below.</p>
+      <section className="relative overflow-hidden mb-8 rounded-4xl bg-charcoal hero-pattern text-white p-6 sm:p-8 lg:p-10">
+        <div className="flex items-center gap-3">
+          <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand/15 text-brand">
+            <MessageSquare className="h-5 w-5" />
+          </span>
+          <div>
+            <h3 className="font-heading text-xl font-bold text-white sm:text-2xl">
+              Comments <span className="text-brand">({comments.length})</span>
+            </h3>
+            <p className="text-sm text-white/70">Join the conversation — share your thoughts below.</p>
+          </div>
         </div>
-      </div>
+      </section>
 
       {loading ? (
         <div className="space-y-4">
@@ -174,10 +176,10 @@ export function BlogComments({ slug }: { slug: string }) {
         </div>
       )}
 
-      <div className="mt-10 rounded-3xl border border-border bg-card p-6 shadow-soft sm:p-8">
+      <section className="relative overflow-hidden mt-10 rounded-4xl bg-charcoal hero-pattern text-white p-6 sm:p-8 lg:p-10">
         <div className="mb-6">
-          <h4 className="font-heading text-lg font-bold text-foreground">Leave a Comment</h4>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <h3 className="font-heading text-lg font-bold text-white sm:text-xl">Leave a Comment</h3>
+          <p className="mt-1 text-sm text-white/70">
             Your email address will not be published. Required fields are marked <span className="text-brand">*</span>.
           </p>
         </div>
@@ -217,63 +219,59 @@ export function BlogComments({ slug }: { slug: string }) {
             )}
 
             <div className="grid gap-5 sm:grid-cols-2">
-              <label className="block">
-                <span className="mb-1.5 block text-sm font-medium text-foreground">
-                  Name <span className="text-brand">*</span>
-                </span>
-                <input
-                  type="text"
-                  required
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Jane Wanjiru"
-                  className="h-12 w-full rounded-xl border border-border bg-background px-4 text-foreground placeholder:text-muted-foreground focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
-                />
-              </label>
-              <label className="block">
-                <span className="mb-1.5 block text-sm font-medium text-foreground">
-                  Email <span className="text-brand">*</span>
-                </span>
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="jane@example.com"
-                  className="h-12 w-full rounded-xl border border-border bg-background px-4 text-foreground placeholder:text-muted-foreground focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
-                />
-              </label>
-            </div>
-
-            <label className="block">
-              <span className="mb-1.5 block text-sm font-medium text-foreground">Website (optional)</span>
+<label className="block">
+              <span className="mb-1.5 block text-sm font-bold text-white">Name <span className="text-brand">*</span></span>
               <input
-                type="url"
-                value={website}
-                onChange={(e) => setWebsite(e.target.value)}
-                placeholder="https://yourwebsite.com"
-                className="h-12 w-full rounded-xl border border-border bg-background px-4 text-foreground placeholder:text-muted-foreground focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
-              />
-            </label>
-
-            <label className="block">
-              <span className="mb-1.5 block text-sm font-medium text-foreground">
-                Comment <span className="text-brand">*</span>
-              </span>
-              <textarea
+                type="text"
                 required
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                rows={5}
-                placeholder="Share your thoughts on this article…"
-                className="w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground placeholder:text-muted-foreground focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Jane Wanjiru"
+                className="h-12 w-full rounded-xl border border-white/20 bg-white/5 px-4 text-white placeholder:text-white/50 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
               />
             </label>
+            <label className="block">
+              <span className="mb-1.5 block text-sm font-bold text-white">Email <span className="text-brand">*</span></span>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="jane@example.com"
+                className="h-12 w-full rounded-xl border border-white/20 bg-white/5 px-4 text-white placeholder:text-white/50 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
+              />
+            </label>
+          </div>
 
-            <div className="flex items-center justify-between gap-4">
-              <p className="text-xs text-muted-foreground">
-                Be kind, respectful and on-topic. Comments are moderated.
-              </p>
+          <label className="block">
+            <span className="mb-1.5 block text-sm font-bold text-white">Website (optional)</span>
+            <input
+              type="url"
+              value={website}
+              onChange={(e) => setWebsite(e.target.value)}
+              placeholder="https://yourwebsite.com"
+              className="h-12 w-full rounded-xl border border-white/20 bg-white/5 px-4 text-white placeholder:text-white/50 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
+            />
+          </label>
+
+          <label className="block">
+            <span className="mb-1.5 block text-sm font-bold text-white">
+              Comment <span className="text-brand">*</span>
+            </span>
+            <textarea
+              required
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              rows={5}
+              placeholder="Share your thoughts on this article…"
+              className="w-full rounded-xl border border-white/20 bg-white/5 px-4 py-3 text-white placeholder:text-white/50 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
+            />
+          </label>
+
+          <div className="flex items-center justify-between gap-4">
+            <div className="rounded-xl bg-navy/60 border border-white/10 px-4 py-3 text-sm text-white/80">
+              Be kind, respectful and on-topic. Comments are moderated.
+            </div>
               <button
                 type="submit"
                 disabled={submitting}
@@ -288,7 +286,7 @@ export function BlogComments({ slug }: { slug: string }) {
             </div>
           </form>
         )}
-      </div>
+      </section>
     </div>
   );
 }

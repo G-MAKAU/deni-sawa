@@ -263,7 +263,7 @@ export default async function BlogPostPage({ params }: PageProps) {
   return (
     <main>
       {/* Hero */}
-      <section className="relative overflow-hidden bg-ink-900 pb-24 pt-8 text-white">
+      <section className="hero-pattern relative overflow-hidden bg-charcoal pb-24 pt-8 text-white">
         <div className="absolute inset-0">
           <div className="absolute right-0 top-0 h-[420px] w-[420px] rounded-full bg-[radial-gradient(circle_at_center,rgba(255,116,1,0.14),transparent_72%)]" />
           <div className="absolute bottom-0 left-0 h-[360px] w-[360px] rounded-full bg-[radial-gradient(circle_at_center,rgba(45,157,120,0.16),transparent_72%)]" />

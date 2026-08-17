@@ -103,6 +103,13 @@ export default async function HomePage() {
               </Reveal>
             </div>
 
+            {/* Business Health Score card — between the top content and the image on
+                small screens so the image stays fully visible; floats over the image
+                on large screens */}
+            <div className="relative lg:absolute lg:bottom-10 lg:left-1/2 lg:-ml-10 lg:z-20">
+              <HealthScoreCard />
+            </div>
+
             {/* Hero image — full-width after the text on small screens; starts at the centre of the page on large screens */}
             <Reveal delay={200} className="relative lg:absolute lg:inset-y-0 lg:left-1/2 lg:right-0">
               <div className="absolute -right-6 top-10 h-36 w-36 rounded-full border border-brand/25" />
@@ -124,9 +131,6 @@ export default async function HomePage() {
                 <div className="absolute inset-0 bg-gradient-to-t from-charcoal/75 via-transparent to-transparent" />
                 <div className="absolute inset-0 bg-gradient-to-t from-transparent via-transparent to-charcoal/25" />
               </div>
-
-              {/* Floating Health Score card */}
-              <HealthScoreCard className="absolute bottom-4 left-4 lg:-left-10 lg:bottom-10" />
             </Reveal>
           </div>
         </div>
