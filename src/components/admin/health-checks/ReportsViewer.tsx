@@ -2,13 +2,14 @@
 
 import * as React from 'react';
 import { format } from 'date-fns';
+import Link from 'next/link';
 import {
   useReactTable,
   getCoreRowModel,
   flexRender,
   type ColumnDef,
 } from '@tanstack/react-table';
-import { Columns, Eye, Loader2, RefreshCw, Search } from 'lucide-react';
+import { Columns, Eye, Loader2, Pencil, RefreshCw, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { adminFetch, adminPut } from '@/lib/admin-client';
 import { useConfirm } from '@/components/admin/confirm';
@@ -174,6 +175,18 @@ export function ReportsViewer() {
         accessorKey: 'delivery_status',
         header: 'Delivery',
         cell: ({ getValue }) => <StatusPill tone={DELIVERY_TONE[getValue() as ReportRow['delivery_status']]}>{getValue() as string}</StatusPill>,
+      },
+      {
+        id: 'edit',
+        header: '',
+        cell: ({ row }) => (
+          <Link
+            href={`/admin/health-checks/reports/${row.original.id}/edit`}
+            className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[12px] font-semibold text-[var(--a-text2)] transition-colors hover:bg-[#E8510A]/10 hover:text-[#E8510A]"
+          >
+            <Pencil className="h-3.5 w-3.5" /> Edit
+          </Link>
+        ),
       },
       {
         id: 'view',

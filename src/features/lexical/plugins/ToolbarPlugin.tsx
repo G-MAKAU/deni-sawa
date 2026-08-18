@@ -511,10 +511,14 @@ export function ToolbarPlugin({
   variables,
   onUploadImage,
   onBrowseImage,
+  floating = false,
 }: {
   variables?: string[];
   onUploadImage?: (file: File) => Promise<string>;
   onBrowseImage?: () => Promise<string | null>;
+  /** Floating mode strips the toolbar's own card border/rounding so the parent
+   *  can render it as a full-width sticky bar with a clean divider line. */
+  floating?: boolean;
 }) {
   const [editor] = useLexicalComposerContext();
   const [toolbar, setToolbar] = useState<ToolbarState>(initialToolbar);
@@ -920,7 +924,7 @@ export function ToolbarPlugin({
   );
 
   return (
-    <div className="flex flex-wrap items-center gap-1 rounded-t-lg border-b border-card-border bg-card px-3 py-2">
+    <div className={cn('flex flex-wrap items-center gap-1 px-3 py-2', floating ? 'bg-transparent' : 'rounded-t-lg border-b border-card-border bg-card')}>
       {/* Undo / Redo */}
       <ToolbarButton onClick={() => editor.dispatchCommand(UNDO_COMMAND, undefined)} disabled={!toolbar.canUndo} title="Undo">
         <Undo2 className="h-4 w-4" />

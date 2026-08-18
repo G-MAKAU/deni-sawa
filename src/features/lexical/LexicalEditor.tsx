@@ -59,6 +59,10 @@ interface LexicalEditorProps {
   /** When true, the editor fills its parent's height and only the editing
    *  area scrolls (no outer/page scrollbar). maxHeight is ignored. */
   fillHeight?: boolean;
+  /** When true, the toolbar renders as a full-width sticky bar that floats
+   *  below the admin header (top-16) while the document scrolls, with the
+   *  editing card below it. maxHeight is ignored. */
+  floatingToolbar?: boolean;
   /** Available {{variable}} names exposed via the toolbar "Insert variable" dropdown. */
   variables?: string[];
   /** When provided, the toolbar gains an "Insert image" button that uploads via this callback. */
@@ -68,14 +72,20 @@ interface LexicalEditorProps {
 }
 
 /** Full branded Lexical editor (playground-style) with toolbar, floating toolbar and rich plugins. */
-export function LexicalEditor({ state, onChange, placeholder = 'Start writing…', className, maxHeight = '760px', fillHeight = false, variables, onUploadImage, onBrowseImage }: LexicalEditorProps) {
+export function LexicalEditor({ state, onChange, placeholder = 'Start writing…', className, maxHeight = '760px', fillHeight = false, floatingToolbar = false, variables, onUploadImage, onBrowseImage }: LexicalEditorProps) {
   return (
-    <div className={cn('rounded-lg border border-card-border bg-card', fillHeight && 'flex h-full min-h-0 flex-col', className)}>
+    <div className={cn(fillHeight || floatingToolbar ? 'flex h-full min-h-0 flex-col' : '', floatingToolbar ? 'min-h-0' : 'rounded-lg border border-card-border bg-card', className)}>
       <LexicalComposer initialConfig={buildEditorConfig({ state, editable: true })}>
         {/* The toolbar has no overflow-hidden so its wrapped controls and
             dropdown menus are always visible, never clipped. */}
-        <ToolbarPlugin variables={variables} onUploadImage={onUploadImage} onBrowseImage={onBrowseImage} />
-        <div className={cn('overflow-hidden rounded-b-lg', fillHeight && 'min-h-0 flex-1')}>
+        {floatingToolbar ? (
+          <div className="sticky top-16 z-30 border-b border-card-border bg-card">
+            <ToolbarPlugin floating variables={variables} onUploadImage={onUploadImage} onBrowseImage={onBrowseImage} />
+          </div>
+        ) : (
+          <ToolbarPlugin variables={variables} onUploadImage={onUploadImage} onBrowseImage={onBrowseImage} />
+        )}
+        <div className={cn('overflow-hidden', floatingToolbar ? 'min-h-0 flex-1 rounded-b-lg border border-t-0 border-card-border bg-card' : 'rounded-b-lg', fillHeight && 'min-h-0 flex-1')}>
           <div
             className={cn('ds-lexical overflow-y-auto bg-background px-4 py-3', fillHeight ? 'min-h-0 h-full' : 'min-h-[220px]')}
             style={fillHeight ? undefined : { maxHeight }}

@@ -2,13 +2,14 @@
 
 import * as React from 'react';
 import { format } from 'date-fns';
+import Link from 'next/link';
 import {
   useReactTable,
   getCoreRowModel,
   flexRender,
   type ColumnDef,
 } from '@tanstack/react-table';
-import { ChevronLeft, ChevronRight, FileText, Loader2, Search, Trash2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, FileText, Loader2, Pencil, Search, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { adminDelete, adminFetch, adminPost } from '@/lib/admin-client';
 import { useConfirm } from '@/components/admin/confirm';
@@ -465,6 +466,12 @@ export function SessionsViewer() {
                     <StatusPill tone={report.delivery_status === 'sent' ? 'green' : report.delivery_status === 'failed' ? 'red' : report.delivery_status === 'pending' ? 'amber' : 'grey'}>
                       {report.delivery_status}
                     </StatusPill>
+                    <Link
+                      href={`/admin/health-checks/reports/${report.id}/edit`}
+                      className="inline-flex items-center gap-1 rounded-full bg-[#E8510A]/10 px-2 py-0.5 text-[11px] font-bold text-[#E8510A] transition-colors hover:bg-[#E8510A] hover:text-white"
+                    >
+                      <Pencil className="h-3 w-3" /> Edit
+                    </Link>
                   </span>
                 ))}
               </div>
