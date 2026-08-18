@@ -48,7 +48,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json({
       report: result.report,
       regenerated: result.regenerated,
-      report_url: `${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://denisawa.co.ke'}/health-checks/report/${result.report.report_url_token}`,
+      report_url: `${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://denisawa.co.ke'}/business-health-checks/report/${result.report.report_url_token}`,
     });
   } catch (error) {
     return jsonAdminWriteError(error, 'Failed to generate report');

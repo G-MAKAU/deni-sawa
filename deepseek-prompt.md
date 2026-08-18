@@ -112,10 +112,10 @@ Build pages in this order:
 
 / — Home
 /business-support — hub + all sub-pages
-/health-checks — hub + assessment flow + report page
+/business-health-checks — hub + assessment flow + report page
 /learning — hub + Executive Finance programme
 /investors
-/specialsit-network
+/about/specialsit-network
 /deni-sawa-method
 /about
 /contact
@@ -147,7 +147,7 @@ API route sends all Q&A pairs to Claude API with a structured system prompt
 Claude returns report as Lexical EditorState JSON — not markdown, not plain text
 Basic report rendered immediately in browser using Lexical in read-only mode
 Full report stored in Supabase (health_check_reports table, lexical_state JSONB column)
-Unique report URL: /health-checks/report/[report-id] — auth protected
+Unique report URL: /business-health-checks/report/[report-id] — auth protected
 Report URL emailed to user via Nodemailer SMTP
 Export buttons on report page: "Download PDF" (Puppeteer) | "Download Word" (docx npm)
 
@@ -179,7 +179,7 @@ Unique <title> and <meta name="description"> per page
 Self-referencing canonical tag
 Open Graph + Twitter Card tags
 JSON-LD structured data (Organization on all pages, Service on service pages, Article on blog posts)
-/robots.txt — disallow /admin/, /api/, /dashboard/, /health-checks/report/
+/robots.txt — disallow /admin/, /api/, /dashboard/, /business-health-checks/report/
 /sitemap.xml via next-sitemap, submitted to Google Search Console
 
 PERFORMANCE TARGETS

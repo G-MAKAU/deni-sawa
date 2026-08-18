@@ -43,7 +43,7 @@ export const navItems: NavItem[] = [
       { label: 'Special Situations', href: '/business-support/special-situations', description: 'Distress, restructuring and recovery' },
     ],
   },
-  { label: 'Health Checks', href: '/health-checks' },
+  { label: 'Business Health Checks', href: '/business-health-checks' },
   { label: 'Learning', href: '/learning' },
   {
     label: 'About',
@@ -53,7 +53,7 @@ export const navItems: NavItem[] = [
       { label: 'Leadership', href: '/about/leadership', description: 'The team behind the method' },
       { label: 'Philosophy', href: '/about/philosophy', description: 'How we think and work' },
       { label: 'Experience', href: '/about/experience', description: 'Track record and credentials' },
-      { label: 'SpecialSit Network', href: '/specialsit-network', description: 'A curated peer community for founders, professionals and investors' },
+      { label: 'SpecialSit Network', href: '/about/specialsit-network', description: 'A curated peer community for founders, professionals and investors' },
       { label: 'Blog & Insights', href: '/about/blog', description: 'Articles, guides and financial insights' },
     ],
   },
@@ -232,7 +232,7 @@ export const audiences = [
     description:
       'Personal financial health is the foundation of professional performance. Build resilience, clarity and the confidence to lead.',
     cta: 'Professional Financial Health Check',
-    href: '/health-checks/professional-health-check',
+    href: '/business-health-checks/professional-health-check',
   },
   {
     title: 'Entrepreneurs & Founders',
@@ -241,7 +241,7 @@ export const audiences = [
     description:
       'From stabilising cashflow to building governance and growth systems — the support founders need at every stage.',
     cta: 'Business Health Check',
-    href: '/health-checks/business-health-check',
+    href: '/business-health-checks/business-health-check',
   },
   {
     title: 'Investors',
@@ -280,7 +280,7 @@ export const methodSteps = [
     description: 'Understand the real situation',
     objective: 'Establish the facts before proposing any fix — cash, debt, controls, performance and stakeholders.',
     example: 'A distributor under creditor pressure: we map the full cash position and every obligation within days.',
-    service: '/health-checks/business-health-check',
+    service: '/business-health-checks/business-health-check',
     serviceLabel: 'Start with a Health Check',
   },
   {

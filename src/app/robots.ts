@@ -7,7 +7,7 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: '/',
-        disallow: ['/health-checks/report/', '/health-checks/assessment/', '/admin', '/api/'],
+        disallow: ['/business-health-checks/report/', '/business-health-checks/assessment/', '/admin', '/api/'],
       },
     ],
     sitemap: `${site.url}/sitemap.xml`,

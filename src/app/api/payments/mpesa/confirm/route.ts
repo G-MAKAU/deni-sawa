@@ -44,7 +44,7 @@ export async function POST(request: Request) {
       payment_status: session?.payment_status,
       requires_call: session?.requires_call,
       report_url_token: report?.report_url_token ?? null,
-      report_url: report?.report_url_token ? `${siteUrl}/health-checks/report/${report.report_url_token}` : null,
+      report_url: report?.report_url_token ? `${siteUrl}/business-health-checks/report/${report.report_url_token}` : null,
     });
   } catch (error) {
     console.error('Payment confirm failed:', error);

@@ -61,7 +61,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json({
       report_id: report.id,
       report_url_token: report.report_url_token,
-      report_url: `${siteUrl}/health-checks/report/${report.report_url_token}`,
+      report_url: `${siteUrl}/business-health-checks/report/${report.report_url_token}`,
       report_type: reportType,
       regenerated,
       requires_payment: requiresPayment && !paid,

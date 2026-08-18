@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   title: 'Business & Financial Health Check | Deni Sawa',
   description:
     'Take our free Business or Professional Financial Health Check and receive a diagnostic report with prioritised recommendations.',
-  alternates: { canonical: `${site.url}/health-checks` },
+  alternates: { canonical: `${site.url}/business-health-checks` },
 };
 
 const howItWorks = [
@@ -48,7 +48,7 @@ export default async function HealthChecksPage() {
           compactImage
         >
           <Button asChild size="lg">
-            <Link href="/health-checks#choose-your-assessment">Choose Your Assessment</Link>
+            <Link href="/business-health-checks#choose-your-assessment">Choose Your Assessment</Link>
           </Button>
         </PageHero>
       </section>
@@ -95,7 +95,7 @@ export default async function HealthChecksPage() {
                   id={check.slug}
                 >
                   <Link
-                    href={`/health-checks/${check.slug}`}
+                    href={`/business-health-checks/${check.slug}`}
                     className="card-elevated group flex h-full flex-col overflow-hidden"
                   >
                     {/* Cover image */}

@@ -1,5 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 
+export function useMounted() {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  return mounted;
+}
+
 export function useInView<T extends HTMLElement = HTMLDivElement>(
   options: IntersectionObserverInit = { threshold: 0.15, rootMargin: '0px 0px -80px 0px' }
 ) {

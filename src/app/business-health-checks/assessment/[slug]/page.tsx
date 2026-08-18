@@ -7,7 +7,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return {
     title: 'Health Check Assessment | Deni Sawa',
     description: 'Take the assessment — a structured, confidential flow that produces your diagnostic report.',
-    alternates: { canonical: `${site.url}/health-checks/assessment/${slug}` },
+    alternates: { canonical: `${site.url}/business-health-checks/assessment/${slug}` },
     robots: { index: false, follow: false },
   };
 }

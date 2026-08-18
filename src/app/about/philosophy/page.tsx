@@ -100,7 +100,7 @@ export default function PhilosophyPage() {
       <CTASection
         title="See the philosophy in action"
         subtitle="The free Health Check is the method, applied to you — no commitment required."
-        primary={{ label: 'Take a Health Check', href: '/health-checks' }}
+        primary={{ label: 'Take a Health Check', href: '/business-health-checks' }}
       />
     </>
   );

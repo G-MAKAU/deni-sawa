@@ -101,6 +101,10 @@ type BlockFormat =
   | 'number'
   | 'check';
 
+type AlignFormat = 'left' | 'center' | 'right' | 'justify';
+
+const ALIGNS: AlignFormat[] = ['left', 'center', 'right', 'justify'];
+
 const blockLabels: Record<BlockFormat, string> = {
   paragraph: 'Paragraph',
   h1: 'Heading 1',
@@ -140,6 +144,8 @@ interface ToolbarState {
   subscript: boolean;
   superscript: boolean;
   block: BlockFormat;
+  /** Current text alignment of the selection (cells read from their block children). */
+  align: AlignFormat;
   textColor: string | null;
   blockBg: string | null;
   /** Number of table cells selected (0 = no cell selection). */
@@ -159,6 +165,7 @@ const initialToolbar: ToolbarState = {
   subscript: false,
   superscript: false,
   block: 'paragraph',
+  align: 'left',
   textColor: null,
   blockBg: null,
   cellCount: 0,
@@ -197,6 +204,49 @@ function getSelectionBlock(selection: ReturnType<typeof $getSelection>): BlockFo
     return 'paragraph';
   }
   return 'paragraph';
+}
+
+/** Reads the effective horizontal alignment of a block element. Lexical stores
+ *  the alignment on the element's format (set via FORMAT_ELEMENT_COMMAND); cell
+ *  blocks set it as a text-align style instead, so both are considered. */
+function readBlockAlign(block: ElementNode): AlignFormat | null {
+  const fromFormat = block.getFormatType();
+  const fromStyle = parseCssProperty(block.getStyle(), 'text-align') ?? '';
+  const value = fromFormat || fromStyle;
+  return (ALIGNS as readonly string[]).includes(value) ? (value as AlignFormat) : null;
+}
+
+/** Resolves the alignment of the current selection: the first selected cell's
+ *  block when in a table, otherwise the anchor's block element. Defaults to
+ *  left (Lexical's unformatted state). */
+function getSelectionAlignment(selection: ReturnType<typeof $getSelection>): AlignFormat {
+  try {
+    const cells = getSelectedCells(selection);
+    if (cells.length > 0) {
+      for (const child of cells[0].getChildren()) {
+        if ($isParagraphNode(child) || $isHeadingNode(child)) {
+          const align = readBlockAlign(child);
+          if (align) return align;
+        }
+      }
+      return 'left';
+    }
+    if ($isRangeSelection(selection)) {
+      const anchor = selection.anchor.getNode();
+      const block =
+        $isElementNode(anchor) && !anchor.isInline()
+          ? anchor
+          : $findMatchingParent(anchor, (node) => $isElementNode(node) && !node.isInline());
+      if (block && $isElementNode(block)) {
+        const align = readBlockAlign(block);
+        if (align) return align;
+      }
+    }
+  } catch {
+    // A selection can leak from a sibling editor; degrade gracefully.
+    return 'left';
+  }
+  return 'left';
 }
 
 /** Reads the colour of the text at the selection anchor, normalised to hex. */
@@ -264,11 +314,15 @@ function getSelectedCells(selection: ReturnType<typeof $getSelection>): TableCel
       return selection.getNodes().filter($isTableCellNode) as TableCellNode[];
     }
     if ($isRangeSelection(selection)) {
-      const anchor = selection.anchor.getNode();
-      const cell = $isTableCellNode(anchor)
-        ? anchor
-        : $findMatchingParent(anchor, $isTableCellNode);
-      return cell ? [cell] : [];
+      // Collect every cell the range touches. A multi-cell drag sometimes
+      // surfaces as a RangeSelection instead of a TableSelection; the old
+      // anchor-only lookup silently ignored every cell but the anchor's.
+      const cells = new Set<TableCellNode>();
+      for (const node of selection.getNodes()) {
+        const cell = $isTableCellNode(node) ? node : $findMatchingParent(node, $isTableCellNode);
+        if (cell) cells.add(cell);
+      }
+      return [...cells];
     }
   } catch {
     /* fall through */
@@ -579,6 +633,7 @@ export function ToolbarPlugin({
             subscript: hasFormat('subscript'),
             superscript: hasFormat('superscript'),
             block: getSelectionBlock(selection),
+            align: getSelectionAlignment(selection),
             textColor: getTextColor(selection),
             blockBg: getBlockBackground(selection),
             cellCount: getSelectedCells(selection).length,
@@ -727,12 +782,26 @@ export function ToolbarPlugin({
     });
   }, [editor]);
 
+  /** Resolves the currently selected table cells, falling back to the keys
+   *  captured at selection time when the live selection is null/cleared or has
+   *  collapsed to a single cell (drag selections often do once the toolbar
+   *  grabs pointer events). The captured keys are the ground truth of what the
+   *  user last selected, so the multi-cell intent survives the collapse. */
+  const resolveSelectedCells = () => {
+    const selection = $getSelection() ?? selectionRef.current;
+    let cells = selection ? getSelectedCells(selection) : [];
+    if (cellKeysRef.current && cells.length < cellKeysRef.current.size) {
+      cells = [...cellKeysRef.current]
+        .map((key) => $getNodeByKey(key))
+        .filter((n): n is TableCellNode => $isTableCellNode(n));
+    }
+    return cells;
+  };
+
   const applyTextColor = useCallback(
     (color: string | null) => {
       editor.update(() => {
-        const selection = $getSelection() ?? selectionRef.current;
-        if (!selection) return;
-        const cells = getSelectedCells(selection);
+        const cells = resolveSelectedCells();
         if (cells.length > 0) {
           cells.forEach((cell) =>
             cell.getChildren().forEach((child) =>
@@ -741,7 +810,8 @@ export function ToolbarPlugin({
           );
           return;
         }
-        if (!$isRangeSelection(selection)) return;
+        const selection = $getSelection() ?? selectionRef.current;
+        if (!selection || !$isRangeSelection(selection)) return;
         $patchStyleText(selection, { color: color ? color : null });
       });
     },
@@ -755,29 +825,41 @@ export function ToolbarPlugin({
         const selection =
           $isRangeSelection(current) ? current : ($isRangeSelection(selectionRef.current) ? selectionRef.current : null);
         if (!selection) return;
-        const node = selection.anchor.getNode();
-        let block: ElementNode | null = null;
-        if ($isElementNode(node)) block = node;
-        else block = node.getParent() ?? null;
-        if (!block || !($isParagraphNode(block) || $isHeadingNode(block))) return;
-        block.setStyle(setCssProperty(block.getStyle(), 'background-color', color));
+        try {
+          // Fill every paragraph/heading the selection touches, not just the
+          // anchor block — a selection spanning several paragraphs should
+          // highlight all of them.
+          const blocks = new Set<ElementNode>();
+          for (const node of selection.getNodes()) {
+            const parent = $isElementNode(node) ? node : node.getParent();
+            if (!parent) continue;
+            let block: ElementNode | null = parent;
+            while (block && !($isParagraphNode(block) || $isHeadingNode(block))) {
+              if ($isTableCellNode(block)) {
+                block = null;
+                break;
+              }
+              block = block.getParent();
+            }
+            if (block) blocks.add(block);
+          }
+          if (blocks.size === 0) {
+            const node = selection.anchor.getNode();
+            const block = $isElementNode(node) ? node : node.getParent() ?? null;
+            if (block && ($isParagraphNode(block) || $isHeadingNode(block))) blocks.add(block);
+          }
+          blocks.forEach((block) => block.setStyle(setCssProperty(block.getStyle(), 'background-color', color)));
+        } catch {
+          const node = selection.anchor.getNode();
+          const block = $isElementNode(node) ? node : node.getParent() ?? null;
+          if (block && ($isParagraphNode(block) || $isHeadingNode(block))) {
+            block.setStyle(setCssProperty(block.getStyle(), 'background-color', color));
+          }
+        }
       });
     },
     [editor]
   );
-
-  /** Resolves the currently selected table cells, falling back to the keys
-   *  captured at selection time when the live selection is null/cleared. */
-  const resolveSelectedCells = () => {
-    const selection = $getSelection() ?? selectionRef.current;
-    let cells = selection ? getSelectedCells(selection) : [];
-    if (cells.length === 0 && cellKeysRef.current) {
-      cells = [...cellKeysRef.current]
-        .map((key) => $getNodeByKey(key))
-        .filter((n): n is TableCellNode => $isTableCellNode(n));
-    }
-    return cells;
-  };
 
   /** Applies a background colour to every selected table cell (1..N). */
   const applyCellBackground = useCallback(
@@ -818,9 +900,7 @@ export function ToolbarPlugin({
   const applyFontSize = useCallback(
     (px: string) => {
       editor.update(() => {
-        const selection = $getSelection() ?? selectionRef.current;
-        if (!selection) return;
-        const cells = getSelectedCells(selection);
+        const cells = resolveSelectedCells();
         if (cells.length > 0) {
           cells.forEach((cell) =>
             cell.getChildren().forEach((child) =>
@@ -829,7 +909,8 @@ export function ToolbarPlugin({
           );
           return;
         }
-        if (!$isRangeSelection(selection)) return;
+        const selection = $getSelection() ?? selectionRef.current;
+        if (!selection || !$isRangeSelection(selection)) return;
         $patchStyleText(selection, { 'font-size': px ? `${px}px` : null });
       });
     },
@@ -839,9 +920,7 @@ export function ToolbarPlugin({
   const applyFontFamily = useCallback(
     (family: string) => {
       editor.update(() => {
-        const selection = $getSelection() ?? selectionRef.current;
-        if (!selection) return;
-        const cells = getSelectedCells(selection);
+        const cells = resolveSelectedCells();
         if (cells.length > 0) {
           cells.forEach((cell) =>
             cell.getChildren().forEach((child) =>
@@ -850,7 +929,8 @@ export function ToolbarPlugin({
           );
           return;
         }
-        if (!$isRangeSelection(selection)) return;
+        const selection = $getSelection() ?? selectionRef.current;
+        if (!selection || !$isRangeSelection(selection)) return;
         $patchStyleText(selection, { 'font-family': family });
       });
     },
@@ -1115,24 +1195,28 @@ export function ToolbarPlugin({
       {/* Alignment (cell-aware: applies to every selected table cell) */}
       <ToolbarButton
         onClick={() => (toolbar.cellCount > 0 ? applyCellAlignment('left') : editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, 'left'))}
+        active={toolbar.align === 'left'}
         title={toolbar.cellCount > 0 ? 'Align cells left' : 'Align left'}
       >
         <AlignLeft className="h-4 w-4" />
       </ToolbarButton>
       <ToolbarButton
         onClick={() => (toolbar.cellCount > 0 ? applyCellAlignment('center') : editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, 'center'))}
+        active={toolbar.align === 'center'}
         title={toolbar.cellCount > 0 ? 'Align cells center' : 'Align center'}
       >
         <AlignCenter className="h-4 w-4" />
       </ToolbarButton>
       <ToolbarButton
         onClick={() => (toolbar.cellCount > 0 ? applyCellAlignment('right') : editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, 'right'))}
+        active={toolbar.align === 'right'}
         title={toolbar.cellCount > 0 ? 'Align cells right' : 'Align right'}
       >
         <AlignRight className="h-4 w-4" />
       </ToolbarButton>
       <ToolbarButton
         onClick={() => (toolbar.cellCount > 0 ? applyCellAlignment('justify') : editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, 'justify'))}
+        active={toolbar.align === 'justify'}
         title={toolbar.cellCount > 0 ? 'Justify cells' : 'Justify'}
       >
         <AlignJustify className="h-4 w-4" />

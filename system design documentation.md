@@ -164,9 +164,9 @@ _💡 The CTA button must remain visible on mobile. Collapse other links into th
 - /business-support/governance-controls
 - /business-support/growth-support
 - /business-support/special-situations
-- /health-checks - Health Checks (hub)
-- /health-checks/business-health-check
-- /health-checks/professional-financial-health-check
+- /business-health-checks - Health Checks (hub)
+- /business-health-checks/business-health-check
+- /business-health-checks/professional-financial-health-check
 - /learning - Learning & Leadership (hub)
 - /learning/executive-finance
 - /learning/business-recovery
@@ -177,7 +177,7 @@ _💡 The CTA button must remain visible on mobile. Collapse other links into th
 - /investors/portfolio-oversight
 - /investors/governance
 - /investors/investor-representation
-- /specialsit-network - SpecialSit Network
+- /about/specialsit-network - SpecialSit Network
 - /deni-sawa-method - The Method
 - /insights - Insights / Blog
 - /about - About (hub)
@@ -649,7 +649,7 @@ The AI-generated Health Check report must be rendered using the **Lexical editor
 
 **Report Page:**
 
-- Each completed Health Check gets a unique shareable URL: /health-checks/report/\[report-id\]
+- Each completed Health Check gets a unique shareable URL: /business-health-checks/report/[report-id]
 - The URL is emailed to the user on completion
 - The page is auth-protected - only the user who completed the assessment (or an admin) can access it
 - A "This report is private and unique to you" notice sits at the top

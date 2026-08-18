@@ -31,8 +31,8 @@ const SAMPLE_VALUES: Record<string, string> = {
   recipient_name: 'Jane Wanjiku',
   check_name: 'Business Health Check',
   report_type: 'summary',
-  report_url: 'https://denisawa.co.ke/health-checks/report/example',
-  resume_url: 'https://denisawa.co.ke/health-checks/assessment/business-health-check',
+  report_url: 'https://denisawa.co.ke/business-health-checks/report/example',
+  resume_url: 'https://denisawa.co.ke/business-health-checks/assessment/business-health-check',
 };
 
 function escapeHtml(text: string): string {

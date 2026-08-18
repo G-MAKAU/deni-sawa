@@ -28,7 +28,7 @@ export default function BusinessSupportPage() {
         image={{ src: '/images/services-hero.jpg', alt: 'Deni Sawa Partners advisory team at work' }}
       >
         <Button asChild size="lg">
-          <Link href="/health-checks#choose-your-assessment">Start Your Assessment</Link>
+          <Link href="/business-health-checks#choose-your-assessment">Start Your Assessment</Link>
         </Button>
       </PageHero>
 

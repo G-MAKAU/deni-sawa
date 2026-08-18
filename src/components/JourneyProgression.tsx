@@ -4,6 +4,7 @@ import { motion, useReducedMotion } from 'motion/react';
 import { HeartPulse, Shield, TrendingUp, Award } from 'lucide-react';
 import { journeyStages } from '@/data/site';
 import { cn } from '@/lib/utils';
+import { useMounted } from '@/lib/hooks';
 
 const ICONS: Record<string, React.ComponentType<{ className?: string; strokeWidth?: number }>> = {
   HeartPulse,
@@ -19,6 +20,7 @@ const ICONS: Record<string, React.ComponentType<{ className?: string; strokeWidt
  */
 export function JourneyProgression() {
   const prefersReducedMotion = useReducedMotion();
+  const mounted = useMounted();
 
   return (
     <div className="relative">
@@ -36,7 +38,7 @@ export function JourneyProgression() {
             <li key={stage.stage} className="relative lg:pl-0 lg:pr-4">
               <div className="relative flex items-start gap-5 lg:flex-col lg:items-start">
                 <motion.div
-                  initial={prefersReducedMotion ? false : { opacity: 0, scale: 0.8 }}
+                  initial={!mounted || prefersReducedMotion ? false : { opacity: 0, scale: 0.8 }}
                   whileInView={{ opacity: 1, scale: 1 }}
                   viewport={{ once: true, amount: 0.6 }}
                   transition={{ duration: 0.4, ease: 'easeOut', delay: i * 0.1 }}
@@ -49,7 +51,7 @@ export function JourneyProgression() {
                 </motion.div>
 
                 <motion.div
-                  initial={prefersReducedMotion ? false : { opacity: 0, y: 14 }}
+                  initial={!mounted || prefersReducedMotion ? false : { opacity: 0, y: 14 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, amount: 0.5 }}
                   transition={{ duration: 0.4, ease: 'easeOut', delay: i * 0.1 + 0.05 }}

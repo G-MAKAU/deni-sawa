@@ -116,7 +116,7 @@ export default async function HomePage() {
               <Reveal delay={240}>
                 <div className="mt-10 flex flex-wrap items-center gap-4">
                   <Button asChild size="lg">
-                    <Link href="/health-checks#choose-your-assessment">
+                    <Link href="/business-health-checks#choose-your-assessment">
                       Start Your Assessment
                       <ArrowRight className="h-4 w-4" />
                     </Link>
@@ -216,7 +216,7 @@ export default async function HomePage() {
                   </div>
                   <div className="mt-8">
                     <Button asChild size="lg">
-                      <Link href={`/health-checks/${check.slug}`}>
+                      <Link href={`/business-health-checks/${check.slug}`}>
                         Start Assessment
                         <ArrowRight className="h-4 w-4" />
                       </Link>
@@ -413,7 +413,7 @@ export default async function HomePage() {
                 icon: Users,
                 title: 'Mentorship',
                 description: 'Direct access to seasoned bankers, operators and turnaround professionals who have lived these situations.',
-                href: '/specialsit-network',
+                href: '/about/specialsit-network',
                 cta: 'Find a Mentor',
               },
               {
@@ -421,7 +421,7 @@ export default async function HomePage() {
                 icon: Network,
                 title: 'SpecialSit Network',
                 description: 'A curated peer community for founders, professionals and investors navigating complex situations.',
-                href: '/specialsit-network',
+                href: '/about/specialsit-network',
                 cta: 'Join the Network',
               },
             ].map((item, i) => (
@@ -460,7 +460,7 @@ export default async function HomePage() {
                 </p>
                 <div className="mt-7">
                   <Button asChild size="lg" variant="secondary">
-                    <Link href="/specialsit-network">
+                    <Link href="/about/specialsit-network">
                       Join the Network
                       <ArrowRight className="h-4 w-4" />
                     </Link>
@@ -566,7 +566,7 @@ export default async function HomePage() {
         <CTASection
           title="Find Your Starting Point"
           subtitle="Take the first step. One conversation can change the direction of your business."
-          primary={{ label: 'Start Your Assessment', href: '/health-checks#choose-your-assessment' }}
+          primary={{ label: 'Start Your Assessment', href: '/business-health-checks#choose-your-assessment' }}
           secondary={{ label: 'Book a Clarity Call', href: '/contact' }}
         />
       </div>

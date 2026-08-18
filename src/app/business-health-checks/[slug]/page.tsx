@@ -46,7 +46,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return {
     title: `${intro.name} | Deni Sawa`,
     description: `Take the ${intro.name} — a structured, confidential assessment. Your responses are analysed and a structured report is prepared, which our advisors use as the foundation for your first conversation.`,
-    alternates: { canonical: `${site.url}/health-checks/${slug}` },
+    alternates: { canonical: `${site.url}/business-health-checks/${slug}` },
   };
 }
 
@@ -61,7 +61,7 @@ export default async function CheckPage({ params }: { params: Promise<{ slug: st
       <div className="border-b border-card-border bg-background">
         <div className="container-lux flex h-14 items-center justify-between gap-3">
           <Link
-            href="/health-checks"
+            href="/business-health-checks"
             className="inline-flex shrink-0 items-center gap-1.5 text-[13px] font-semibold text-muted-foreground transition-colors hover:text-brand"
           >
             <ArrowLeft className="h-3.5 w-3.5" /> All Health Checks

@@ -82,7 +82,7 @@ async function notifyAdminOfCall(
   const { data: check } = await supabase.from('health_checks').select('name').eq('id', session.health_check_id).maybeSingle();
   const checkName = (check as { name?: string } | null)?.name ?? 'Health Check';
   const siteUrl = resolveSiteUrl();
-  const reportUrl = reportToken ? `${siteUrl}/health-checks/report/${reportToken}` : 'not generated';
+  const reportUrl = reportToken ? `${siteUrl}/business-health-checks/report/${reportToken}` : 'not generated';
 
   const bodyHtml = `
     <h1>Advisory call requested</h1>

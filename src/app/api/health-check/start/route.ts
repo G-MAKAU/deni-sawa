@@ -115,7 +115,7 @@ export async function POST(request: NextRequest) {
 
     // ── Started notifications (best-effort) ─────────────────────────────────
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://denisawa.co.ke';
-    const resumeUrl = `${siteUrl}/health-checks/assessment/${check.slug}?session=${session.id}`;
+    const resumeUrl = `${siteUrl}/business-health-checks/assessment/${check.slug}?session=${session.id}`;
 
     if (preferredDelivery === 'email' || preferredDelivery === 'both') {
       if (email) {

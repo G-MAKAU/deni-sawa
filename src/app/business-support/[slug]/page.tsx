@@ -85,7 +85,7 @@ export default async function ServiceDetailPage({
           </Link>
         </Button>
         <Button asChild size="lg" variant="ghost">
-          <Link href="/health-checks/business-health-check">Take the Business Health Check</Link>
+          <Link href="/business-health-checks/business-health-check">Take the Business Health Check</Link>
         </Button>
       </PageHero>
 

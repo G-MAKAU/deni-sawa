@@ -28,7 +28,7 @@ export default function MethodPage() {
         image={{ src: '/images/method.jpg', alt: 'The Deni Sawa Method' }}
       >
         <Button asChild size="lg">
-          <Link href="/health-checks#choose-your-assessment">Start With a Diagnosis</Link>
+          <Link href="/business-health-checks#choose-your-assessment">Start With a Diagnosis</Link>
         </Button>
       </PageHero>
 
@@ -89,7 +89,7 @@ export default function MethodPage() {
       <CTASection
         title="Start with a diagnosis"
         subtitle="Free. Confidential. In under 15 minutes you will know where you stand."
-        primary={{ label: 'Take a Health Check', href: '/health-checks#choose-your-assessment' }}
+        primary={{ label: 'Take a Health Check', href: '/business-health-checks#choose-your-assessment' }}
       />
     </>
   );

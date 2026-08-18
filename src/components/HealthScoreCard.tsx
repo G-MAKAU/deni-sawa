@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { motion, useReducedMotion } from 'motion/react';
 import { ArrowRight, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useMounted } from '@/lib/hooks';
 
 interface Level {
   label: string;
@@ -39,11 +40,13 @@ export function HealthScoreCard({ className = '' }: HealthScoreCardProps) {
   const [trend, setTrend] = useState<'up' | 'down' | 'flat'>('up');
   const prevRef = useRef(72);
   const prefersReducedMotion = useReducedMotion();
+  const mounted = useMounted();
 
-  // Scroll behaviour: the card starts large and prominent over the hero and
-  // transitions to its compact inline form as the user scrolls past it. On
-  // mobile (< lg) it renders in its inline position from the start.
-  const [settled, setSettled] = useState(false);
+  // Scroll behaviour: on load the card lifts a little above its settled
+  // position over the hero; as the user scrolls it eases down to rest in
+  // place. Both the lift and the scroll distance that settles it are derived
+  // from the viewport height so the effect scales across screen sizes. On
+  // mobile (< lg) the card renders in its inline position from the start.
   const [isDesktop, setIsDesktop] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
@@ -57,14 +60,32 @@ export function HealthScoreCard({ className = '' }: HealthScoreCardProps) {
 
   useEffect(() => {
     const el = cardRef.current;
-    if (!el || !isDesktop) return;
-    const io = new IntersectionObserver(
-      ([entry]) => setSettled(!entry.isIntersecting),
-      { rootMargin: '0px 0px -45% 0px', threshold: 0 }
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, [isDesktop]);
+    if (!el || !isDesktop || prefersReducedMotion) return;
+
+    let raf = 0;
+    const render = () => {
+      raf = 0;
+      const lift = Math.min(Math.round(window.innerHeight * 0.06), 56);
+      const settleRange = Math.round(window.innerHeight * 0.4);
+      const p = Math.min(window.scrollY / settleRange, 1);
+      const eased = 1 - Math.pow(1 - p, 2);
+      el.style.transform = `translateY(${(-lift * (1 - eased)).toFixed(1)}px) scale(${(1.06 - 0.06 * eased).toFixed(4)})`;
+      el.style.boxShadow = `0 ${Math.round(16 - 6 * eased)}px ${Math.round(50 - 10 * eased)}px rgba(232, 81, 10, ${(0.22 - 0.06 * eased).toFixed(3)})`;
+    };
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(render);
+    };
+    render();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+      if (raf) cancelAnimationFrame(raf);
+      el.style.transform = '';
+      el.style.boxShadow = '';
+    };
+  }, [isDesktop, prefersReducedMotion]);
 
   const level = levelFor(score);
 
@@ -87,10 +108,7 @@ export function HealthScoreCard({ className = '' }: HealthScoreCardProps) {
     <div
       ref={cardRef}
       className={cn(
-        'w-full rounded-lg border border-card-border bg-card p-5 transition-[transform,box-shadow,opacity] duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] will-change-transform sm:w-72',
-        isDesktop && !settled
-          ? 'shadow-[0_16px_50px_rgba(232,81,10,0.22)] lg:scale-[1.06]'
-          : 'shadow-[0_10px_40px_rgba(232,81,10,0.16)]',
+        'mx-auto w-full max-w-sm rounded-lg border border-card-border bg-card p-5 shadow-[0_10px_40px_rgba(232,81,10,0.16)] will-change-transform sm:w-72',
         className
       )}
     >
@@ -101,7 +119,7 @@ export function HealthScoreCard({ className = '' }: HealthScoreCardProps) {
       <div className="mt-3 flex items-end gap-1.5">
         <motion.span
           key={level.label}
-          initial={prefersReducedMotion ? false : { opacity: 0, y: 6 }}
+          initial={!mounted || prefersReducedMotion ? false : { opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, ease: 'easeOut' }}
           className={cn('font-display text-5xl font-bold leading-none', level.text)}
@@ -111,7 +129,7 @@ export function HealthScoreCard({ className = '' }: HealthScoreCardProps) {
         <span className="mb-1 text-sm text-muted-foreground">/100</span>
         <motion.span
           key={`${level.label}-${trend}`}
-          initial={prefersReducedMotion ? false : { opacity: 0, scale: 0.9 }}
+          initial={!mounted || prefersReducedMotion ? false : { opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.25, ease: 'easeOut' }}
           className={cn(
@@ -157,7 +175,7 @@ export function HealthScoreCard({ className = '' }: HealthScoreCardProps) {
       </div>
 
       <Link
-        href="/health-checks#choose-your-assessment"
+        href="/business-health-checks/business-health-check"
         className="mt-4 flex items-center justify-between rounded-lg bg-brand px-3 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-brand-600"
       >
         Free Diagnostic

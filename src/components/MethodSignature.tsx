@@ -5,6 +5,7 @@ import { motion, useReducedMotion } from 'motion/react';
 import { ArrowRight, Target, Lightbulb, Building2 } from 'lucide-react';
 import { methodSteps } from '@/data/site';
 import { cn } from '@/lib/utils';
+import { useMounted } from '@/lib/hooks';
 
 /**
  * Signature Deni Sawa Method™ experience: a D→E→N→I→S progression where each
@@ -14,6 +15,7 @@ import { cn } from '@/lib/utils';
  */
 export function MethodSignature() {
   const prefersReducedMotion = useReducedMotion();
+  const mounted = useMounted();
 
   return (
     <div className="relative">
@@ -30,7 +32,7 @@ export function MethodSignature() {
             <li key={step.letter} className="relative lg:pl-14">
               {/* Rail dot */}
               <motion.span
-                initial={prefersReducedMotion ? false : { scale: 0.6, opacity: 0 }}
+                initial={!mounted || prefersReducedMotion ? false : { scale: 0.6, opacity: 0 }}
                 whileInView={{ scale: 1, opacity: 1 }}
                 viewport={{ once: true, amount: 0.6 }}
                 transition={{ duration: 0.3, ease: 'easeOut' }}
@@ -41,7 +43,7 @@ export function MethodSignature() {
               />
 
               <motion.div
-                initial={prefersReducedMotion ? false : { opacity: 0, y: 20 }}
+                initial={!mounted || prefersReducedMotion ? false : { opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, amount: 0.35 }}
                 transition={{ duration: 0.45, ease: 'easeOut' }}

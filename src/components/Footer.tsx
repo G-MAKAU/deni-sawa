@@ -16,10 +16,10 @@ const columns = [
   {
     title: 'Platform',
     links: [
-      { label: 'Health Checks', href: '/health-checks' },
+      { label: 'Health Checks', href: '/business-health-checks' },
       { label: 'Learning & Leadership', href: '/learning' },
       { label: 'Investors', href: '/investors' },
-      { label: 'SpecialSit Network', href: '/specialsit-network' },
+      { label: 'SpecialSit Network', href: '/about/specialsit-network' },
       { label: 'The Deni Sawa Method™', href: '/deni-sawa-method' },
       { label: 'Blog & Insights', href: '/about/blog' },
     ],
@@ -57,7 +57,7 @@ export function Footer() {
               </p>
             </div>
             <Link
-              href="/health-checks#choose-your-assessment"
+              href="/business-health-checks#choose-your-assessment"
               className="group inline-flex items-center gap-2.5 rounded-full bg-brand px-7 py-3.5 text-[15px] font-semibold text-white shadow-[0_4px_30px_rgba(232,81,10,0.35)] transition-all duration-300 hover:shadow-[0_6px_40px_rgba(232,81,10,0.5)] hover:brightness-110 active:scale-[0.97]"
             >
               Start Your Assessment

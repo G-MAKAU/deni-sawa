@@ -222,7 +222,7 @@ export function HealthCheckWizardV2({ slug }: { slug: string }) {
             const rb = await r.json();
             if (!r.ok) throw new Error(rb.error ?? 'Failed to load your saved progress.');
             if (rb.session?.is_complete) {
-              router.replace(`/health-checks/report/${resumeSessionId}`);
+              router.replace(`/business-health-checks/report/${resumeSessionId}`);
               return;
             }
             setSessionId(resumeSessionId);

@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   title: 'SpecialSit Network | Peer Forums, Mentorship & Deal Flow | Deni Sawa',
   description:
     'A members-only community for operators, bankers, advisors and investors working in and around special situations — candid peer forums, mentorship and curated deal flow.',
-  alternates: { canonical: `${site.url}/specialsit-network` },
+  alternates: { canonical: `${site.url}/about/specialsit-network` },
 };
 
 const pillars = [
@@ -36,7 +36,7 @@ export default function SpecialSitNetworkPage() {
         eyebrow="SpecialSit Network"
         title="The room where special situations get solved."
         subtitle="A members-only community connecting operators, professionals, investors and lenders working in and around distressed and high-stakes situations."
-        crumbs={[{ label: 'SpecialSit Network' }]}
+        crumbs={[{ label: 'About', href: '/about' }, { label: 'SpecialSit Network' }]}
         image={{ src: '/images/network.jpg', alt: 'SpecialSit Network community' }}
       >
         <Button asChild size="lg">

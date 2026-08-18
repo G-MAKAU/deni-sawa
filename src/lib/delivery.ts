@@ -98,7 +98,7 @@ export async function deliverReportByEmail(supabase: SupabaseClient, reportId: s
   if (!template || !template.is_active) return { ok: false, error: 'Email template is missing or inactive.' };
 
   const checkName = await getCheckName(supabase, session.health_check_id);
-  const reportUrl = `${siteUrl()}/health-checks/report/${report.report_url_token}`;
+  const reportUrl = `${siteUrl()}/business-health-checks/report/${report.report_url_token}`;
 
   const result = await sendTemplatedEmail(supabase, {
     template: template as unknown as EmailTemplateRow,
@@ -148,7 +148,7 @@ export async function deliverReportByWhatsApp(supabase: SupabaseClient, reportId
   if (!template) return { ok: false, error: 'WhatsApp template is missing.' };
 
   const checkName = await getCheckName(supabase, session.health_check_id);
-  const reportUrl = `${siteUrl()}/health-checks/report/${report.report_url_token}`;
+  const reportUrl = `${siteUrl()}/business-health-checks/report/${report.report_url_token}`;
 
   const result = await sendTemplatedWhatsApp(supabase, {
     template: template as unknown as WhatsAppTemplateRow,
