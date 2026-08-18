@@ -26,16 +26,16 @@ const PROMPTS = [
 type AudienceInput = Omit<Audience, 'accent'> & { accent: string };
 
 /**
- * Progressive "Which describes you?" router over the Who-We-Serve cards.
- * Selecting a profile highlights the matching pathway and reveals the
- * recommended next step — no new pages, no friction.
+ * Progressive "Which describes you?" router over the Who-We-Serve profiles.
+ * Typography-led rows with hairline dividers — selecting a profile highlights
+ * the matching pathway and reveals the recommended next step. No boxes.
  */
 export function AudienceRouter({ audiences }: { audiences: AudienceInput[] }) {
   const [active, setActive] = useState<number | null>(null);
 
   return (
     <div>
-      <div className="mb-8 flex flex-wrap items-center justify-center gap-2">
+      <div className="mb-10 flex flex-wrap items-center justify-center gap-2">
         <span className="mr-1 font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
           Which describes you?
         </span>
@@ -46,7 +46,7 @@ export function AudienceRouter({ audiences }: { audiences: AudienceInput[] }) {
             onClick={() => setActive(active === i ? null : i)}
             aria-pressed={active === i}
             className={cn(
-              'rounded-none border px-4 py-2 text-sm font-semibold transition-colors',
+              'rounded-full border px-4 py-2 text-sm font-semibold transition-colors',
               active === i
                 ? 'border-brand bg-brand text-white'
                 : 'border-card-border bg-card text-foreground hover:border-brand/40 hover:text-brand'
@@ -98,7 +98,7 @@ export function AudienceRouter({ audiences }: { audiences: AudienceInput[] }) {
       </div>
 
       {active !== null && (
-        <div className="mx-auto mt-8 flex max-w-2xl flex-wrap items-center justify-center gap-3 rounded-xl border border-brand/25 bg-brand/5 px-6 py-4 text-center">
+        <div className="mx-auto mt-10 flex max-w-2xl flex-wrap items-center justify-center gap-3 rounded-xl border border-brand/25 bg-brand/5 px-6 py-4 text-center">
           <p className="text-sm text-foreground">
             <span className="font-semibold">{audiences[active].title}:</span>{' '}
             {audiences[active].description}

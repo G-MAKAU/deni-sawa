@@ -9,8 +9,13 @@ import {
   ShieldCheck,
   LifeBuoy,
   TrendingUp,
+  GraduationCap,
+  Users,
+  Network,
 } from 'lucide-react';
-import { site, capabilities, services, audiences, healthChecks, conversionSteps, networkBenefits } from '@/data/site';
+import { site, services, audiences, healthChecks, networkBenefits } from '@/data/site';
+import { stats, testimonials } from '@/data/content';
+import { cn } from '@/lib/utils';
 import { Reveal } from '@/components/Reveal';
 import { HealthScoreCard } from '@/components/HealthScoreCard';
 import { AudienceRouter } from '@/components/AudienceRouter';
@@ -19,7 +24,10 @@ import { JourneyProgression } from '@/components/JourneyProgression';
 import { SectionHeading } from '@/components/SectionHeading';
 import { CTASection } from '@/components/CTASection';
 import { MediaBand } from '@/components/MediaBand';
-import { BlogInsightsSection } from '@/components/blog/BlogInsightsSection';
+import { EditorialRow } from '@/components/EditorialRow';
+import { StatBand } from '@/components/StatBand';
+import { PullQuote } from '@/components/PullQuote';
+import { BlogCoverImage } from '@/components/blog/BlogCoverImage';
 import { getBlogPosts } from '@/lib/supabase/queries';
 import { Button } from '@/components/ui/button';
 
@@ -54,7 +62,7 @@ export default async function HomePage() {
 
   return (
     <>
-      {/* ── 1. Hero ─────────────────────────────────────────── */}
+      {/* ── 01. Hero ────────────────────────────────────────── */}
       <section className="hero-pattern relative overflow-hidden bg-charcoal text-white">
         <div className="container-lux section-pad">
           <div className="grid items-center gap-14 lg:grid-cols-[1fr_1fr] lg:gap-16">
@@ -123,13 +131,8 @@ export default async function HomePage() {
                   sizes="(min-width: 1024px) 50vw, 100vw"
                   className="object-cover"
                 />
-                {/* Subtle smooth fade from the left edge so the image blends into the hero */}
-                {/* inset-y-0 left-0 w-[250px] bg-gradient-to-r from-charcoal to-transparent */}
-                <div className="absolute mt-15" />
-                {/* Soft bottom vignette keeps the floating card readable */}
                 <div className="absolute inset-0 bg-gradient-to-t from-charcoal/75 via-transparent to-transparent" />
                 <div className="absolute inset-0 bg-gradient-to-t from-transparent via-transparent to-charcoal/25" />
-                {/* Caption — bottom right, matching MediaBand caption style */}
                 <div className="absolute bottom-0 right-0 bg-navy">
                   <div className="px-5 py-3 sm:px-8">
                     <p className="font-mono text-xs font-semibold uppercase tracking-[0.22em] text-white/80">
@@ -143,116 +146,12 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ── 2. Capability Strip ─────────────────────────────── */}
-      <section className="border-b border-card-border bg-background">
-        <div className="container-lux py-8">
-          <Reveal className="flex flex-wrap items-center justify-center gap-3">
-            {capabilities.map((cap) => (
-              <span
-                key={cap}
-                className="rounded-badge border border-card-border bg-bgalt px-4 py-2 text-sm font-medium text-foreground transition-colors hover:border-brand/40 hover:text-brand"
-              >
-                {cap}
-              </span>
-            ))}
-          </Reveal>
-        </div>
-      </section>
-
-      {/* ── 3. Core Service ─────────────────────────────────── */}
-      <section className="section-pad bg-background">
-        <div className="container-lux">
-          <SectionHeading
-            eyebrow="Fractional / Part-Time Business Support"
-            title="Senior-level expertise. Part-time commitment. Full-time impact."
-            subtitle="A seasoned operating bench for organisations that need boardroom capability without boardroom payroll."
-          />
-
-          {/* Featured — Growth & Business Development */}
-          <Reveal className="h-full">
-            {(() => {
-              const featured = services.find((s) => s.slug === 'growth-support')!;
-              const FeaturedIcon = TrendingUp;
-              return (
-                <Link
-                  href={`/business-support/${featured.slug}`}
-                  className="card-elevated group relative flex flex-col overflow-hidden p-0 lg:flex-row"
-                >
-                  <div className="flex flex-1 flex-col p-8 lg:p-10">
-                    <span className="mb-5 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-growth/10 text-growth transition-colors group-hover:bg-growth group-hover:text-white">
-                      <FeaturedIcon className="h-6 w-6" strokeWidth={1.8} />
-                    </span>
-                    <h3 className="text-h2 font-semibold text-foreground">
-                      {featured.title.split(' / ')[0]}
-                    </h3>
-                    <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-muted-foreground">
-                      {featured.short}
-                    </p>
-                    <div className="mt-6 flex flex-wrap gap-2">
-                      {featured.capabilities.slice(0, 3).map((cap) => (
-                        <span
-                          key={cap}
-                          className="rounded-badge border border-card-border bg-bgalt px-3 py-1 text-xs text-foreground"
-                        >
-                          {cap}
-                        </span>
-                      ))}
-                    </div>
-                    <span className="mt-7 inline-flex items-center gap-1.5 text-sm font-semibold text-growth transition-colors group-hover:text-growth-600">
-                      Explore Growth & Business Development
-                      <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-                    </span>
-                  </div>
-                  <div className="flex items-center bg-gradient-to-br from-growth/10 to-brand/10 p-8 lg:w-80 lg:p-10">
-                    <div className="rounded-xl border border-card-border bg-card p-6 shadow-lg">
-                      <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
-                        Growth Path
-                      </p>
-                      <p className="mt-3 text-sm leading-relaxed text-foreground">
-                        Revenue optimisation, business model review, strategic partnerships and
-                        investor readiness — a deliberate path to sustainable expansion.
-                      </p>
-                    </div>
-                  </div>
-                </Link>
-              );
-            })()}
-          </Reveal>
-
-          <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-            {services
-              .filter((s) => s.slug !== 'growth-support')
-              .map((service, i) => {
-                const Icon = serviceIcons[service.slug as keyof typeof serviceIcons] ?? Briefcase;
-                return (
-                  <Reveal key={service.slug} delay={i * 80} className="h-full">
-                    <Link
-                      href={`/business-support/${service.slug}`}
-                      className="card-elevated group flex h-full flex-col"
-                    >
-                      <span className="mb-5 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-brand/10 text-brand transition-colors group-hover:bg-brand group-hover:text-white">
-                        <Icon className="h-6 w-6" strokeWidth={1.8} />
-                      </span>
-                      <h3 className="text-h3 font-semibold text-foreground">{service.title.split(' / ')[0]}</h3>
-                      <p className="mt-3 flex-1 text-[15px] leading-relaxed text-muted-foreground">{service.short}</p>
-                      <span className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-growth transition-colors group-hover:text-growth-600">
-                        Learn More
-                        <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-                      </span>
-                    </Link>
-                  </Reveal>
-                );
-              })}
-          </div>
-        </div>
-      </section>
-
-      {/* ── 4. Who We Serve ─────────────────────────────────── */}
+      {/* ── 02. Choose Your Situation ───────────────────────── */}
       <section className="section-pad bg-bgalt">
         <div className="container-lux">
           <SectionHeading
-            eyebrow="Who We Serve"
-            title="One firm. Three pathways. One standard."
+            eyebrow="Choose Your Situation"
+            title="Individual · Business · Investor"
             subtitle="Every engagement starts with clarity about where you are and what success looks like."
           />
 
@@ -260,21 +159,13 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Photography band */}
-      <MediaBand
-        src="/images/hero-3.jpg"
-        alt="Deni Sawa Partners leadership in session"
-        caption="Recovery → Resilience → Growth → Best-in-Class"
-        height="md"
-      />
-
-      {/* ── 5. Health Check Entry ───────────────────────────── */}
+      {/* ── 03. Diagnose ─────────────────────────────────────── */}
       <section className="hero-pattern section-pad bg-navy text-white">
         <div className="container-lux">
           <SectionHeading
             dark
-            eyebrow="Health Checks"
-            title="Where Are You Right Now?"
+            eyebrow="Diagnose"
+            title="Business / Professional Health Check"
             subtitle="Two AI-powered assessments. A diagnostic report with prioritised recommendations. Start free, in minutes."
           />
 
@@ -309,13 +200,117 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ── 6. Deni Sawa Method™ ────────────────────────────── */}
+      {/* ── 04. Your Journey ─────────────────────────────────── */}
+      <section className="section-pad bg-background">
+        <div className="container-lux">
+          <SectionHeading
+            eyebrow="Your Journey"
+            title="Recovery → Resilience → Growth → Best-in-Class"
+            subtitle="We do not promise overnight transformation. We build it in stages that compound."
+          />
+
+          <JourneyProgression />
+        </div>
+      </section>
+
+      {/* Photography band */}
+      <MediaBand
+        src="/images/hero-3.jpg"
+        alt="Deni Sawa Partners leadership in session"
+        caption="Recovery → Resilience → Growth → Best-in-Class"
+        height="md"
+      />
+
+      {/* ── 05. How We Help ──────────────────────────────────── */}
+      <section className="section-pad bg-bgalt">
+        <div className="container-lux">
+          <SectionHeading
+            eyebrow="How We Help"
+            title="Fractional CFO · CEO · Governance · Growth · Special Situations"
+            subtitle="A seasoned operating bench for organisations that need boardroom capability without boardroom payroll."
+          />
+
+          {/* Featured — Growth & Business Development */}
+          <Reveal className="h-full">
+            {(() => {
+              const featured = services.find((s) => s.slug === 'growth-support')!;
+              const FeaturedIcon = TrendingUp;
+              return (
+                <Link
+                  href={`/business-support/${featured.slug}`}
+                  className="card-elevated group relative flex flex-col overflow-hidden p-0 lg:flex-row"
+                >
+                  <div className="flex flex-1 flex-col p-8 lg:p-10">
+                    <span className="mb-5 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-growth/10 text-growth transition-colors group-hover:bg-growth group-hover:text-white">
+                      <FeaturedIcon className="h-6 w-6" strokeWidth={1.8} />
+                    </span>
+                    <h3 className="text-h2 font-semibold text-foreground">
+                      {featured.title.split(' / ')[0]}
+                    </h3>
+                    <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-muted-foreground">
+                      {featured.short}
+                    </p>
+                    <div className="mt-6 flex flex-wrap gap-2">
+                      {featured.capabilities.slice(0, 3).map((cap) => (
+                        <span
+                          key={cap}
+                          className="rounded-badge border border-card-border bg-background px-3 py-1 text-xs text-foreground"
+                        >
+                          {cap}
+                        </span>
+                      ))}
+                    </div>
+                    <span className="mt-7 inline-flex items-center gap-1.5 text-sm font-semibold text-growth transition-colors group-hover:text-growth-600">
+                      Explore Growth & Business Development
+                      <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                    </span>
+                  </div>
+                  <div className="flex items-center bg-gradient-to-br from-growth/10 to-brand/10 p-8 lg:w-80 lg:p-10">
+                    <div className="rounded-xl border border-card-border bg-card p-6 shadow-lg">
+                      <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+                        Growth Path
+                      </p>
+                      <p className="mt-3 text-sm leading-relaxed text-foreground">
+                        Revenue optimisation, business model review, strategic partnerships and
+                        investor readiness — a deliberate path to sustainable expansion.
+                      </p>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })()}
+          </Reveal>
+
+          <div className="mt-10">
+            {services
+              .filter((s) => s.slug !== 'growth-support')
+              .map((service, i) => {
+                const Icon = serviceIcons[service.slug as keyof typeof serviceIcons] ?? Briefcase;
+                return (
+                  <Reveal key={service.slug} delay={i * 60}>
+                    <EditorialRow
+                      index={String(i + 1).padStart(2, '0')}
+                      title={service.title.split(' / ')[0]}
+                      description={service.short}
+                      href={`/business-support/${service.slug}`}
+                      cta="Explore Service"
+                      icon={Icon}
+                      last={i === services.length - 2}
+                    />
+                  </Reveal>
+                );
+              })}
+          </div>
+        </div>
+      </section>
+
+      {/* ── 06. The Deni Sawa Method™ ────────────────────────── */}
       <section className="section-pad bg-background">
         <div className="container-lux">
           <SectionHeading
             eyebrow="The Method"
             title="The Deni Sawa Method™"
-            subtitle="Five disciplines, applied in sequence, that move organisations from instability to sustained best-in-class performance."
+            subtitle="Diagnose → Evaluate → Negotiate → Implement → Sustain. Five disciplines that move organisations from instability to sustained best-in-class performance."
           />
 
           <MethodSignature />
@@ -331,111 +326,219 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ── 7. Transformation Journey ───────────────────────── */}
-      <section className="section-pad bg-bgalt">
+      {/* ── 07. Proof ────────────────────────────────────────── */}
+      <section className="hero-pattern section-pad bg-charcoal text-white">
         <div className="container-lux">
           <SectionHeading
-            eyebrow="The Journey"
-            title="Recovery → Resilience → Growth → Best-in-Class"
-            subtitle="We do not promise overnight transformation. We build it in stages that compound."
+            dark
+            eyebrow="Proof"
+            title="Experience · Results · Case Studies"
+            subtitle="A track record built in banking, finance, risk and restructuring — applied to the situations our clients face."
           />
 
-          <JourneyProgression />
+          {/* Stats */}
+          <StatBand stats={stats} dark />
+
+          {/* Testimonial */}
+          <Reveal className="mt-16">
+            <PullQuote
+              quote={testimonials[0].quote}
+              author={testimonials[0].author}
+              role={testimonials[0].role}
+              dark
+            />
+          </Reveal>
+
+          <Reveal className="mt-12 text-center">
+            <Button asChild size="lg" variant="ghost">
+              <Link href="/about/experience">
+                View Our Track Record & Credentials
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
+          </Reveal>
         </div>
       </section>
 
-      {/* ── 8. Blog Insights ───────────────────────────────── */}
-      <BlogInsightsSection
-        eyebrow="Blog insights"
-        title="Recent featured articles"
-        subtitle="Guides, frameworks and practical financial tips from the Deni Sawa advisory team."
-        posts={insights}
-        viewAllHref="/about/blog"
-        viewAllLabel="Visit the blog"
-      />
+      {/* ── 08. Ecosystem ────────────────────────────────────── */}
+      <section className="section-pad bg-bgalt">
+        <div className="container-lux">
+          <SectionHeading
+            eyebrow="The Ecosystem"
+            title="Learning · Mentorship · SpecialSit Network"
+            subtitle="Everything we offer sits inside one connected ecosystem — learn the capability, then be held accountable by peers and operators."
+          />
 
-      {/* ── 9. SpecialSit Network Teaser ─────────────────────── */}
-      <section className="hero-pattern section-pad bg-charcoal text-white">
-        <div className="container-lux grid items-center gap-10 lg:grid-cols-2">
           <div>
+            {[
+              {
+                index: '01',
+                icon: GraduationCap,
+                title: 'Learning Centre',
+                description: 'Self-paced programmes and pathways that build recovery, governance and financial-resilience capability.',
+                href: '/learning',
+                cta: 'Explore Learning',
+              },
+              {
+                index: '02',
+                icon: Users,
+                title: 'Mentorship',
+                description: 'Direct access to seasoned bankers, operators and turnaround professionals who have lived these situations.',
+                href: '/specialsit-network',
+                cta: 'Find a Mentor',
+              },
+              {
+                index: '03',
+                icon: Network,
+                title: 'SpecialSit Network',
+                description: 'A curated peer community for founders, professionals and investors navigating complex situations.',
+                href: '/specialsit-network',
+                cta: 'Join the Network',
+              },
+            ].map((item, i) => (
+              <Reveal key={item.title} delay={i * 60}>
+                <EditorialRow
+                  index={item.index}
+                  title={item.title}
+                  description={item.description}
+                  href={item.href}
+                  cta={item.cta}
+                  icon={item.icon}
+                  last={i === 2}
+                />
+              </Reveal>
+            ))}
+          </div>
+
+          <div className="mt-12 grid items-center gap-10 lg:grid-cols-2">
             <Reveal>
-              <span className="eyebrow mb-5 items-start gap-2 text-brand">
-                <span className="divider-accent" />
-                The SpecialSit Network (SS-N)
-              </span>
-            </Reveal>
-            <Reveal delay={80}>
-              <h2 className="text-h2 font-semibold text-white">
-                The relationship layer of the Deni Sawa ecosystem
-              </h2>
-            </Reveal>
-            <Reveal delay={160}>
-              <p className="mt-5 max-w-xl text-lg leading-relaxed text-white/65">
-                A curated peer community for founders, professionals and investors navigating complex
-                situations. Not another consulting service — a place to exchange, learn and be held
-                accountable.
-              </p>
-            </Reveal>
-            <Reveal delay={240}>
-              <ul className="mt-8 space-y-3">
-                {networkBenefits.slice(0, 3).map((benefit) => (
-                  <li key={benefit} className="flex items-start gap-3 text-white/80">
+              <ul className="space-y-3">
+                {networkBenefits.map((benefit) => (
+                  <li key={benefit} className="flex items-start gap-3 text-muted-foreground">
                     <Check className="mt-0.5 h-5 w-5 flex-shrink-0 text-growth" />
                     <span className="text-[15px] leading-relaxed">{benefit}</span>
                   </li>
                 ))}
               </ul>
             </Reveal>
-            <Reveal delay={320}>
-              <div className="mt-9">
-                <Button asChild size="lg" variant="secondary">
-                  <Link href="/specialsit-network">
-                    Join the Network
-                    <ArrowRight className="h-4 w-4" />
-                  </Link>
-                </Button>
+
+            <Reveal direction="left" delay={120}>
+              <div className="hero-pattern rounded-lg bg-navy p-8 text-white">
+                <p className="font-mono text-xs uppercase tracking-[0.22em] text-brand">The Deni Sawa view · By invitation</p>
+                <p className="mt-4 font-display text-3xl leading-snug text-white">
+                  The best operators don't go it alone. They plug into a community that holds them to a higher
+                  standard.
+                </p>
+                <div className="mt-7">
+                  <Button asChild size="lg" variant="secondary">
+                    <Link href="/specialsit-network">
+                      Join the Network
+                      <ArrowRight className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                </div>
               </div>
             </Reveal>
           </div>
+        </div>
+      </section>
 
-          <Reveal direction="left" delay={120}>
-            <div className="card-dark-panel">
-              <p className="font-mono text-xs uppercase tracking-[0.22em] text-brand">The Deni Sawa view · By invitation</p>
-              <p className="mt-4 font-display text-3xl leading-snug text-white">
-                The best operators don't go it alone. They plug into a community that holds them to a higher
-                standard.
-              </p>
-              <p className="mt-6 text-sm text-white/50">
-                A curated peer network for founders, professionals and investors navigating complex situations.
-              </p>
+      {/* ── 09. Intelligence ─────────────────────────────────── */}
+      <section className="section-pad bg-background">
+        <div className="container-lux">
+          <SectionHeading
+            eyebrow="Intelligence"
+            title="Insights"
+            subtitle="Guides, frameworks and practical financial notes from the Deni Sawa advisory team."
+          />
+
+          {insights[0] && (
+            <Reveal>
+              <Link
+                href={`/about/blog/${insights[0].slug}`}
+                className="group grid overflow-hidden rounded-lg border border-card-border lg:grid-cols-2"
+              >
+                <div className="relative overflow-hidden">
+                  <BlogCoverImage
+                    src={insights[0].cover_image_url}
+                    alt={insights[0].title}
+                    className="aspect-video h-full"
+                    fallbackTextSize="text-6xl"
+                  />
+                </div>
+                <div className="flex flex-col justify-center p-8 lg:p-10">
+                  <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-brand px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-white">
+                    {insights[0].primary_category ?? 'General'}
+                  </span>
+                  <h3 className="mt-4 text-h2 font-semibold text-foreground transition-colors group-hover:text-brand">
+                    {insights[0].title}
+                  </h3>
+                  {insights[0].excerpt && (
+                    <p className="mt-3 line-clamp-3 text-[15px] leading-relaxed text-muted-foreground">
+                      {insights[0].excerpt}
+                    </p>
+                  )}
+                  <span className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-brand">
+                    Read Article
+                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  </span>
+                </div>
+              </Link>
+            </Reveal>
+          )}
+
+          {insights.slice(1).length > 0 && (
+            <div className="mt-10">
+              {insights.slice(1).map((post, i) => (
+                <Reveal key={post.slug} delay={i * 60}>
+                  <Link
+                    href={`/about/blog/${post.slug}`}
+                    className={cn(
+                      'group grid grid-cols-1 items-start gap-3 py-6 md:grid-cols-[1fr_auto] md:items-center',
+                      i < insights.slice(1).length - 1 && 'border-b border-card-border'
+                    )}
+                  >
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                        <h3 className="text-h3 font-semibold text-foreground transition-colors group-hover:text-brand">
+                          {post.title}
+                        </h3>
+                        <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                          {post.primary_category ?? 'General'}
+                        </span>
+                      </div>
+                      <p className="mt-1.5 line-clamp-2 max-w-3xl text-[15px] leading-relaxed text-muted-foreground">
+                        {post.excerpt}
+                      </p>
+                    </div>
+                    <span className="inline-flex items-center gap-1.5 justify-self-start text-sm font-semibold text-brand md:justify-self-end">
+                      Read
+                      <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                    </span>
+                  </Link>
+                </Reveal>
+              ))}
             </div>
+          )}
+
+          <Reveal className="mt-12 text-center">
+            <Button asChild variant="outline" size="lg">
+              <Link href="/about/blog">
+                Visit the Blog
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
           </Reveal>
         </div>
       </section>
 
-      {/* ── 10. Conversion Journey Strip ──────────────────────── */}
-      <section className="bg-brand text-white">
-        <div className="container-lux section-pad">
-          <Reveal className="mb-10 text-center">
-            <h2 className="text-h2 font-semibold text-white">The Path to Transformation</h2>
-          </Reveal>
-          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-6 lg:gap-4">
-            {conversionSteps.map((step, i) => (
-              <Reveal key={step.step} delay={i * 60} className="relative">
-                <span className="font-mono text-sm font-bold text-white/60">{step.step}</span>
-                <h3 className="mt-2 text-lg font-semibold text-white">{step.title}</h3>
-                <p className="mt-1 text-sm leading-relaxed text-white/80">{step.description}</p>
-                {i < conversionSteps.length - 1 && (
-                  <ArrowRight className="absolute -right-3 top-1/2 hidden h-4 w-4 -translate-y-1/2 text-white/50 lg:block" />
-                )}
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── 11. Final CTA ────────────────────────────────────── */}
-      <CTASection />
+      {/* ── 10. CTA ──────────────────────────────────────────── */}
+      <CTASection
+        title="Find Your Starting Point"
+        subtitle="Wherever you are — individual, business or investor — there is a first step designed for you."
+        primary={{ label: 'Take the Health Check', href: '/health-checks' }}
+        secondary={{ label: 'Book a Conversation', href: '/contact' }}
+      />
     </>
   );
 }
