@@ -2,14 +2,21 @@ import {
   AlignmentType,
   BorderStyle,
   Document,
+  ExternalHyperlink,
   Footer,
   Header,
+  LevelFormat,
   PageNumber,
   Paragraph,
   ShadingType,
   TabStopPosition,
   TabStopType,
+  Table,
+  TableCell,
+  TableRow,
   TextRun,
+  VerticalAlign,
+  WidthType,
   type IRunOptions,
 } from 'docx';
 import { cssColorToHex, parseCssProperty } from '@/lib/css-color';
@@ -64,9 +71,24 @@ function blockShading(node: Node) {
   return bg ? { type: ShadingType.CLEAR, color: 'auto' as const, fill: docxHex(bg) } : undefined;
 }
 
+/** A run or a hyperlink, carrying its target URL so it can be rebuilt with italics etc. */
+type RichChild = { kind: 'run'; run: TextRun } | { kind: 'link'; run: TextRun; url: string };
+
+function runFor(child: RichChild, overrides: Partial<IRunOptions> = {}): RichChild {
+  if (child.kind === 'link') return { kind: 'link', url: child.url, run: new TextRun({ ...child.run, ...overrides }) };
+  return { kind: 'run', run: new TextRun({ ...child.run, ...overrides }) };
+}
+
+function toDocxChild(child: RichChild): TextRun | ExternalHyperlink {
+  if (child.kind === 'link') {
+    return new ExternalHyperlink({ link: child.url, children: [child.run] });
+  }
+  return child.run;
+}
+
 /** Builds styled runs from a node's inline children (text / link nodes). */
-function runsFromChildren(children: Node[] | undefined): TextRun[] {
-  const runs: TextRun[] = [];
+function runsFromChildren(children: Node[] | undefined): RichChild[] {
+  const runs: RichChild[] = [];
   const walk = (nodes: Node[] | undefined) => {
     (nodes ?? []).forEach((child) => {
       if (child.type === 'text' || child.type === 'link') {
@@ -85,7 +107,13 @@ function runsFromChildren(children: Node[] | undefined): TextRun[] {
           ...(family ? { font: docxFamily(family) } : {}),
           ...(isLink ? { color: ORANGE } : {}),
         };
-        runs.push(run(child.text ?? '', options));
+        const textRun = run(child.text ?? '', options);
+        if (isLink && child.url) {
+          // Real clickable hyperlink in Word (orange, underlined).
+          runs.push({ kind: 'link', run: textRun, url: child.url });
+        } else {
+          runs.push({ kind: 'run', run: textRun });
+        }
       } else if (child.children) {
         walk(child.children);
       }
@@ -142,7 +170,7 @@ function buildTitle(title: string): Paragraph {
 
 function blockParagraph(node: Node): Paragraph {
   const headingTag = node.type === 'heading' ? node.tag : undefined;
-  const runs = runsFromChildren(node.children);
+  const runs = runsFromChildren(node.children).map(toDocxChild);
   const shading = blockShading(node);
 
   if (headingTag === 'h1') {
@@ -198,7 +226,7 @@ export function lexicalStateToDocx(
     return (source as { root?: Node }).root;
   };
 
-  const children: Paragraph[] = [buildTitle(title)];
+  const children: (Paragraph | Table)[] = [buildTitle(title)];
 
   const appendRoot = (root: Node | undefined) => {
     (root?.children ?? []).forEach((node) => {
@@ -208,13 +236,14 @@ export function lexicalStateToDocx(
           children.push(blockParagraph(node));
           break;
         case 'quote': {
+          const quoteRuns = runsFromChildren(node.children).map((c) => runFor(c, { italics: true })).map(toDocxChild);
           children.push(
             new Paragraph({
               spacing: { before: 120, after: 120 },
               indent: { left: 360 },
               border: { left: { style: BorderStyle.SINGLE, size: 18, color: ORANGE } },
-              children: runsFromChildren(node.children).length
-                ? runsFromChildren(node.children).map((r) => new TextRun({ ...r, italics: true }))
+              children: quoteRuns.length
+                ? quoteRuns
                 : [new TextRun({ text: '', font: 'Calibri', size: 22, italics: true, color: DARK })],
             })
           );
@@ -223,31 +252,87 @@ export function lexicalStateToDocx(
         case 'callout': {
           const isGrowth = node.tone === 'growth';
           const label = node.tone === 'growth' ? 'NOTE' : 'PRIORITY';
+          const calloutRuns: (TextRun | ExternalHyperlink)[] = [
+            new TextRun({ text: label, font: 'Calibri', size: 14, bold: true, color: isGrowth ? GREEN : ORANGE, allCaps: true }),
+          ];
+          // Insert a line break before each run/hyperlink that follows the label.
+          runsFromChildren(node.children).forEach((c) => {
+            const withBreak = runFor(c, { break: 1 });
+            calloutRuns.push(toDocxChild(withBreak));
+          });
           children.push(
             new Paragraph({
               spacing: { before: 160, after: 160 },
               shading: { type: ShadingType.CLEAR, color: 'auto', fill: isGrowth ? GROWTH_LIGHT : LIGHT },
               border: { left: { style: BorderStyle.SINGLE, size: 24, color: isGrowth ? GREEN : ORANGE } },
-              children: [
-                new TextRun({ text: label, font: 'Calibri', size: 14, bold: true, color: isGrowth ? GREEN : ORANGE, allCaps: true }),
-                ...(runsFromChildren(node.children).map((r) => new TextRun({ break: 1, ...r })) as TextRun[]),
-              ],
+              children: calloutRuns,
             })
           );
           break;
         }
-        case 'list':
-          (node.children ?? []).forEach((item) =>
+        case 'list': {
+          const listType = node.listType ?? 'bullet';
+          (node.children ?? []).forEach((item, index) => {
+            const itemRuns = runsFromChildren(item.children).map(toDocxChild);
+            const checked = (item as { checked?: boolean }).checked;
+            const markerPrefix = listType === 'check' ? (checked ? '☑ ' : '☐ ') : listType === 'number' ? `${index + 1}. ` : '• ';
             children.push(
               new Paragraph({
                 spacing: { after: 60 },
-                indent: { left: 420, hanging: 200 },
-                bullet: { level: 0 },
-                children: runsFromChildren(item.children).length ? runsFromChildren(item.children) : [run('')],
+                indent: { left: 420, hanging: 240 },
+                bullet: listType === 'bullet' ? { level: 0 } : undefined,
+                children:
+                  itemRuns.length > 0
+                    ? [new TextRun({ text: markerPrefix, font: 'Calibri', size: 22, color: listType === 'check' ? GREEN : DARK, bold: true }), ...itemRuns]
+                    : [run(markerPrefix)],
               })
-            )
+            );
+          });
+          break;
+        }
+        case 'table': {
+          const rows = (node.children ?? []).map((row) => {
+            const cells = (row.children ?? []).map((cell, cellIndex) => {
+              const isHeader = Number((cell as { headerState?: number }).headerState ?? 0) > 0;
+              const cellRuns = runsFromChildren(cell.children).map(toDocxChild);
+              const cellBg = cssColorToHex(String((cell as { backgroundColor?: string }).backgroundColor ?? ''));
+              return new TableCell({
+                width: { size: 100 / Math.max(1, (row.children ?? []).length), type: WidthType.PERCENTAGE },
+                shading: isHeader
+                  ? { type: ShadingType.CLEAR, color: 'auto', fill: 'F6F0E8' }
+                  : cellBg
+                    ? { type: ShadingType.CLEAR, color: 'auto', fill: docxHex(cellBg) }
+                    : undefined,
+                verticalAlign: VerticalAlign.CENTER,
+                margins: { top: 80, bottom: 80, left: 120, right: 120 },
+                children: [
+                  new Paragraph({
+                    spacing: { after: 0 },
+                    children: cellRuns.length
+                      ? cellRuns
+                      : [new TextRun({ text: cellIndex === 0 ? (cell as { type?: string }).type ?? '' : '', font: 'Calibri', size: 22, color: DARK })],
+                  }),
+                ],
+              });
+            });
+            return new TableRow({ children: cells });
+          });
+          children.push(
+            new Table({
+              width: { size: 100, type: WidthType.PERCENTAGE },
+              borders: {
+                top: { style: BorderStyle.SINGLE, size: 4, color: 'D8D8D8' },
+                bottom: { style: BorderStyle.SINGLE, size: 4, color: 'D8D8D8' },
+                left: { style: BorderStyle.SINGLE, size: 4, color: 'D8D8D8' },
+                right: { style: BorderStyle.SINGLE, size: 4, color: 'D8D8D8' },
+                insideHorizontal: { style: BorderStyle.SINGLE, size: 4, color: 'E0E0E0' },
+                insideVertical: { style: BorderStyle.SINGLE, size: 4, color: 'E0E0E0' },
+              },
+              rows,
+            })
           );
           break;
+        }
         case 'divider':
         default:
           children.push(

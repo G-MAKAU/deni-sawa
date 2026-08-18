@@ -1,0 +1,190 @@
+.simpleHtml {
+  color: inherit;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.simpleHtml > :first-child {
+  margin-top: 0;
+}
+
+.simpleHtml > :last-child {
+  margin-bottom: 0;
+}
+
+.simpleHtml p {
+  margin-bottom: 1.25rem;
+  line-height: 1.8;
+}
+
+.simpleHtml h1,
+.simpleHtml h2,
+.simpleHtml h3,
+.simpleHtml h4,
+.simpleHtml h5,
+.simpleHtml h6 {
+  color: inherit;
+  font-family: 'Manrope', system-ui, sans-serif;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.simpleHtml h1 {
+  font-size: 2rem;
+  margin: 0 0 1.25rem;
+}
+
+.simpleHtml h2 {
+  font-size: 1.75rem;
+  margin: 2.5rem 0 1rem;
+}
+
+.simpleHtml h3 {
+  font-size: 1.375rem;
+  margin: 2rem 0 0.75rem;
+}
+
+.simpleHtml code {
+  background: rgba(45, 157, 120, 0.12);
+  color: #1B6350;
+  padding: 0.15rem 0.4rem;
+  border-radius: 0.35rem;
+  font-size: 0.875rem;
+}
+
+.simpleHtml pre {
+  background: #111111;
+  color: #e2e8f0;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 1rem;
+  padding: 1.25rem;
+  overflow-x: auto;
+  margin: 1.5rem 0;
+}
+
+.simpleHtml pre code {
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  font-size: 0.875rem;
+}
+
+.simpleHtml ul {
+  list-style: none;
+  padding-left: 0;
+  margin-bottom: 1.25rem;
+}
+
+.simpleHtml ul:not([data-checklist='true']) li {
+  position: relative;
+  padding-left: 1.75rem;
+  margin-bottom: 0.6rem;
+  line-height: 1.7;
+}
+
+.simpleHtml ul:not([data-checklist='true']) li::before {
+  content: '';
+  position: absolute;
+  left: 0.25rem;
+  top: 0.7rem;
+  height: 0.5rem;
+  width: 0.5rem;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, #FF7401, #E56500);
+  box-shadow: 0 0 0 3px rgba(255, 116, 1, 0.18);
+}
+
+.simpleHtml ol {
+  list-style: none;
+  counter-reset: item;
+  padding-left: 0;
+  margin-bottom: 1.25rem;
+}
+
+.simpleHtml ol > li {
+  counter-increment: item;
+  position: relative;
+  padding-left: 2.5rem;
+  margin-bottom: 0.6rem;
+  line-height: 1.7;
+}
+
+.simpleHtml ol > li::before {
+  content: counter(item);
+  position: absolute;
+  left: 0;
+  top: 0.3rem;
+  display: flex;
+  height: 1.5rem;
+  width: 1.5rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: rgba(45, 157, 120, 0.14);
+  color: #228063;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.simpleHtml li > p {
+  margin-bottom: 0.35rem;
+}
+
+.simpleHtml a {
+  color: #E56500;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+  transition: color 0.2s ease;
+}
+
+.simpleHtml a:hover {
+  color: #FF7401;
+}
+
+.simpleHtml blockquote {
+  position: relative;
+  border-left: 3px solid #FF7401;
+  background: linear-gradient(90deg, rgba(255, 116, 1, 0.07), transparent 70%);
+  padding: 1.25rem 1.5rem;
+  margin: 1.75rem 0;
+  border-radius: 0 1rem 1rem 0;
+  font-style: italic;
+  color: inherit;
+}
+
+.simpleHtml blockquote p {
+  margin-bottom: 0;
+}
+
+.simpleHtml table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5rem 0;
+  font-size: 0.95rem;
+}
+
+.simpleHtml th,
+.simpleHtml td {
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  padding: 0.75rem 1rem;
+  text-align: left;
+}
+
+.simpleHtml th {
+  background: rgba(45, 157, 120, 0.12);
+  font-weight: 700;
+}
+
+.simpleHtml hr {
+  border: none;
+  border-top: 1px solid rgba(148, 163, 184, 0.35);
+  margin: 2rem 0;
+}
+
+.simpleHtml img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 1rem;
+  margin: 1rem 0;
+}

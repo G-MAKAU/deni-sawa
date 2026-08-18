@@ -202,6 +202,26 @@
     background: transparent;
   }
 
+  /* Brand buttons (legacy components + blog + not-found + AI chat) */
+  .btn-brand {
+    @apply btn-base bg-brand text-white hover:bg-brand-600 active:bg-brand-700;
+    box-shadow: 0 2px 8px rgba(232, 81, 10, 0.28);
+  }
+  .btn-brand-outline {
+    @apply btn-base border border-brand/40 text-brand hover:bg-brand hover:text-white;
+    background: transparent;
+  }
+
+  /* Legacy section heading */
+  .section-heading {
+    @apply font-display text-3xl font-semibold leading-tight text-foreground sm:text-4xl;
+  }
+
+  /* Legacy dark eyebrow */
+  .eyebrow-dark {
+    @apply inline-flex items-center gap-2 font-mono font-semibold uppercase tracking-[0.18em] text-brand;
+  }
+
   /* Cards */
   .card-elevated {
     @apply rounded-lg border border-card-border bg-card p-8 transition-all duration-200 ease-in-out;

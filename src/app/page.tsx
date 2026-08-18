@@ -3,26 +3,25 @@ import Link from 'next/link';
 import Image from 'next/image';
 import {
   ArrowRight,
-  ArrowUpRight,
   Check,
   LineChart,
   Briefcase,
   ShieldCheck,
   LifeBuoy,
   TrendingUp,
-  HeartPulse,
-  Award,
 } from 'lucide-react';
-import { site, capabilities, services, audiences, healthChecks, methodSteps, journeyStages, conversionSteps, networkBenefits } from '@/data/site';
+import { site, capabilities, services, audiences, healthChecks, conversionSteps, networkBenefits } from '@/data/site';
 import { Reveal } from '@/components/Reveal';
 import { HealthScoreCard } from '@/components/HealthScoreCard';
+import { AudienceRouter } from '@/components/AudienceRouter';
+import { MethodSignature } from '@/components/MethodSignature';
+import { JourneyProgression } from '@/components/JourneyProgression';
 import { SectionHeading } from '@/components/SectionHeading';
 import { CTASection } from '@/components/CTASection';
 import { MediaBand } from '@/components/MediaBand';
 import { BlogInsightsSection } from '@/components/blog/BlogInsightsSection';
 import { getBlogPosts } from '@/lib/supabase/queries';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
 
 export const metadata: Metadata = {
   title: 'Deni Sawa Partners | Fractional CFO & Business Advisory | Special Situations',
@@ -257,36 +256,7 @@ export default async function HomePage() {
             subtitle="Every engagement starts with clarity about where you are and what success looks like."
           />
 
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-            {audiences.map((audience, i) => (
-              <Reveal key={audience.title} delay={i * 80} className="h-full">
-                <div className="card-elevated flex h-full flex-col overflow-hidden p-0">
-                  <div
-                    className={cn(
-                      'h-1.5 w-full',
-                      audience.accent === 'brand' ? 'bg-brand' : 'bg-growth'
-                    )}
-                  />
-                  <div className="flex flex-1 flex-col p-8">
-                    <h3 className="text-h3 font-semibold text-foreground">{audience.title}</h3>
-                    <p className="mt-3 font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
-                      {audience.journey}
-                    </p>
-                    <p className="mt-4 flex-1 text-[15px] leading-relaxed text-muted-foreground">
-                      {audience.description}
-                    </p>
-                    <Link
-                      href={audience.href}
-                      className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-brand transition-colors hover:text-brand-600"
-                    >
-                      {audience.cta}
-                      <ArrowUpRight className="h-4 w-4" />
-                    </Link>
-                  </div>
-                </div>
-              </Reveal>
-            ))}
-          </div>
+          <AudienceRouter audiences={audiences} />
         </div>
       </section>
 
@@ -348,23 +318,7 @@ export default async function HomePage() {
             subtitle="Five disciplines, applied in sequence, that move organisations from instability to sustained best-in-class performance."
           />
 
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-stretch">
-            {methodSteps.map((step, i) => (
-              <Reveal key={step.letter} delay={i * 80} className="flex flex-1 flex-col items-center">
-                <div className="relative flex w-full flex-col items-center text-center">
-                  <span className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-brand text-2xl font-bold text-brand">
-                    {step.letter}
-                  </span>
-                  {/* Connector arrow (desktop only) */}
-                  {i < methodSteps.length - 1 && (
-                    <ArrowRight className="absolute -right-4 top-1/2 hidden h-5 w-5 -translate-y-1/2 text-brand/60 lg:block" />
-                  )}
-                  <h3 className="mt-5 text-lg font-semibold text-growth">{step.title}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{step.description}</p>
-                </div>
-              </Reveal>
-            ))}
-          </div>
+          <MethodSignature />
 
           <Reveal className="mt-12 text-center">
             <Button asChild variant="outline" size="lg">
@@ -386,22 +340,7 @@ export default async function HomePage() {
             subtitle="We do not promise overnight transformation. We build it in stages that compound."
           />
 
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-            {journeyStages.map((stage, i) => (
-              <Reveal key={stage.stage} delay={i * 80} className="h-full">
-                <div className="card-elevated flex h-full flex-col">
-                  <span className="mb-5 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-growth/10 text-growth">
-                    {stage.icon === 'HeartPulse' && <HeartPulse className="h-6 w-6" strokeWidth={1.8} />}
-                    {stage.icon === 'Shield' && <ShieldCheck className="h-6 w-6" strokeWidth={1.8} />}
-                    {stage.icon === 'TrendingUp' && <TrendingUp className="h-6 w-6" strokeWidth={1.8} />}
-                    {stage.icon === 'Award' && <Award className="h-6 w-6" strokeWidth={1.8} />}
-                  </span>
-                  <h3 className="text-lg font-semibold text-foreground">{stage.stage}</h3>
-                  <p className="mt-3 flex-1 text-[15px] leading-relaxed text-muted-foreground">{stage.description}</p>
-                </div>
-              </Reveal>
-            ))}
-          </div>
+          <JourneyProgression />
         </div>
       </section>
 

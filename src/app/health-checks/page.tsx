@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 };
 
 const howItWorks = [
-  { step: '01', icon: ClipboardCheck, title: 'Answer questions', description: 'A structured, confidential assessment — around 20 questions, one at a time.' },
+  { step: '01', icon: ClipboardCheck, title: 'Answer questions', description: 'A structured, confidential assessment — around 20 questions, answered section by section.' },
   { step: '02', icon: Sparkles, title: 'AI generates your report', description: 'Claude AI turns your answers into a diagnostic report with prioritised recommendations.' },
   { step: '03', icon: FileText, title: 'Receive recommendations', description: 'A readable, actionable report you can export as PDF or Word — and take to a conversation.' },
 ];
@@ -29,22 +29,25 @@ const comparison = [
   { label: 'Top 3 priority callouts', basic: true, full: true },
   { label: 'Category-by-category findings', basic: false, full: true },
   { label: 'Prioritised recommendation list', basic: false, full: true },
-  { label: 'PDF & Word export', basic: false, full: true },
-  { label: 'Emailed to you with a private link', basic: false, full: true },
+  { label: 'PDF & Word export', basic: true, full: true },
+  { label: 'Emailed to you with a private link', basic: true, full: true },
 ];
 
 /** Cover images set on health checks in the admin (Supabase storage), keyed by slug. */
-async function getCheckImages(): Promise<Record<string, string | null>> {
+async function getCheckImages(): Promise<Record<string, { image: string | null; minutes: number | null }>> {
   try {
     const supabase = getServiceClient();
     const slugs = [
       `${healthChecks.business.slug}-health-check`,
       `${healthChecks.professional.slug}-health-check`,
     ];
-    const { data } = await supabase.from('health_checks').select('slug, image_url').in('slug', slugs);
-    const map: Record<string, string | null> = {};
+    const { data } = await supabase.from('health_checks').select('slug, image_url, estimated_minutes').in('slug', slugs);
+    const map: Record<string, { image: string | null; minutes: number | null }> = {};
     (data ?? []).forEach((c) => {
-      map[c.slug] = (c.image_url as string | null) ?? null;
+      map[c.slug] = {
+        image: (c.image_url as string | null) ?? null,
+        minutes: (c.estimated_minutes as number | null) ?? null,
+      };
     });
     return map;
   } catch {
@@ -65,12 +68,12 @@ export default async function HealthChecksPage() {
         image={{ src: '/images/health-check.jpg', alt: 'Health check assessment' }}
       >
         <Button asChild size="lg">
-          <Link href="/health-checks/business-health-check">Start Your Assessment</Link>
+          <Link href="/health-checks#choose-assessment">Choose Your Assessment</Link>
         </Button>
       </PageHero>
 
       {/* Entry cards */}
-      <section className="section-pad bg-background">
+      <section id="choose-assessment" className="scroll-mt-24 section-pad bg-background">
         <div className="container-lux">
           <SectionHeading
             eyebrow="Choose your assessment"
@@ -80,7 +83,8 @@ export default async function HealthChecksPage() {
             {[healthChecks.business, healthChecks.professional].map((check, i) => {
               const slugKey = `${check.slug}-health-check`;
               const imageSrc =
-                images[slugKey] ?? (i === 0 ? '/images/business-check.jpg' : '/images/professional-check.jpg');
+                images[slugKey]?.image ?? (i === 0 ? '/images/business-check.jpg' : '/images/professional-check.jpg');
+              const minutes = images[slugKey]?.minutes ?? 15;
               return (
                 <Reveal key={check.slug} delay={i * 80} className="h-full">
                   <div className="card-elevated group flex h-full flex-col overflow-hidden">
@@ -100,7 +104,7 @@ export default async function HealthChecksPage() {
                           {i === 0 ? <ClipboardCheck className="h-5 w-5" strokeWidth={1.8} /> : <Sparkles className="h-5 w-5" strokeWidth={1.8} />}
                         </span>
                         <span className="rounded-full bg-[#111111]/55 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.18em] text-white/85 backdrop-blur-sm">
-                          {String(i + 1).padStart(2, '0')} / Free · 10–15 min
+                          {String(i + 1).padStart(2, '0')} / Free · ~{minutes} min
                         </span>
                       </div>
                     </div>
@@ -159,14 +163,14 @@ export default async function HealthChecksPage() {
         <div className="container-lux">
           <SectionHeading
             eyebrow="What you get"
-            title="Basic report — free. Full report — when you register."
-            subtitle="Every assessment generates an AI diagnostic report immediately. Register with an email to receive the full report and your private link."
+            title="Start with the free summary. Unlock the full diagnostic."
+            subtitle="Every assessment generates an AI diagnostic report immediately — the summary is free, and the full detailed report is available as a one-off upgrade."
           />
           <Reveal>
             <div className="mx-auto max-w-3xl overflow-hidden rounded-lg border border-card-border bg-card">
               <div className="grid grid-cols-[1fr_auto_auto] items-center gap-4 border-b border-card-border px-6 py-4 font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
                 <span>Report feature</span>
-                <span className="w-24 text-center">Basic</span>
+                <span className="w-24 text-center">Free</span>
                 <span className="w-24 text-center">Full</span>
               </div>
               {comparison.map((row) => (
@@ -180,6 +184,10 @@ export default async function HealthChecksPage() {
                   </span>
                 </div>
               ))}
+              <p className="px-6 py-4 text-xs leading-relaxed text-muted-foreground">
+                The free summary report is delivered by email or WhatsApp with a private link. The full diagnostic —
+                with category-by-category findings and the prioritised recommendation list — is a one-off upgrade.
+              </p>
             </div>
           </Reveal>
         </div>

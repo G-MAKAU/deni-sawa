@@ -7,8 +7,8 @@ import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { Loader2, Mail, Moon, Save, Send, Sun } from 'lucide-react';
 import { adminFetch, adminPut, adminPost } from '@/lib/admin-client';
-import { LexicalEditor } from '@/features/lexical/LexicalEditor';
-import { LexicalRenderer } from '@/features/lexical/LexicalRenderer';
+import { SimpleHtmlEditor } from '@/features/lexical/SimpleHtmlEditor';
+import { SimpleHtmlRenderer } from '@/features/lexical/SimpleHtmlRenderer';
 import { AdminCard, AsyncButton, ErrorBanner, Field, Loading, Modal, PageHeader, Toggle } from '@/components/admin/ui';
 import { cn } from '@/lib/utils';
 
@@ -18,7 +18,6 @@ interface EmailTemplateDetail {
   name: string;
   subject: string;
   preview_text: string | null;
-  body_lexical: Record<string, unknown>;
   body_html: string | null;
   from_name: string;
   from_email: string;
@@ -84,6 +83,12 @@ function substituteInState(state: Record<string, unknown>, values: Record<string
   return walk(clone) as Record<string, unknown>;
 }
 
+function substituteInHtml(html: string, values: Record<string, string>): string {
+  return html.replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, (match, key: string) =>
+    values[key] !== undefined ? values[key] : match
+  );
+}
+
 export function EmailTemplateEditor() {
   const params = useParams<{ key: string }>();
   const templateKey = params.key;
@@ -99,7 +104,7 @@ export function EmailTemplateEditor() {
   const [fromEmail, setFromEmail] = React.useState('noreply@denisawa.co.ke');
   const [replyTo, setReplyTo] = React.useState('');
   const [isActive, setIsActive] = React.useState(true);
-  const [bodyLexical, setBodyLexical] = React.useState<Record<string, unknown> | null>(null);
+  const [bodyHtml, setBodyHtml] = React.useState<string | null>(null);
 
   const [saving, setSaving] = React.useState(false);
   const [previewMode, setPreviewMode] = React.useState<'editor' | 'preview'>('editor');
@@ -109,11 +114,55 @@ export function EmailTemplateEditor() {
   const [testTo, setTestTo] = React.useState('');
   const [testVariables, setTestVariables] = React.useState<Record<string, string>>({});
   const [sendingTest, setSendingTest] = React.useState(false);
+  const [previewKey, setPreviewKey] = React.useState(0);
+  const [isPreviewSticky, setIsPreviewSticky] = React.useState(false);
+
+  const handleUploadImage = async (file: File): Promise<string> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    try {
+      const res = await adminPost<{ url: string }>('/api/admin/upload-image', formData);
+      return res.url;
+    } catch (e) {
+      toast.error('Image upload failed');
+      return '';
+    }
+  };
+
+  const handleBrowseImage = async (): Promise<string | null> => {
+    try {
+      const res = await adminFetch<{ url: string }>('/api/admin/media/browse');
+      return res.url ?? null;
+    } catch {
+      return null;
+    }
+  };
+
+  const handleInsertImage = async (url: string) => {
+    const imgHtml = `<img src="${url}" alt="" style="max-width:100%;height:auto;border-radius:0.5rem;">`;
+    setBodyHtml(prev => prev + imgHtml);
+  };
+
+  const handleImageUpload = async (file: File) => {
+    if (!file) return;
+    try {
+      const url = await handleUploadImage(file);
+      if (url) {
+        const imgHtml = `<img src="${url}" alt="" style="max-width:100%;height:auto;border-radius:0.5rem;">`;
+        setBodyHtml(prev => prev + imgHtml);
+      }
+    } catch (e) {
+      toast.error('Image upload failed');
+    }
+  };
+
+  const previewHtml = bodyHtml ? substituteInHtml(bodyHtml, testVariables) : '';
+  const previewKeyString = JSON.stringify(previewHtml);
 
   React.useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    setBodyLexical(null);
+    setBodyHtml(null);
     (async () => {
       try {
         const [templateResult, meResult] = await Promise.all([
@@ -129,7 +178,7 @@ export function EmailTemplateEditor() {
         setFromEmail(t.from_email);
         setReplyTo(t.reply_to ?? '');
         setIsActive(t.is_active);
-        setBodyLexical(t.body_lexical);
+        setBodyHtml(t.body_html ?? '');
         setAdminEmail(meResult?.admin.email ?? '');
         setTestTo(meResult?.admin.email ?? '');
         setTestVariables(Object.fromEntries(t.available_variables.map((v) => [v, SAMPLE_VALUES[v] ?? `[${v}]`])));
@@ -145,14 +194,14 @@ export function EmailTemplateEditor() {
   }, [templateKey]);
 
   const referencedVariables = React.useMemo(() => {
-    const bodyText = JSON.stringify(bodyLexical ?? {});
+    const bodyText = bodyHtml ?? '';
     const used = new Set<string>();
     bodyText.replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, (_m, k: string) => {
       used.add(k);
       return '';
     });
     return used;
-  }, [bodyLexical]);
+  }, [bodyHtml]);
 
   const fieldSetters: Record<string, (value: string) => void> = React.useMemo(
     () => ({
@@ -183,14 +232,14 @@ export function EmailTemplateEditor() {
   };
 
   const handleSave = async () => {
-    if (!bodyLexical) return;
+    if (!bodyHtml) return;
     setSaving(true);
     try {
       await adminPut(`/api/admin/email-templates/${templateKey}`, {
         name: template?.name ?? '',
         subject,
         preview_text: previewText || null,
-        body_lexical: bodyLexical,
+        body_html: bodyHtml,
         from_name: fromName,
         from_email: fromEmail,
         reply_to: replyTo || null,
@@ -228,8 +277,6 @@ export function EmailTemplateEditor() {
   if (error) return <ErrorBanner message={error} />;
   if (loading) return <Loading label="Loading template…" />;
   if (!template) return null;
-
-  const previewState = bodyLexical ? substituteInState(bodyLexical, testVariables) : null;
 
   const editorPane = (
     <div className="space-y-6">
@@ -296,12 +343,15 @@ export function EmailTemplateEditor() {
         </p>
       </AdminCard>
 
-      <AdminCard title="Body" subtitle="Edit with Lexical — variables render as orange pills.">
-        <LexicalEditor
-          state={bodyLexical ?? undefined}
-          onChange={(state) => setBodyLexical(state as Record<string, unknown>)}
+      <AdminCard title="Body" subtitle="Edit HTML — variables render as orange pills.">
+        <SimpleHtmlEditor
+          html={bodyHtml ?? ''}
+          onChange={setBodyHtml}
           placeholder="Write your email body…"
           variables={template.available_variables}
+          onInsertVariable={insertVariable}
+          onUploadImage={handleUploadImage}
+          onBrowseImage={handleBrowseImage}
           className="min-h-[440px]"
         />
       </AdminCard>
@@ -361,8 +411,8 @@ export function EmailTemplateEditor() {
               </p>
             </div>
             <div className={cn('px-6 py-6 text-[14px] leading-relaxed', previewDark ? 'bg-[#111111] text-[#E5E7EB]' : 'bg-[var(--a-card)] text-[var(--a-ink2)]')}>
-              {previewState ? (
-                <LexicalRenderer state={previewState} />
+              {previewHtml ? (
+                <SimpleHtmlRenderer key={previewKeyString} html={previewHtml} />
               ) : (
                 <p className="text-[var(--a-muted)]">Start writing the email body…</p>
               )}

@@ -231,7 +231,7 @@ export const audiences = [
     description:
       'Personal financial health is the foundation of professional performance. Build resilience, clarity and the confidence to lead.',
     cta: 'Professional Financial Health Check',
-    href: '/health-checks/professional-financial-health-check',
+    href: '/health-checks/professional-health-check',
   },
   {
     title: 'Entrepreneurs & Founders',
@@ -273,11 +273,51 @@ export const healthChecks = {
 };
 
 export const methodSteps = [
-  { letter: 'D', title: 'Diagnose', description: 'Understand the real situation' },
-  { letter: 'E', title: 'Evaluate', description: 'Determine priorities, risks and opportunities' },
-  { letter: 'N', title: 'Negotiate', description: 'Create workable solutions' },
-  { letter: 'I', title: 'Implement', description: 'Put the recovery or growth plan into action' },
-  { letter: 'S', title: 'Sustain', description: 'Build systems that prevent regression and support long-term performance' },
+  {
+    letter: 'D',
+    title: 'Diagnose',
+    description: 'Understand the real situation',
+    objective: 'Establish the facts before proposing any fix — cash, debt, controls, performance and stakeholders.',
+    example: 'A distributor under creditor pressure: we map the full cash position and every obligation within days.',
+    service: '/health-checks/business-health-check',
+    serviceLabel: 'Start with a Health Check',
+  },
+  {
+    letter: 'E',
+    title: 'Evaluate',
+    description: 'Determine priorities, risks and opportunities',
+    objective: 'Rank the decisions that matter and quantify what each one changes.',
+    example: 'We identify which obligations are restructurable and which costs must move this month, not next.',
+    service: '/business-support/fractional-cfo',
+    serviceLabel: 'Fractional CFO support',
+  },
+  {
+    letter: 'N',
+    title: 'Negotiate',
+    description: 'Create workable solutions',
+    objective: 'Turn a position into a plan your lenders, partners and team can agree to.',
+    example: 'A repayment schedule and equity line negotiated so the business keeps operating while it recovers.',
+    service: '/business-support/special-situations',
+    serviceLabel: 'Special Situations support',
+  },
+  {
+    letter: 'I',
+    title: 'Implement',
+    description: 'Put the recovery or growth plan into action',
+    objective: 'Execute with accountability — rhythms, KPIs and a senior hand on execution.',
+    example: 'A 90-day operating plan with weekly reviews, cash forecasting and a management cadence that sticks.',
+    service: '/business-support/fractional-ceo',
+    serviceLabel: 'Fractional CEO leadership',
+  },
+  {
+    letter: 'S',
+    title: 'Sustain',
+    description: 'Build systems that prevent regression and support long-term performance',
+    objective: 'Embed governance, controls and reporting so the gains hold without constant hand-holding.',
+    example: 'Board rhythm, policy framework and reporting that survive due diligence and scale with the business.',
+    service: '/business-support/governance-controls',
+    serviceLabel: 'Governance & Controls',
+  },
 ];
 
 export const journeyStages = [

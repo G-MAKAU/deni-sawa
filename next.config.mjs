@@ -19,6 +19,11 @@ const nextConfig = {
       // Consolidate the duplicate insights/blog URLs into one canonical path.
       { source: '/insights', destination: '/blog', permanent: true },
       { source: '/insights/:path*', destination: '/blog/:path*', permanent: true },
+      // Legacy "Debt Management" brand pages are replaced by Business Support & Learning.
+      { source: '/services', destination: '/business-support', permanent: true },
+      { source: '/services/:path*', destination: '/business-support/:path*', permanent: true },
+      { source: '/academy', destination: '/learning', permanent: true },
+      { source: '/academy/:path*', destination: '/learning/:path*', permanent: true },
     ];
   },
 };

@@ -13,7 +13,71 @@ const answerSchema = z.object({
 
 const submitSchema = z.object({
   answers: z.array(answerSchema).min(1).max(500),
+  is_partial: z.boolean().optional(),
 });
+
+/** Resume support — returns the saved answers for a session so a user can pick up where they left off. */
+export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const supabase = getServiceClient();
+    const { id: sessionId } = await params;
+
+    const { data: session, error: sessionError } = await supabase
+      .from('health_check_sessions')
+      .select('*')
+      .eq('id', sessionId)
+      .maybeSingle();
+    if (sessionError) throw sessionError;
+    if (!session) return NextResponse.json({ error: 'Session not found.' }, { status: 404 });
+
+    const { data: answers, error: answersError } = await supabase
+      .from('health_check_answers')
+      .select('question_id, answer_text, selected_option_ids')
+      .eq('session_id', sessionId);
+    if (answersError) throw answersError;
+
+    const { data: sections } = await supabase
+      .from('health_check_sections')
+      .select('id')
+      .eq('health_check_id', session.health_check_id);
+    const sectionIds = (sections ?? []).map((s) => s.id);
+    const { data: subsections } = await supabase
+      .from('health_check_subsections')
+      .select('id')
+      .in('section_id', sectionIds);
+    const subsectionIds = (subsections ?? []).map((s) => s.id);
+    const { data: questions } = await supabase
+      .from('health_check_questions')
+      .select('id, question_type')
+      .in('subsection_id', subsectionIds);
+    const typeById = new Map((questions ?? []).map((q) => [q.id, q.question_type]));
+
+    const normalized: Record<string, string | string[]> = {};
+    for (const a of answers ?? []) {
+      const type = typeById.get(a.question_id);
+      if (type === 'single_select') normalized[a.question_id] = (a.selected_option_ids?.[0] ?? '') as string;
+      else if (type === 'multi_select') normalized[a.question_id] = (a.selected_option_ids ?? []) as string[];
+      else normalized[a.question_id] = (a.answer_text ?? '') as string;
+    }
+
+    return NextResponse.json({
+      session: {
+        id: session.id,
+        full_name: session.full_name,
+        business_name: session.business_name,
+        email: session.email,
+        whatsapp: session.whatsapp,
+        preferred_delivery: session.preferred_delivery,
+        report_selection: session.report_selection,
+        is_complete: session.is_complete,
+      },
+      answers: normalized,
+    });
+  } catch (error) {
+    console.error('Failed to load answers:', error);
+    return NextResponse.json({ error: 'Failed to load answers.' }, { status: 500 });
+  }
+}
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   let body: unknown;
@@ -31,6 +95,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   try {
     const supabase = getServiceClient();
     const { id: sessionId } = await params;
+    const isPartial = parsed.data.is_partial === true;
 
     const { data: session, error: sessionError } = await supabase
       .from('health_check_sessions')
@@ -115,11 +180,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       submittedIds.add(answer.question_id);
     }
 
-    // Required questions must all be answered.
+    // Required questions must all be answered (unless this is a partial autosave).
     const unansweredRequired = (questions ?? []).filter(
       (q) => q.is_required && !submittedIds.has(q.id)
     );
-    if (unansweredRequired.length > 0) {
+    if (!isPartial && unansweredRequired.length > 0) {
       return NextResponse.json(
         { error: 'All required questions must be answered.', missing: unansweredRequired.map((q) => q.id) },
         { status: 422 }
@@ -131,6 +196,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       onConflict: 'session_id,question_id',
     });
     if (insertError) throw insertError;
+
+    if (isPartial) {
+      return NextResponse.json({ success: true, partial: true });
+    }
 
     const completedAt = new Date().toISOString();
     const timeTaken = Math.max(1, Math.round((Date.now() - new Date(session.started_at).getTime()) / 1000));

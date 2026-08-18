@@ -1,5 +1,5 @@
 import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer';
-import type { ExportModel, ReportTextRun } from './lexical-to-model';
+import type { ExportModel, ReportTableRow, ReportTextRun } from './lexical-to-model';
 import { healthChecks } from '@/data/site';
 
 const ORANGE = '#E8510A';
@@ -108,6 +108,28 @@ const styles = StyleSheet.create({
   itemText: { flex: 1 },
   divider: { marginVertical: 12, height: 1, backgroundColor: '#E0E0E0' },
   accentBar: { marginTop: 12, marginBottom: 18, height: 3, width: 48, backgroundColor: ORANGE },
+  table: { marginTop: 8, marginBottom: 12, borderWidth: 0.5, borderColor: '#D8D8D8', borderRadius: 4 },
+  tableRow: { flexDirection: 'row', borderBottomWidth: 0.5, borderBottomColor: '#E0E0E0' },
+  tableCell: {
+    flex: 1,
+    paddingHorizontal: 6,
+    paddingVertical: 5,
+    fontSize: 8.5,
+    color: DARK,
+    lineHeight: 1.4,
+  },
+  tableCellHeader: {
+    backgroundColor: '#F6F0E8',
+    fontWeight: 700,
+    color: ORANGE,
+  },
+  tableCellGrowthHeader: {
+    backgroundColor: '#F0F6EA',
+    color: '#3F6D1C',
+  },
+  tableCellFirst: { paddingLeft: 8 },
+  tableCellLast: { paddingRight: 8 },
+  checkbox: { width: 10, color: GREEN, fontSize: 10 },
 });
 
 function ReportHeader({ title }: { title: string }) {
@@ -138,15 +160,61 @@ function ReportFooter() {
   );
 }
 
+function TableRenderer({ rows }: { rows: ReportTableRow[] }) {
+  if (!rows.length) return null;
+  const firstRow = rows[0];
+  const colCount = Math.max(1, firstRow?.cells.length ?? 1);
+  return (
+    <View style={styles.table}>
+      {rows.map((row, i) => {
+        const isHeader = row.cells.every((c) => c.header) || (i === 0 && row.cells.length > 1);
+        return (
+          <View
+            key={i}
+            style={[styles.tableRow, i === rows.length - 1 ? { borderBottomWidth: 0 } : undefined]}
+          >
+            {Array.from({ length: colCount }).map((_, c) => {
+              const cell = row.cells[c];
+              const headerCell = isHeader || (cell?.header ?? false);
+              return (
+                <View
+                  key={c}
+                  style={[
+                    styles.tableCell,
+                    c === 0 ? styles.tableCellFirst : undefined,
+                    c === colCount - 1 ? styles.tableCellLast : undefined,
+                    headerCell ? styles.tableCellHeader : undefined,
+                  ]}
+                >
+                  <Text
+                    style={headerCell ? { fontWeight: 700, color: ORANGE } : undefined}
+                  >
+                    {cell?.runs?.map((run, j) => (
+                      <Text key={j} style={runStyle(run)}>
+                        {run.text}
+                      </Text>
+                    )) ?? cell?.text ?? ''}
+                  </Text>
+                </View>
+              );
+            })}
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
 /** Inline styles for a text run (bold/italic/underline/strike + colour + size). */
-function runStyle(run: ReportTextRun): Record<string, string> {
-  const style: Record<string, string> = {};
+function runStyle(run: ReportTextRun): Record<string, string | number> {
+  const style: Record<string, string | number> = {};
   if (run.bold) style.fontWeight = '700';
   if (run.italic) style.fontStyle = 'italic';
   if (run.underline && !run.strike) style.textDecoration = 'underline';
   if (run.strike) style.textDecoration = 'line-through';
   if (run.color) style.color = run.color;
-  if (run.fontSize) style.fontSize = `${run.fontSize}px`;
+  // react-pdf expects a numeric fontSize (in pt) — a string like "14px" breaks layout.
+  if (run.fontSize) style.fontSize = run.fontSize * 0.75;
   // react-pdf only ships Helvetica/Times/Courier — map the known families so a
   // custom family degrades gracefully instead of breaking.
   if (run.fontFamily) {
@@ -235,18 +303,34 @@ export function HealthReportDocument({ model }: { model: ExportModel }) {
                   >
                     {block.tone === 'growth' ? 'Note' : 'Priority'}
                   </Text>
-                  <Text style={styles.calloutText}>{block.text}</Text>
+                  <Text style={styles.calloutText}>
+                    {block.runs?.map((run, j) => (
+                      <Text key={j} style={runStyle(run)}>
+                        {run.text}
+                      </Text>
+                    ))}
+                  </Text>
                 </View>
               );
+            case 'table':
+              return <TableRenderer key={i} rows={block.rows ?? []} />;
             case 'list':
               return (
                 <View key={i} style={styles.list}>
-                  {block.items?.map((item, j) => (
-                    <View key={j} style={styles.listItem}>
-                      <Text style={styles.bullet}>•</Text>
-                      <Text style={styles.itemText}>{item}</Text>
-                    </View>
-                  ))}
+                  {block.items?.map((item, j) => {
+                    const marker =
+                      block.listType === 'number'
+                        ? `${j + 1}.`
+                        : block.listType === 'check'
+                          ? (block.checked?.[j] ? '[x]' : '[ ]')
+                          : '•';
+                    return (
+                      <View key={j} style={styles.listItem}>
+                        <Text style={block.listType === 'check' ? styles.checkbox : styles.bullet}>{marker}</Text>
+                        <Text style={styles.itemText}>{item}</Text>
+                      </View>
+                    );
+                  })}
                 </View>
               );
             case 'divider':

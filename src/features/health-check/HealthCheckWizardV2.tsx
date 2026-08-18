@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft, ArrowRight, Check, Clock, Loader2, Lock, Mail, MessageCircle, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -153,12 +153,15 @@ function QuestionField({
 
 export function HealthCheckWizardV2({ slug }: { slug: string }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const resumeSessionId = searchParams.get('session');
 
   const [phase, setPhase] = React.useState<Phase>('loading');
   const [check, setCheck] = React.useState<CheckInfo | null>(null);
   const [sections, setSections] = React.useState<SectionGroup[]>([]);
   const [questionCount, setQuestionCount] = React.useState(0);
   const [error, setError] = React.useState<string | null>(null);
+  const [isResuming, setIsResuming] = React.useState(false);
 
   const [sessionId, setSessionId] = React.useState<string | null>(null);
   const [sectionIndex, setSectionIndex] = React.useState(0);
@@ -205,12 +208,54 @@ export function HealthCheckWizardV2({ slug }: { slug: string }) {
           questions: section.subsections.flatMap((sub) => sub.questions),
         }));
 
-        if (!cancelled) {
-          setCheck(body.check as CheckInfo);
-          setSections(grouped);
-          setQuestionCount(grouped.reduce((n, s) => n + s.questions.length, 0));
-          setPhase('details');
+        if (cancelled) return;
+        setCheck(body.check as CheckInfo);
+        setSections(grouped);
+        setQuestionCount(grouped.reduce((n, s) => n + s.questions.length, 0));
+
+        // Resume support — if the user returned via the emailed/WhatsApp resume link,
+        // restore their saved answers, details and position in the flow.
+        if (resumeSessionId) {
+          setIsResuming(true);
+          try {
+            const r = await fetch(`/api/health-check/${resumeSessionId}/answers`, { cache: 'no-store' });
+            const rb = await r.json();
+            if (!r.ok) throw new Error(rb.error ?? 'Failed to load your saved progress.');
+            if (rb.session?.is_complete) {
+              router.replace(`/health-checks/report/${resumeSessionId}`);
+              return;
+            }
+            setSessionId(resumeSessionId);
+            if (rb.session) {
+              setFullName(rb.session.full_name ?? '');
+              setBusinessName(rb.session.business_name ?? '');
+              setEmail(rb.session.email ?? '');
+              setWhatsapp(rb.session.whatsapp ?? '');
+              if (rb.session.preferred_delivery) setPreferredDelivery(rb.session.preferred_delivery);
+              if (rb.session.report_selection) setReportSelection(rb.session.report_selection);
+            }
+            const saved = (rb.answers ?? {}) as Record<string, Answer>;
+            setAnswers(saved);
+
+            // Jump to the first section with unanswered questions.
+            let firstIncomplete = 0;
+            for (let i = 0; i < grouped.length; i += 1) {
+              if (grouped[i].questions.some((q) => !isAnswered(q, saved))) {
+                firstIncomplete = i;
+                break;
+              }
+            }
+            setSectionIndex(firstIncomplete);
+            setPhase('questions');
+            setIsResuming(false);
+            return;
+          } catch (e) {
+            setError(e instanceof Error ? e.message : 'We could not restore your saved progress. You can start fresh below.');
+            setIsResuming(false);
+          }
         }
+
+        setPhase('details');
       } catch (e) {
         if (!cancelled) {
           setError(e instanceof Error ? e.message : 'Failed to load the assessment.');
@@ -221,7 +266,7 @@ export function HealthCheckWizardV2({ slug }: { slug: string }) {
     return () => {
       cancelled = true;
     };
-  }, [slug]);
+  }, [slug, resumeSessionId]);
 
   const currentSection = sections[sectionIndex];
   const totalSections = sections.length;
@@ -297,6 +342,34 @@ export function HealthCheckWizardV2({ slug }: { slug: string }) {
     setAnswers((prev) => ({ ...prev, [questionId]: value }));
   };
 
+  // Autosave the answers answered so far so a user can resume from the emailed link.
+  const saveProgress = async () => {
+    if (!sessionId) return;
+    const allQuestions = sections.flatMap((s) => s.questions);
+    const payload = allQuestions
+      .filter((q) => isAnswered(q, answers))
+      .map((question) => {
+        const raw = answers[question.id];
+        if (question.question_type === 'paragraph') {
+          return { question_id: question.id, answer_text: typeof raw === 'string' ? raw : '', selected_option_ids: [] };
+        }
+        if (question.question_type === 'single_select') {
+          return { question_id: question.id, answer_text: null, selected_option_ids: [raw as string] };
+        }
+        return { question_id: question.id, answer_text: null, selected_option_ids: (raw as string[]) ?? [] };
+      });
+    if (payload.length === 0) return;
+    try {
+      await fetch(`/api/health-check/${sessionId}/answers`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ answers: payload, is_partial: true }),
+      });
+    } catch {
+      // Best-effort — never block navigation on a failed autosave.
+    }
+  };
+
   const missingInSection = (section: SectionGroup): string[] => {
     if (!section) return [];
     return section.questions.filter((q) => q.is_required && !isAnswered(q, answers)).map((q) => q.question_text);
@@ -311,10 +384,17 @@ export function HealthCheckWizardV2({ slug }: { slug: string }) {
     }
     setError(null);
     if (sectionIndex < totalSections - 1) {
+      void saveProgress();
       setSectionIndex((s) => s + 1);
     } else {
       void submitAnswers();
     }
+  };
+
+  const handlePreviousSection = () => {
+    if (sectionIndex === 0) return;
+    void saveProgress();
+    setSectionIndex((s) => Math.max(0, s - 1));
   };
 
   const submitAnswers = async () => {
@@ -447,7 +527,7 @@ export function HealthCheckWizardV2({ slug }: { slug: string }) {
     return (
       <div className="flex flex-col items-center justify-center gap-4 py-24">
         <Loader2 className="h-8 w-8 animate-spin text-brand" />
-        <p className="text-sm text-muted-foreground">Preparing your assessment…</p>
+        <p className="text-sm text-muted-foreground">{isResuming ? 'Restoring your saved progress…' : 'Preparing your assessment…'}</p>
       </div>
     );
   }
@@ -634,6 +714,13 @@ export function HealthCheckWizardV2({ slug }: { slug: string }) {
         </section>
 
         <div className="mx-auto mt-8 max-w-2xl space-y-6">
+          {resumeSessionId && (
+            <div className="flex items-center gap-2 rounded-lg border border-growth/30 bg-growth/5 px-4 py-3 text-sm text-foreground">
+              <Check className="h-4 w-4 shrink-0 text-growth" />
+              Progress restored — continuing where you left off. Changes are saved automatically.
+            </div>
+          )}
+
           {currentSection.description && (
             <p className="text-sm leading-relaxed text-muted-foreground">{currentSection.description}</p>
           )}
@@ -654,7 +741,7 @@ export function HealthCheckWizardV2({ slug }: { slug: string }) {
         )}
 
         <div className="mx-auto mt-8 flex max-w-2xl items-center justify-between">
-          <Button variant="ghostLight" onClick={() => setSectionIndex((s) => Math.max(0, s - 1))} disabled={sectionIndex === 0}>
+          <Button variant="ghostLight" onClick={handlePreviousSection} disabled={sectionIndex === 0}>
             <ArrowLeft className="h-4 w-4" /> Previous section
           </Button>
           <div className="flex items-center gap-2">

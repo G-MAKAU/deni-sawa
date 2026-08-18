@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { motion, useReducedMotion } from 'motion/react';
 import { ArrowRight, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -24,9 +25,9 @@ function levelFor(score: number): Level {
 }
 
 function thumbFor(score: number): string {
-  if (score >= 70) return '#5A9E28';
-  if (score >= 40) return '#E8510A';
-  return '#E11D48';
+  if (score >= 70) return 'var(--growth)';
+  if (score >= 40) return 'var(--brand)';
+  return 'hsl(var(--destructive))';
 }
 
 interface HealthScoreCardProps {
@@ -37,6 +38,7 @@ export function HealthScoreCard({ className = '' }: HealthScoreCardProps) {
   const [score, setScore] = useState(72);
   const [trend, setTrend] = useState<'up' | 'down' | 'flat'>('up');
   const prevRef = useRef(72);
+  const prefersReducedMotion = useReducedMotion();
 
   const level = levelFor(score);
 
@@ -56,7 +58,12 @@ export function HealthScoreCard({ className = '' }: HealthScoreCardProps) {
   }, [score]);
 
   return (
-    <div className={cn('w-72 rounded-xl border border-card-border bg-card p-5 shadow-2xl shadow-black/40', className)}>
+    <div
+      className={cn(
+        'w-full rounded-xl border border-card-border bg-card p-5 shadow-2xl shadow-black/40 sm:w-72',
+        className
+      )}
+    >
       <div className="flex items-center justify-between">
         <p className="text-sm font-semibold text-brand">Business Health Score</p>
         <span className="rounded-full bg-brand/15 px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-widest text-foreground">
@@ -65,18 +72,23 @@ export function HealthScoreCard({ className = '' }: HealthScoreCardProps) {
       </div>
 
       <div className="mt-3 flex items-end gap-1.5">
-        <span
-          className={cn(
-            'font-display text-5xl font-bold leading-none transition-colors duration-300',
-            level.text
-          )}
+        <motion.span
+          key={level.label}
+          initial={prefersReducedMotion ? false : { opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, ease: 'easeOut' }}
+          className={cn('font-display text-5xl font-bold leading-none', level.text)}
         >
           {score}
-        </span>
+        </motion.span>
         <span className="mb-1 text-sm text-muted-foreground">/100</span>
-        <span
+        <motion.span
+          key={`${level.label}-${trend}`}
+          initial={prefersReducedMotion ? false : { opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.25, ease: 'easeOut' }}
           className={cn(
-            'ml-auto mb-0.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold transition-colors duration-300',
+            'ml-auto mb-0.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold',
             level.bg,
             level.text
           )}
@@ -89,7 +101,7 @@ export function HealthScoreCard({ className = '' }: HealthScoreCardProps) {
             <Minus className="h-3 w-3" />
           )}
           {level.label}
-        </span>
+        </motion.span>
       </div>
 
       {/* Range — drag to change the score */}

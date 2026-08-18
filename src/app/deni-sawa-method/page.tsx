@@ -1,11 +1,12 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { ArrowRight, HeartPulse, Shield, TrendingUp, Award } from 'lucide-react';
-import { site, methodSteps, journeyStages } from '@/data/site';
+import { site } from '@/data/site';
 import { PageHero } from '@/components/PageHero';
 import { SectionHeading } from '@/components/SectionHeading';
 import { CTASection } from '@/components/CTASection';
 import { MediaBand } from '@/components/MediaBand';
+import { MethodSignature } from '@/components/MethodSignature';
+import { JourneyProgression } from '@/components/JourneyProgression';
 import { Button } from '@/components/ui/button';
 import { Reveal } from '@/components/Reveal';
 
@@ -15,13 +16,6 @@ export const metadata: Metadata = {
     'Our disciplined, AI-enabled method moves organisations from Special Situations to Best-in-Class — Diagnose, Evaluate, Negotiate, Implement, Sustain.',
   alternates: { canonical: `${site.url}/deni-sawa-method` },
 };
-
-const stageIcons = {
-  HeartPulse,
-  Shield,
-  TrendingUp,
-  Award,
-} as const;
 
 export default function MethodPage() {
   return (
@@ -44,22 +38,9 @@ export default function MethodPage() {
           <SectionHeading
             eyebrow="The five disciplines"
             title="DENIS"
+            description="Five disciplines, applied in sequence. Each one has a clear objective, a concrete example and a service that brings it to life."
           />
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-5">
-            {methodSteps.map((step, i) => (
-              <Reveal key={step.letter} delay={i * 80} className="h-full">
-                <div className="card-elevated relative flex h-full flex-col p-6">
-                  <span className="font-display text-5xl font-semibold leading-none text-brand/90">{step.letter}</span>
-                  <span className="mt-4 h-px w-10 bg-brand/40" />
-                  <h2 className="mt-4 text-lg font-semibold text-foreground">{step.title}</h2>
-                  <p className="mt-2 flex-1 text-sm leading-relaxed text-muted-foreground">{step.description}</p>
-                  <span className="mt-6 font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                    Discipline {String(i + 1).padStart(2, '0')}
-                  </span>
-                </div>
-              </Reveal>
-            ))}
-          </div>
+          <MethodSignature />
         </div>
       </section>
 
@@ -71,25 +52,7 @@ export default function MethodPage() {
             title="Recovery → Resilience → Growth → Best-in-Class"
             description="The method plays out as a staged journey. Each stage builds on the last — and each one is measured, not assumed."
           />
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-            {journeyStages.map((stage, i) => {
-              const Icon = stageIcons[stage.icon as keyof typeof stageIcons] ?? TrendingUp;
-              return (
-                <Reveal key={stage.stage} delay={i * 80} className="h-full">
-                  <div className="relative flex h-full flex-col rounded-lg border border-card-border bg-card p-7">
-                    <span className="absolute right-5 top-5 font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                      Stage {String(i + 1).padStart(2, '0')}
-                    </span>
-                    <span className="inline-flex h-12 w-12 items-center justify-center rounded-lg bg-brand/10 text-brand">
-                      <Icon className="h-6 w-6" strokeWidth={1.8} />
-                    </span>
-                    <h3 className="mt-5 text-h3 font-semibold text-foreground">{stage.stage}</h3>
-                    <p className="mt-3 flex-1 text-[15px] leading-relaxed text-muted-foreground">{stage.description}</p>
-                  </div>
-                </Reveal>
-              );
-            })}
-          </div>
+          <JourneyProgression />
         </div>
       </section>
 
