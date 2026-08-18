@@ -13,7 +13,7 @@ import { Reveal } from '@/components/Reveal';
 export const metadata: Metadata = {
   title: 'The Deni Sawa Method | Diagnose · Evaluate · Negotiate · Implement · Sustain',
   description:
-    'Our disciplined, AI-enabled method moves organisations from Special Situations to Best-in-Class — Diagnose, Evaluate, Negotiate, Implement, Sustain.',
+    'Our disciplined, expert-led method moves organisations from Special Situations to Best-in-Class — Diagnose, Evaluate, Negotiate, Implement, Sustain.',
   alternates: { canonical: `${site.url}/deni-sawa-method` },
 };
 
@@ -28,7 +28,7 @@ export default function MethodPage() {
         image={{ src: '/images/method.jpg', alt: 'The Deni Sawa Method' }}
       >
         <Button asChild size="lg">
-          <Link href="/health-checks">Start With a Diagnosis</Link>
+          <Link href="/health-checks#choose-your-assessment">Start With a Diagnosis</Link>
         </Button>
       </PageHero>
 
@@ -69,7 +69,7 @@ export default function MethodPage() {
           />
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             {[
-              { label: 'Free', title: 'AI Health Check', text: 'Diagnosis you can access today.' },
+              { label: 'Free', title: 'Health Check', text: 'Diagnosis you can access today.' },
               { label: 'Self-learning', title: 'Learning Centre', text: 'Build the capability yourself.' },
               { label: 'Guided', title: 'Mentorship', text: 'Progress with a seasoned practitioner.' },
               { label: 'Engaged', title: 'Fractional & Advisory', text: 'A full operating bench for the situation.' },
@@ -88,8 +88,8 @@ export default function MethodPage() {
 
       <CTASection
         title="Start with a diagnosis"
-        subtitle="Free. Confidential. AI-powered. In under 15 minutes you will know where you stand."
-        primary={{ label: 'Take a Health Check', href: '/health-checks' }}
+        subtitle="Free. Confidential. In under 15 minutes you will know where you stand."
+        primary={{ label: 'Take a Health Check', href: '/health-checks#choose-your-assessment' }}
       />
     </>
   );

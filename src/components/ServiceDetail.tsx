@@ -190,8 +190,8 @@ export function ServiceDetail({ service }: ServiceDetailProps) {
                   Ready to begin your <span className="text-brand-gradient">{service.tab} journey?</span>
                 </h2>
                 <p className="mx-auto mb-8 max-w-xl text-base text-white/60">
-                  Explore our structured 12, 24 and 48-week programmes, or speak to an advisor today — your first
-                  consultation is free.
+                  Explore our structured 12, 24 and 48-week programmes, or speak to an advisor today — start with a
+                  no-obligation Clarity Call.
                 </p>
                 <div className="flex flex-wrap items-center justify-center gap-4">
                   <a href="/services#programs" className="btn-brand text-sm">

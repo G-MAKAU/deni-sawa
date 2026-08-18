@@ -24,8 +24,8 @@ export function ContactPage() {
               No judgement. Just a <span className="text-brand-gradient">clear way forward</span>
             </h2>
             <p className="text-lg leading-relaxed text-muted-foreground">
-              Your first consultation is completely free. Reach out in whatever way feels comfortable —
-              we will take it from there.
+              Start with a no-obligation Clarity Call. Confidential. Focused entirely on your situation. Reach out
+              in whatever way feels comfortable — we will take it from there.
             </p>
           </div>
 

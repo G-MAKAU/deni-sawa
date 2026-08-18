@@ -57,7 +57,7 @@ export function Footer() {
               </p>
             </div>
             <Link
-              href="/health-checks"
+              href="/health-checks#choose-your-assessment"
               className="group inline-flex items-center gap-2.5 rounded-full bg-brand px-7 py-3.5 text-[15px] font-semibold text-white shadow-[0_4px_30px_rgba(232,81,10,0.35)] transition-all duration-300 hover:shadow-[0_6px_40px_rgba(232,81,10,0.5)] hover:brightness-110 active:scale-[0.97]"
             >
               Start Your Assessment
@@ -77,7 +77,7 @@ export function Footer() {
               Partners
             </p>
             <p className="mt-3 max-w-sm text-[15px] leading-relaxed text-white/80">
-              AI-enabled advisory and fractional business support helping organisations move from
+              Senior-level advisory and fractional business support helping organisations move from
               Special Situations to Best-in-Class performance.
             </p>
 

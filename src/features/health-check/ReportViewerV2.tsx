@@ -244,7 +244,7 @@ export function ReportViewerV2({ token }: { token: string }) {
         <div className="mb-6 flex items-start gap-2.5 rounded-lg border border-amber-500/25 bg-amber-500/5 px-4 py-3 text-sm text-amber-700">
           <Loader2 className="mt-0.5 h-4 w-4 shrink-0" />
           <div>
-            <p className="font-semibold">AI report generation was unavailable</p>
+            <p className="font-semibold">Report generation was unavailable</p>
             <p className="mt-0.5 text-xs text-amber-700/80">
               This is a summary of your answers. Our team has been notified and can provide your full diagnostic report on request.
             </p>

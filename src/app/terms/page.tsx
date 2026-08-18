@@ -18,11 +18,11 @@ const sections = [
   },
   {
     title: '2. Nature of our services',
-    body: 'Our website provides information and diagnostic tools (including AI-generated Health Check reports) to help you understand your situation. These tools and reports are provided for guidance only and do not constitute legal, accounting, investment or professional financial advice. Any engagement for advisory services is subject to a separate written agreement.',
+    body: 'Our website provides information and diagnostic tools (including diagnostic Health Check reports) to help you understand your situation. These tools and reports are provided for guidance only and do not constitute legal, accounting, investment or professional financial advice. Any engagement for advisory services is subject to a separate written agreement.',
   },
   {
     title: '3. Health Check reports',
-    body: 'Health Check reports are generated from the answers you provide and may be based on AI. They are informational, not a substitute for professional advice. You are responsible for the accuracy of the information you submit.',
+    body: 'Health Check reports are prepared from the answers you provide. They are informational, not a substitute for professional advice. You are responsible for the accuracy of the information you submit.',
   },
   {
     title: '4. Intellectual property',

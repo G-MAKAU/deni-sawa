@@ -307,11 +307,11 @@ export function AIChatWidget() {
       >
         <button
           onClick={() => openChat('suggestions')}
-          className="group flex items-center gap-3 rounded-full border border-brand/15 bg-card py-3 pl-4 pr-3 shadow-soft-xl transition-all duration-300 hover:border-brand/40 hover:shadow-brand-glow"
+          className="group flex items-center gap-3 rounded-md border border-brand/15 bg-card py-2 pl-4 pr-3 shadow-soft-xl transition-all duration-300 hover:border-brand/40 hover:shadow-brand-glow"
           aria-label="Open chat"
         >
-          <span className="relative flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand to-brand-600 text-white">
-            <Sparkles className="h-4 w-4" />
+          <span className="relative flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand to-brand-600 text-white">
+            <Sparkles className="h-3.5 w-3.5" />
           </span>
           <span className="text-sm font-semibold text-foreground">How can we help you today?</span>
           <ArrowUpRight className="h-4 w-4 text-muted-foreground transition-all duration-300 group-hover:text-brand" />
@@ -342,7 +342,7 @@ export function AIChatWidget() {
           'fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full text-white shadow-brand-glow transition-all duration-300 active:scale-90',
           open ? 'bg-charcoaldeep' : 'bg-gradient-to-br from-brand to-brand-600'
         )}
-        aria-label="Toggle AI chat"
+        aria-label="Toggle chat assistant"
       >
         {open ? <X className="h-6 w-6" /> : <MessageCircle className="h-6 w-6" />}
       </button>
@@ -367,7 +367,7 @@ export function AIChatWidget() {
                 <div className="font-heading text-sm font-bold text-white">Deni Sawa Assistant</div>
                 <div className="flex items-center gap-1.5 text-[11px] text-white/70">
                   <span className="h-1.5 w-1.5 flex-shrink-0 rounded-full bg-growth" />
-                  AI concierge · From Special Situations to Best-in-Class
+                  Deni Sawa Assistant · From Special Situations to Best-in-Class
                 </div>
               </div>
             </div>
@@ -587,7 +587,7 @@ export function AIChatWidget() {
                   </button>
                 </form>
                 <p className="mt-2 text-center text-[10px] text-muted-foreground">
-                  AI concierge · Confidential &amp; judgement-free
+                  Deni Sawa Assistant · Confidential &amp; judgement-free
                 </p>
               </div>
             </>

@@ -97,7 +97,7 @@ export default function OpengraphImage() {
 
           {/* Subline */}
           <div style={{ marginTop: 24, fontSize: 24, lineHeight: 1.5, color: 'rgba(255,255,255,0.72)', maxWidth: 820 }}>
-            AI-enabled advisory &amp; fractional business support for professionals, entrepreneurs and investors.
+            Senior-level advisory &amp; fractional business support for professionals, entrepreneurs and investors.
           </div>
 
           {/* Footer strip */}
@@ -115,7 +115,7 @@ export default function OpengraphImage() {
                 letterSpacing: '0.04em',
               }}
             >
-              FREE AI HEALTH CHECKS
+              FREE HEALTH CHECKS
             </span>
             <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 15 }}>
               Business · Professional Financial

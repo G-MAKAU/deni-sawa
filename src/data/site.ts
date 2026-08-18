@@ -20,7 +20,7 @@ export const site = {
     youtube: 'http://www.youtube.com/@denisawa8468',
   },
   description:
-    'AI-enabled advisory and fractional business support helping organisations recover, stabilise, grow and perform at their best.',
+    'Senior-level advisory and fractional business support helping organisations move from Special Situations to Best-in-Class performance.',
 };
 
 export interface NavItem {
@@ -30,6 +30,7 @@ export interface NavItem {
 }
 
 export const navItems: NavItem[] = [
+  { label: 'Home', href: '/' },
   {
     label: 'Services',
     href: '/business-support',
@@ -44,7 +45,6 @@ export const navItems: NavItem[] = [
   },
   { label: 'Health Checks', href: '/health-checks' },
   { label: 'Learning', href: '/learning' },
-  { label: 'SpecialSit Network', href: '/specialsit-network' },
   {
     label: 'About',
     href: '/about',
@@ -53,6 +53,7 @@ export const navItems: NavItem[] = [
       { label: 'Leadership', href: '/about/leadership', description: 'The team behind the method' },
       { label: 'Philosophy', href: '/about/philosophy', description: 'How we think and work' },
       { label: 'Experience', href: '/about/experience', description: 'Track record and credentials' },
+      { label: 'SpecialSit Network', href: '/specialsit-network', description: 'A curated peer community for founders, professionals and investors' },
       { label: 'Blog & Insights', href: '/about/blog', description: 'Articles, guides and financial insights' },
     ],
   },
@@ -257,15 +258,15 @@ export const healthChecks = {
   business: {
     slug: 'business',
     title: 'Business Health Check',
-    subtitle: 'AI-powered assessment of financial health, operations, governance, cashflow and growth readiness.',
+    subtitle: 'A structured assessment of financial health, operations, governance, cashflow and growth readiness.',
     description:
-      'A confidential, structured assessment across the five pillars of a healthy business. Claude AI turns your answers into a diagnostic report with prioritised recommendations.',
+      'A confidential, structured assessment across the five pillars of a healthy business. Your responses are analysed and a structured report is prepared, which our advisors use as the foundation for your first conversation.',
     areas: ['Financial Health', 'Operations', 'Governance', 'Cashflow', 'Growth & Investment Readiness'],
   },
   professional: {
     slug: 'professional',
     title: 'Professional Financial Health Check',
-    subtitle: 'AI-powered assessment of personal finances, debt, cashflow, savings and future financial security.',
+    subtitle: 'A structured assessment of personal finances, debt, cashflow, savings and future financial security.',
     description:
       'A structured, confidential review of your personal financial position — debt, cashflow, savings and resilience — with a prioritised action plan.',
     areas: ['Personal Finances', 'Debt', 'Cashflow', 'Savings', 'Resilience', 'Future Financial Security'],

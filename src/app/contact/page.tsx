@@ -51,7 +51,7 @@ export default async function ContactPage({
                 No judgement. Just a <span className="text-brand-gradient">clear way forward</span>.
               </h2>
               <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
-                Your first consultation is free. Reach out in whatever way feels comfortable — we will take it from there.
+                Start with a no-obligation Clarity Call. Confidential. Focused entirely on your situation. Reach out in whatever way feels comfortable — we will take it from there.
               </p>
             </div>
 

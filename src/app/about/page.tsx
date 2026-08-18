@@ -14,7 +14,7 @@ import { Reveal } from '@/components/Reveal';
 export const metadata: Metadata = {
   title: 'About Us | Deni Sawa Partners',
   description:
-    'Deni Sawa Partners is an AI-enabled advisory and fractional business support firm helping organisations move from Special Situations to Best-in-Class.',
+    'Deni Sawa Partners is a senior-level advisory and fractional business support firm helping organisations move from Special Situations to Best-in-Class.',
   alternates: { canonical: `${site.url}/about` },
 };
 
@@ -50,7 +50,7 @@ export default async function AboutPage() {
       <PageHero
         eyebrow="About Us"
         title="Built in the special situations. Designed for the road ahead."
-        subtitle="Deni Sawa Partners is an AI-enabled advisory and fractional business support firm. We help professionals, entrepreneurs and investors move from Special Situations to Best-in-Class."
+        subtitle="Deni Sawa Partners is a senior-level advisory and fractional business support firm. We help professionals, entrepreneurs and investors move from Special Situations to Best-in-Class."
         crumbs={[{ label: 'About' }]}
         image={{ src: '/images/about-team.jpg', alt: 'Deni Sawa Partners team' }}
       >
@@ -75,7 +75,7 @@ export default async function AboutPage() {
                 people who have been in the room before.
               </p>
               <p>
-                We are that room. A bench of seasoned bankers, operators and advisors — augmented by AI — helping
+                We are that room. A bench of seasoned bankers, operators and advisors helping
                 organisations diagnose their situation honestly, and move deliberately from recovery to resilience,
                 growth and Best-in-Class performance.
               </p>
@@ -85,7 +85,7 @@ export default async function AboutPage() {
               </p>
             </div>
             <div className="mt-8 flex flex-wrap gap-3">
-              {['Banking & Restructuring', 'Fractional Leadership', 'AI-Enabled Advisory', 'Governance'].map((tag) => (
+              {['Banking & Restructuring', 'Fractional Leadership', 'Expert-Led Advisory', 'Governance'].map((tag) => (
                 <span key={tag} className="rounded-badge border border-card-border bg-bgalt px-4 py-1.5 text-xs font-medium text-foreground">
                   {tag}
                 </span>

@@ -3,7 +3,7 @@ import { ReportViewerV2 } from '@/features/health-check/ReportViewerV2';
 
 export const metadata: Metadata = {
   title: 'Health Check Report | Deni Sawa',
-  description: 'Your private, AI-generated diagnostic report.',
+  description: 'Your private diagnostic report.',
   robots: { index: false, follow: false },
 };
 

@@ -40,6 +40,32 @@ export function HealthScoreCard({ className = '' }: HealthScoreCardProps) {
   const prevRef = useRef(72);
   const prefersReducedMotion = useReducedMotion();
 
+  // Scroll behaviour: the card starts large and prominent over the hero and
+  // transitions to its compact inline form as the user scrolls past it. On
+  // mobile (< lg) it renders in its inline position from the start.
+  const [settled, setSettled] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 1024px)');
+    setIsDesktop(mq.matches);
+    const onChange = () => setIsDesktop(mq.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
+
+  useEffect(() => {
+    const el = cardRef.current;
+    if (!el || !isDesktop) return;
+    const io = new IntersectionObserver(
+      ([entry]) => setSettled(!entry.isIntersecting),
+      { rootMargin: '0px 0px -45% 0px', threshold: 0 }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [isDesktop]);
+
   const level = levelFor(score);
 
   const setFrom = (value: number) => {
@@ -59,16 +85,17 @@ export function HealthScoreCard({ className = '' }: HealthScoreCardProps) {
 
   return (
     <div
+      ref={cardRef}
       className={cn(
-        'w-full rounded-xl border border-card-border bg-card p-5 shadow-2xl shadow-black/40 sm:w-72',
+        'w-full rounded-lg border border-card-border bg-card p-5 transition-[transform,box-shadow,opacity] duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] will-change-transform sm:w-72',
+        isDesktop && !settled
+          ? 'shadow-[0_16px_50px_rgba(232,81,10,0.22)] lg:scale-[1.06]'
+          : 'shadow-[0_10px_40px_rgba(232,81,10,0.16)]',
         className
       )}
     >
       <div className="flex items-center justify-between">
         <p className="text-sm font-semibold text-brand">Business Health Score</p>
-        <span className="rounded-full bg-brand/15 px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-widest text-foreground">
-          AI
-        </span>
       </div>
 
       <div className="mt-3 flex items-end gap-1.5">
@@ -130,11 +157,11 @@ export function HealthScoreCard({ className = '' }: HealthScoreCardProps) {
       </div>
 
       <Link
-        href="/health-checks"
-        className="mt-4 flex items-center justify-between rounded-lg border border-brand/30 bg-brand/10 px-3 py-2.5 text-xs font-semibold text-foreground transition-colors hover:border-brand/50 hover:bg-brand/20"
+        href="/health-checks#choose-your-assessment"
+        className="mt-4 flex items-center justify-between rounded-lg bg-brand px-3 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-brand-600"
       >
-        Free AI Diagnostic
-        <ArrowRight className="h-3.5 w-3.5 text-brand" />
+        Free Diagnostic
+        <ArrowRight className="h-3.5 w-3.5" />
       </Link>
     </div>
   );

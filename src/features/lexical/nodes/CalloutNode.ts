@@ -16,7 +16,7 @@ export type SerializedCalloutNode = Spread<
 >;
 
 /**
- * Custom block node — a branded callout panel used by AI-generated reports
+ * Custom block node — a branded callout panel used by diagnostic reports
  * for the top-priority findings and recommendations.
  */
 export class CalloutNode extends ElementNode {

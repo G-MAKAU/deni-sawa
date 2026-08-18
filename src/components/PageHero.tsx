@@ -23,6 +23,8 @@ interface PageHeroProps {
   dark?: boolean;
   /** Optional framed image on the right (desktop). */
   image?: PageHeroImage;
+  /** Constrains the hero image to a compact banner (max 320px desktop / 200px mobile). */
+  compactImage?: boolean;
   children?: React.ReactNode;
   className?: string;
 }
@@ -35,6 +37,7 @@ export function PageHero({
   crumbs = [],
   dark = true,
   image,
+  compactImage = false,
   children,
   className,
 }: PageHeroProps) {
@@ -94,15 +97,25 @@ export function PageHero({
 
           {image && (
             <Reveal direction="left" delay={160} className="lg:h-full">
-              <div className="relative aspect-[16/10] w-full overflow-hidden rounded-md border border-white/10 shadow-soft-xl lg:aspect-auto lg:h-full lg:min-h-[460px]">
+              <div
+                className={cn(
+                  'relative w-full overflow-hidden rounded-md border border-white/10 shadow-soft-xl',
+                  compactImage
+                    ? 'h-[200px] lg:h-[320px]'
+                    : 'aspect-[16/10] lg:aspect-auto lg:h-full lg:min-h-[460px]'
+                )}
+              >
                 <Image
                   src={image.src}
                   alt={image.alt}
                   fill
                   sizes="(max-width: 1024px) 100vw, 50vw"
-                  className="object-cover"
+                  className="object-cover object-center"
                 />
                 <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-charcoal/60 via-transparent to-transparent" />
+                {compactImage && (
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[rgba(232,81,10,0.08)] via-transparent to-transparent" />
+                )}
               </div>
             </Reveal>
           )}

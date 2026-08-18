@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 const sections = [
   {
     title: '1. Who we are',
-    body: 'Deni Sawa Partners ("we", "us") is an AI-enabled advisory and fractional business support firm. This policy explains how we collect, use and protect personal information you provide through our website, Health Checks, consultations and communications.',
+    body: 'Deni Sawa Partners ("we", "us") is a senior-level advisory and fractional business support firm. This policy explains how we collect, use and protect personal information you provide through our website, Health Checks, consultations and communications.',
   },
   {
     title: '2. Information we collect',
@@ -25,8 +25,8 @@ const sections = [
     body: 'We use your information to respond to enquiries, deliver your diagnostic Health Check report, provide advisory and learning services, and — where you have opted in — send relevant updates. We do not sell your personal information.',
   },
   {
-    title: '4. Health Check data & AI',
-    body: 'Your Health Check responses are used solely to generate your diagnostic report. Where AI is involved, your responses are processed to produce that report and are not used to train models on your behalf. Reports are confidential, private and accessible only through your unguessable report link.',
+    title: '4. Health Check data',
+    body: 'Your Health Check responses are used solely to generate your diagnostic report. Reports are confidential, private and accessible only through your unguessable report link.',
   },
   {
     title: '5. Sharing',

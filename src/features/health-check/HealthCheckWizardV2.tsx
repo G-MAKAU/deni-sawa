@@ -546,9 +546,17 @@ export function HealthCheckWizardV2({ slug }: { slug: string }) {
   if (phase === 'details') {
     return (
       <div className="mx-auto max-w-xl">
-        <div className="mb-8 text-center">
-          <span className="eyebrow">Start your assessment</span>
-          <h2 className="mt-2 font-display text-2xl font-semibold text-foreground">{check?.name}</h2>
+        <div className="mb-8">
+          <div className="flex items-center justify-between">
+            <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-brand">
+              Step 1 of {totalSections + 1}
+            </span>
+            <span className="font-mono text-[11px] text-muted-foreground">Tell us about yourself</span>
+          </div>
+          <div className="mt-2 h-[3px] w-full bg-bgalt">
+            <div className="h-[3px] bg-brand transition-all duration-300" style={{ width: `${(1 / (totalSections + 1)) * 100}%` }} />
+          </div>
+          <h2 className="mt-6 font-display text-2xl font-semibold text-foreground">{check?.name}</h2>
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
             {totalSections} sections · {questionCount} questions · about {check?.estimated_minutes ?? 15} minutes.
             Tell us where to send your private report.
@@ -640,7 +648,7 @@ export function HealthCheckWizardV2({ slug }: { slug: string }) {
             </div>
 
             <div>
-              <label className="mb-1.5 block text-[13px] font-semibold text-foreground">How should we deliver your report?</label>
+              <label className="mb-1.5 block text-[13px] font-semibold text-foreground">Preferred report delivery</label>
               <div className="grid grid-cols-3 gap-2">
                 {(
                   [

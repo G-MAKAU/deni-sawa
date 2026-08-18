@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowRight, ClipboardCheck, Sparkles, FileText, Lock, Check } from 'lucide-react';
-import { site, healthChecks } from '@/data/site';
-import { getServiceClient } from '@/lib/supabase/service';
+import { site } from '@/data/site';
+import { getActiveHealthChecks } from '@/lib/health-checks';
 import { PageHero } from '@/components/PageHero';
 import { SectionHeading } from '@/components/SectionHeading';
 import { CTASection } from '@/components/CTASection';
@@ -11,20 +11,20 @@ import { Button } from '@/components/ui/button';
 import { Reveal } from '@/components/Reveal';
 
 export const metadata: Metadata = {
-  title: 'Business & Financial Health Check | AI-Powered Assessment | Deni Sawa',
+  title: 'Business & Financial Health Check | Deni Sawa',
   description:
-    'Take our free AI-powered Business or Professional Financial Health Check and receive a diagnostic report with prioritised recommendations.',
+    'Take our free Business or Professional Financial Health Check and receive a diagnostic report with prioritised recommendations.',
   alternates: { canonical: `${site.url}/health-checks` },
 };
 
 const howItWorks = [
   { step: '01', icon: ClipboardCheck, title: 'Answer questions', description: 'A structured, confidential assessment — around 20 questions, answered section by section.' },
-  { step: '02', icon: Sparkles, title: 'AI generates your report', description: 'Claude AI turns your answers into a diagnostic report with prioritised recommendations.' },
+  { step: '02', icon: Sparkles, title: 'Your report is prepared', description: 'Your answers are analysed and a structured report is prepared, which our advisors use as the foundation for your first conversation.' },
   { step: '03', icon: FileText, title: 'Receive recommendations', description: 'A readable, actionable report you can export as PDF or Word — and take to a conversation.' },
 ];
 
 const comparison = [
-  { label: 'AI-generated diagnostic report', basic: true, full: true },
+  { label: 'Diagnostic report', basic: true, full: true },
   { label: 'Executive summary', basic: true, full: true },
   { label: 'Top 3 priority callouts', basic: true, full: true },
   { label: 'Category-by-category findings', basic: false, full: true },
@@ -33,61 +33,71 @@ const comparison = [
   { label: 'Emailed to you with a private link', basic: true, full: true },
 ];
 
-/** Cover images set on health checks in the admin (Supabase storage), keyed by slug. */
-async function getCheckImages(): Promise<Record<string, { image: string | null; minutes: number | null }>> {
-  try {
-    const supabase = getServiceClient();
-    const slugs = [
-      `${healthChecks.business.slug}-health-check`,
-      `${healthChecks.professional.slug}-health-check`,
-    ];
-    const { data } = await supabase.from('health_checks').select('slug, image_url, estimated_minutes').in('slug', slugs);
-    const map: Record<string, { image: string | null; minutes: number | null }> = {};
-    (data ?? []).forEach((c) => {
-      map[c.slug] = {
-        image: (c.image_url as string | null) ?? null,
-        minutes: (c.estimated_minutes as number | null) ?? null,
-      };
-    });
-    return map;
-  } catch {
-    return {};
-  }
-}
-
 export default async function HealthChecksPage() {
-  const images = await getCheckImages();
+  const checks = await getActiveHealthChecks();
 
   return (
     <>
-      <PageHero
-        eyebrow="Health Checks"
-        title="Understand Your Situation. Get Clarity. Take Action."
-        subtitle="Two AI-powered assessments that turn a structured set of questions into a diagnostic report — with prioritised recommendations you can act on."
-        crumbs={[{ label: 'Health Checks' }]}
-        image={{ src: '/images/health-check.jpg', alt: 'Health check assessment' }}
-      >
-        <Button asChild size="lg">
-          <Link href="/health-checks#choose-assessment">Choose Your Assessment</Link>
-        </Button>
-      </PageHero>
+      <section id="overview" className="scroll-mt-20">
+        <PageHero
+          eyebrow="Health Checks"
+          title="Understand Your Situation. Get Clarity. Take Action."
+          subtitle="Structured assessments that turn your answers into a diagnostic report — with prioritised recommendations you can act on."
+          crumbs={[{ label: 'Health Checks' }]}
+          image={{ src: '/images/health-check.jpg', alt: 'Health check assessment' }}
+          compactImage
+        >
+          <Button asChild size="lg">
+            <Link href="/health-checks#choose-your-assessment">Choose Your Assessment</Link>
+          </Button>
+        </PageHero>
+      </section>
+
+      {/* In-page quick-nav — floats at the very top while scrolling down */}
+      <section className="sticky top-0 z-30 border-b border-card-border bg-background/95 backdrop-blur-md">
+        <div className="container-lux">
+          <div className="scrollbar-hide flex items-center gap-2 overflow-x-auto py-3">
+            {[
+              { label: 'Overview', href: '#overview' },
+              ...checks.map((check) => ({ label: check.title, href: `#${check.slug}` })),
+              { label: 'How It Works', href: '#how-it-works' },
+              { label: 'What You Get', href: '#what-you-get' },
+              { label: 'Start Your Assessment', href: '#choose-your-assessment' },
+            ].map((link) => (
+              <a
+                key={link.href}
+                href={link.href}
+                className="whitespace-nowrap rounded-badge border border-card-border px-4 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:border-brand/40 hover:text-brand"
+              >
+                {link.label}
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* Entry cards */}
-      <section id="choose-assessment" className="scroll-mt-24 section-pad bg-background">
+      <section id="choose-your-assessment" className="scroll-mt-20 section-pad bg-background">
         <div className="container-lux">
           <SectionHeading
             eyebrow="Choose your assessment"
-            title="Two checks. One standard of rigour."
+            title="One standard of rigour."
           />
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            {[healthChecks.business, healthChecks.professional].map((check, i) => {
-              const slugKey = `${check.slug}-health-check`;
-              const imageSrc =
-                images[slugKey]?.image ?? (i === 0 ? '/images/business-check.jpg' : '/images/professional-check.jpg');
-              const minutes = images[slugKey]?.minutes ?? 15;
+            {checks.map((check, i) => {
+              const imageSrc = check.image_url ?? (i === 0 ? '/images/business-check.jpg' : '/images/professional-check.jpg');
+              const minutes = check.estimated_minutes;
               return (
-                <Reveal key={check.slug} delay={i * 80} className="h-full">
-                  <div className="card-elevated group flex h-full flex-col overflow-hidden">
+                <Reveal
+                  key={check.id}
+                  delay={i * 80}
+                  className="h-full"
+                  id={check.slug}
+                >
+                  <Link
+                    href={`/health-checks/${check.slug}`}
+                    className="card-elevated group flex h-full flex-col overflow-hidden"
+                  >
                     {/* Cover image */}
                     <div className="relative aspect-[16/9] w-full overflow-hidden">
                       <Image
@@ -114,22 +124,20 @@ export default async function HealthChecksPage() {
                       <h2 className="text-h3 font-semibold text-foreground">{check.title}</h2>
                       <p className="mt-3 flex-1 leading-relaxed text-muted-foreground">{check.description}</p>
                       <div className="mt-6 flex flex-wrap gap-2">
-                        {check.areas.map((area) => (
+                        {check.tags.map((area) => (
                           <span key={area} className="rounded-badge border border-card-border bg-bgalt px-3 py-1 text-xs font-medium text-foreground">
                             {area}
                           </span>
                         ))}
                       </div>
                       <div className="mt-8">
-                        <Button asChild size="lg">
-                          <Link href={`/health-checks/${slugKey}`}>
-                            Start Assessment
-                            <ArrowRight className="h-4 w-4" />
-                          </Link>
-                        </Button>
+                        <span className="inline-flex items-center gap-2 rounded-md bg-brand px-6 py-3 text-[15px] font-semibold text-white transition-colors group-hover:bg-brand-600">
+                          Start Assessment
+                          <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+                        </span>
                       </div>
                     </div>
-                  </div>
+                  </Link>
                 </Reveal>
               );
             })}
@@ -138,7 +146,7 @@ export default async function HealthChecksPage() {
       </section>
 
       {/* How it works */}
-      <section className="section-pad bg-bgalt">
+      <section id="how-it-works" className="scroll-mt-20 section-pad bg-bgalt">
         <div className="container-lux">
           <SectionHeading eyebrow="How it works" title="Three steps to clarity" />
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
@@ -159,12 +167,12 @@ export default async function HealthChecksPage() {
       </section>
 
       {/* Basic vs Full */}
-      <section className="section-pad bg-background">
+      <section id="what-you-get" className="scroll-mt-20 section-pad bg-background">
         <div className="container-lux">
           <SectionHeading
             eyebrow="What you get"
             title="Start with the free summary. Unlock the full diagnostic."
-            subtitle="Every assessment generates an AI diagnostic report immediately — the summary is free, and the full detailed report is available as a one-off upgrade."
+            subtitle="Every assessment generates a diagnostic report immediately — the summary is free, and the full detailed report is available as a one-off upgrade."
           />
           <Reveal>
             <div className="mx-auto max-w-3xl overflow-hidden rounded-lg border border-card-border bg-card">

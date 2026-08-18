@@ -32,7 +32,7 @@ export const metadata: Metadata = {
     template: '%s | Deni Sawa Partners',
   },
   description:
-    'AI-enabled fractional business support helping organisations move from Special Situations to Best-in-Class performance. Take your Business Health Check today.',
+    'Senior-level fractional business support helping organisations move from Special Situations to Best-in-Class performance. Take your Business Health Check today.',
   keywords: [
     'fractional CFO Kenya',
     'business advisory Kenya',
@@ -64,7 +64,7 @@ export const metadata: Metadata = {
       name: 'Deni Sawa Partners',
       url: site.url,
       description:
-        'AI-enabled advisory and fractional business support helping organisations move from Special Situations to Best-in-Class.',
+        'Senior-level advisory and fractional business support helping organisations move from Special Situations to Best-in-Class.',
       telephone: site.phone,
       address: {
         '@type': 'PostalAddress',
@@ -89,7 +89,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${inter.variable} ${playfair.variable} ${jetbrains.variable}`}
+      className={`${inter.variable} ${playfair.variable} ${jetbrains.variable} scroll-smooth`}
     >
       <body>
         <GoogleAnalytics />

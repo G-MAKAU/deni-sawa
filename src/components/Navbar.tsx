@@ -324,7 +324,7 @@ export function Navbar() {
             <div className="flex items-center gap-3">
               <ThemeToggle />
               <Link
-                href="/health-checks"
+                href="/health-checks#choose-your-assessment"
                 className="group relative hidden overflow-hidden rounded-none bg-brand px-6 py-3 text-[12px] font-semibold text-white shadow-[0_2px_20px_rgba(232,81,10,0.3)] transition-all duration-300 hover:shadow-[0_4px_30px_rgba(232,81,10,0.45)] hover:brightness-110 active:scale-[0.97] md:inline-flex md:items-center md:gap-2"
               >
                 <span className="relative z-10">Start Your Assessment</span>
@@ -461,7 +461,7 @@ export function Navbar() {
               </a>
             </div>
             <Button asChild size="lg" className="w-full rounded-none">
-              <Link href="/health-checks" onClick={() => setDrawerOpen(false)}>
+              <Link href="/health-checks#choose-your-assessment" onClick={() => setDrawerOpen(false)}>
                 Start Your Assessment
                 <ArrowRight className="h-4 w-4" />
               </Link>

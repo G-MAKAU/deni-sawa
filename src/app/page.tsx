@@ -14,6 +14,7 @@ import {
   Network,
 } from 'lucide-react';
 import { site, services, audiences, healthChecks, networkBenefits } from '@/data/site';
+import { getActiveHealthChecks } from '@/lib/health-checks';
 import { stats, testimonials } from '@/data/content';
 import { cn } from '@/lib/utils';
 import { Reveal } from '@/components/Reveal';
@@ -28,13 +29,14 @@ import { EditorialRow } from '@/components/EditorialRow';
 import { StatBand } from '@/components/StatBand';
 import { PullQuote } from '@/components/PullQuote';
 import { BlogCoverImage } from '@/components/blog/BlogCoverImage';
+import { HomepageSectionNav } from '@/components/homepage/HomepageSectionNav';
 import { getBlogPosts } from '@/lib/supabase/queries';
 import { Button } from '@/components/ui/button';
 
 export const metadata: Metadata = {
   title: 'Deni Sawa Partners | Fractional CFO & Business Advisory | Special Situations',
   description:
-    'AI-enabled fractional business support helping organisations move from Special Situations to Best-in-Class performance. Take your Business Health Check today.',
+    'Senior-level fractional business support helping organisations move from Special Situations to Best-in-Class performance. Take your Business Health Check today.',
   alternates: { canonical: `${site.url}/` },
   openGraph: {
     title: 'Deni Sawa Partners | Fractional CFO & Business Advisory',
@@ -60,10 +62,36 @@ export default async function HomePage() {
     insights = await getBlogPosts({ limit: 3 });
   }
 
+  // Assessment cards reflect every active health check in the system,
+  // falling back to the two canonical checks if the database is unreachable.
+  const activeChecks = await getActiveHealthChecks();
+  const checkCards =
+    activeChecks.length > 0
+      ? activeChecks.map((c) => ({
+          slug: c.slug,
+          title: c.title,
+          subtitle: c.description,
+          areas: c.tags,
+        }))
+      : [
+          {
+            slug: `${healthChecks.business.slug}-health-check`,
+            title: healthChecks.business.title,
+            subtitle: healthChecks.business.subtitle,
+            areas: healthChecks.business.areas,
+          },
+          {
+            slug: `${healthChecks.professional.slug}-health-check`,
+            title: healthChecks.professional.title,
+            subtitle: healthChecks.professional.subtitle,
+            areas: healthChecks.professional.areas,
+          },
+        ];
+
   return (
     <>
       {/* ── 01. Hero ────────────────────────────────────────── */}
-      <section className="hero-pattern relative overflow-hidden bg-charcoal text-white">
+      <section id="overview" className="hero-pattern relative overflow-hidden bg-charcoal text-white scroll-mt-20">
         <div className="container-lux section-pad">
           <div className="grid items-center gap-14 lg:grid-cols-[1fr_1fr] lg:gap-16">
             <div className="max-w-4xl">
@@ -81,14 +109,14 @@ export default async function HomePage() {
               </Reveal>
               <Reveal delay={160}>
                 <p className="mt-6 max-w-2xl text-lg leading-relaxed text-white/70 md:text-xl">
-                  AI-enabled advisory and fractional business support helping organisations recover,
+                  Senior advisors and fractional executives helping organisations recover,
                   stabilise, grow and perform at their best.
                 </p>
               </Reveal>
               <Reveal delay={240}>
                 <div className="mt-10 flex flex-wrap items-center gap-4">
                   <Button asChild size="lg">
-                    <Link href="/health-checks">
+                    <Link href="/health-checks#choose-your-assessment">
                       Start Your Assessment
                       <ArrowRight className="h-4 w-4" />
                     </Link>
@@ -147,7 +175,8 @@ export default async function HomePage() {
       </section>
 
       {/* ── 02. Choose Your Situation ───────────────────────── */}
-      <section className="section-pad bg-bgalt">
+      <HomepageSectionNav />
+      <section id="who-we-serve" className="section-pad bg-bgalt scroll-mt-20">
         <div className="container-lux">
           <SectionHeading
             eyebrow="Choose Your Situation"
@@ -160,17 +189,17 @@ export default async function HomePage() {
       </section>
 
       {/* ── 03. Diagnose ─────────────────────────────────────── */}
-      <section className="hero-pattern section-pad bg-navy text-white">
+      <section id="health-checks" className="hero-pattern section-pad bg-navy text-white scroll-mt-20">
         <div className="container-lux">
           <SectionHeading
             dark
             eyebrow="Diagnose"
-            title="Business / Professional Health Check"
-            subtitle="Two AI-powered assessments. A diagnostic report with prioritised recommendations. Start free, in minutes."
+            title="Your Health Check"
+            subtitle="Structured assessments. A prioritised diagnostic report — used by our advisors as the foundation for your first conversation. Start free, in minutes."
           />
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            {[healthChecks.business, healthChecks.professional].map((check, i) => (
+            {checkCards.map((check, i) => (
               <Reveal key={check.slug} delay={i * 80} className="h-full">
                 <div className="card-dark-panel card-dark-panel--consistent flex h-full flex-col">
                   <h3 className="text-h3 font-semibold text-white">{check.title}</h3>
@@ -187,7 +216,7 @@ export default async function HomePage() {
                   </div>
                   <div className="mt-8">
                     <Button asChild size="lg">
-                      <Link href={`/health-checks/${check.slug}-health-check`}>
+                      <Link href={`/health-checks/${check.slug}`}>
                         Start Assessment
                         <ArrowRight className="h-4 w-4" />
                       </Link>
@@ -201,7 +230,7 @@ export default async function HomePage() {
       </section>
 
       {/* ── 04. Your Journey ─────────────────────────────────── */}
-      <section className="section-pad bg-background">
+      <section id="the-journey" className="section-pad bg-background scroll-mt-20">
         <div className="container-lux">
           <SectionHeading
             eyebrow="Your Journey"
@@ -222,7 +251,7 @@ export default async function HomePage() {
       />
 
       {/* ── 05. How We Help ──────────────────────────────────── */}
-      <section className="section-pad bg-bgalt">
+      <section id="services" className="section-pad bg-bgalt scroll-mt-20">
         <div className="container-lux">
           <SectionHeading
             eyebrow="How We Help"
@@ -305,7 +334,7 @@ export default async function HomePage() {
       </section>
 
       {/* ── 06. The Deni Sawa Method™ ────────────────────────── */}
-      <section className="section-pad bg-background">
+      <section id="the-method" className="section-pad bg-background scroll-mt-20">
         <div className="container-lux">
           <SectionHeading
             eyebrow="The Method"
@@ -361,7 +390,7 @@ export default async function HomePage() {
       </section>
 
       {/* ── 08. Ecosystem ────────────────────────────────────── */}
-      <section className="section-pad bg-bgalt">
+      <section id="the-network" className="section-pad bg-bgalt scroll-mt-20">
         <div className="container-lux">
           <SectionHeading
             eyebrow="The Ecosystem"
@@ -444,7 +473,7 @@ export default async function HomePage() {
       </section>
 
       {/* ── 09. Intelligence ─────────────────────────────────── */}
-      <section className="section-pad bg-background">
+      <section id="insights" className="section-pad bg-background scroll-mt-20">
         <div className="container-lux">
           <SectionHeading
             eyebrow="Intelligence"
@@ -533,12 +562,14 @@ export default async function HomePage() {
       </section>
 
       {/* ── 10. CTA ──────────────────────────────────────────── */}
-      <CTASection
-        title="Find Your Starting Point"
-        subtitle="Wherever you are — individual, business or investor — there is a first step designed for you."
-        primary={{ label: 'Take the Health Check', href: '/health-checks' }}
-        secondary={{ label: 'Book a Conversation', href: '/contact' }}
-      />
+      <div id="get-started" className="scroll-mt-20">
+        <CTASection
+          title="Find Your Starting Point"
+          subtitle="Take the first step. One conversation can change the direction of your business."
+          primary={{ label: 'Start Your Assessment', href: '/health-checks#choose-your-assessment' }}
+          secondary={{ label: 'Book a Clarity Call', href: '/contact' }}
+        />
+      </div>
     </>
   );
 }

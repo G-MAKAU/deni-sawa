@@ -108,7 +108,7 @@ function blockBackground(node: Record<string, unknown>): string | undefined {
 /**
  * Converts a serialized Lexical EditorState into a simple block model that
  * both the PDF and Word exporters can render with brand styling. Handles every
- * node the AI reports emit — including tables — so no content is dropped.
+ * node the report generator emits — including tables — so no content is dropped.
  */
 export function lexicalStateToModel(
   state: Record<string, unknown> | string,

@@ -62,7 +62,7 @@ function hasContent(state: Record<string, unknown> | string | undefined): boolea
 
 /**
  * Shared initial config factory. `state` may be a serialized Lexical
- * EditorState JSON object (as produced by Claude) or a JSON string.
+ * EditorState JSON object (as produced by the report generator) or a JSON string.
  */
 export function buildEditorConfig({
   state,

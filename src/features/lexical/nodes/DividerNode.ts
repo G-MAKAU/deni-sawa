@@ -11,7 +11,7 @@ export type SerializedDividerNode = SerializedElementNode;
 
 /**
  * Custom block node — a full-width horizontal divider used to separate
- * major sections of an AI-generated report.
+ * major sections of a diagnostic report.
  */
 export class DividerNode extends ElementNode {
   static getType(): string {

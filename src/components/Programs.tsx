@@ -106,7 +106,7 @@ export function Programs() {
 
         <Reveal delay={200}>
           <p className="mt-10 text-center text-sm text-white/50">
-            Pricing is transparent and tailored to your situation — shared during your free first consultation.
+            Pricing is transparent and tailored to your situation — shared on your no-obligation Clarity Call.
           </p>
         </Reveal>
       </div>

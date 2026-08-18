@@ -32,7 +32,7 @@ interface LexicalRendererProps {
 }
 
 /**
- * Read-only Lexical renderer for AI-generated Health Check reports.
+ * Read-only Lexical renderer for diagnostic Health Check reports.
  * Hydrates the stored EditorState JSON and renders it with the brand theme —
  * including tables, code blocks and horizontal rules.
  */

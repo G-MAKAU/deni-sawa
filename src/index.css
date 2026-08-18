@@ -170,7 +170,7 @@
   .container-lux { @apply mx-auto w-full max-w-[1440px] px-5 sm:px-8; }
 
   /* Section rhythm */
-  .section-pad { @apply py-12 md:py-16 lg:py-24; }
+  .section-pad { @apply pb-12 pt-8 md:pb-16 md:pt-8 lg:pb-24 lg:pt-10; }
 
   /* Eyebrow label — JetBrains Mono data-label */
   .eyebrow {
