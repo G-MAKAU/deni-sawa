@@ -48,13 +48,30 @@ const ITALIC_MASK = 2;
 const UNDERLINE_MASK = 4;
 const STRIKETHROUGH_MASK = 8;
 
+/**
+ * PDF-safe text. react-pdf's built-in fonts (Helvetica/Times/Courier) encode
+ * WinAnsi (cp1252) only — glyphs like ✓, ✅, █ and emoji have no glyph and are
+ * silently dropped by the renderer. Map them to WinAnsi-safe stand-ins so no
+ * report content (checklists, score bars, status dots) disappears in exports.
+ */
+export function pdfSafeText(text: string): string {
+  return text
+    .replace(/[✓✔☑✅]/g, '[x]')
+    .replace(/[✗✘❌☐❎]/g, '[ ]')
+    .replace(/[█]/g, '#')
+    .replace(/[▓]/g, '#')
+    .replace(/[▒]/g, '-')
+    .replace(/[░]/g, '·')
+    .replace(/[🟡🟠🟢🔴⚪⚫]/g, '•');
+}
+
 function collectText(node: Record<string, unknown> | null | undefined): ReportTextRun[] {
   if (!node) return [];
   const type = node.type;
   if (type === 'text' && typeof node.text === 'string') {
     const format = (node.format as number) || 0;
     const run: ReportTextRun = {
-      text: node.text,
+      text: pdfSafeText(node.text),
       bold: Boolean(format & BOLD_MASK),
       italic: Boolean(format & ITALIC_MASK),
       underline: Boolean(format & UNDERLINE_MASK),

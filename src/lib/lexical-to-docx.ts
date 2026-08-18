@@ -71,19 +71,22 @@ function blockShading(node: Node) {
   return bg ? { type: ShadingType.CLEAR, color: 'auto' as const, fill: docxHex(bg) } : undefined;
 }
 
-/** A run or a hyperlink, carrying its target URL so it can be rebuilt with italics etc. */
-type RichChild = { kind: 'run'; run: TextRun } | { kind: 'link'; run: TextRun; url: string };
+/** A run or a hyperlink, carrying its text and options so it can be rebuilt with overrides (italics, breaks, etc.). */
+type RichChild =
+  | { kind: 'run'; text: string; options: Partial<IRunOptions> }
+  | { kind: 'link'; text: string; url: string; options: Partial<IRunOptions> };
 
 function runFor(child: RichChild, overrides: Partial<IRunOptions> = {}): RichChild {
-  if (child.kind === 'link') return { kind: 'link', url: child.url, run: new TextRun({ ...child.run, ...overrides }) };
-  return { kind: 'run', run: new TextRun({ ...child.run, ...overrides }) };
+  return { ...child, options: { ...child.options, ...overrides } };
 }
 
 function toDocxChild(child: RichChild): TextRun | ExternalHyperlink {
+  const textRun = run(child.text, child.options);
   if (child.kind === 'link') {
-    return new ExternalHyperlink({ link: child.url, children: [child.run] });
+    // Real clickable hyperlink in Word (orange, underlined).
+    return new ExternalHyperlink({ link: child.url, children: [textRun] });
   }
-  return child.run;
+  return textRun;
 }
 
 /** Builds styled runs from a node's inline children (text / link nodes). */
@@ -107,12 +110,11 @@ function runsFromChildren(children: Node[] | undefined): RichChild[] {
           ...(family ? { font: docxFamily(family) } : {}),
           ...(isLink ? { color: ORANGE } : {}),
         };
-        const textRun = run(child.text ?? '', options);
+        const text = child.text ?? '';
         if (isLink && child.url) {
-          // Real clickable hyperlink in Word (orange, underlined).
-          runs.push({ kind: 'link', run: textRun, url: child.url });
+          runs.push({ kind: 'link', text, url: child.url, options });
         } else {
-          runs.push({ kind: 'run', run: textRun });
+          runs.push({ kind: 'run', text, options });
         }
       } else if (child.children) {
         walk(child.children);

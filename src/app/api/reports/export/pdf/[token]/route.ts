@@ -45,10 +45,16 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
 
     const buffer = await renderToBuffer(HealthReportDocument({ model }));
 
+    // Filename = "<business> - <full name>" (falls back to a generic name).
+    const business = (session as { business_name?: string | null } | undefined)?.business_name ?? '';
+    const fullName = (session as { full_name?: string | null } | undefined)?.full_name ?? '';
+    const fileBase = [business, fullName].filter(Boolean).join(' - ') || 'deni-sawa-health-report';
+    const fileName = `${fileBase.replace(/[^\w\- ]+/g, '').replace(/\s+/g, ' ').trim()}.pdf`;
+
     return new NextResponse(new Uint8Array(buffer), {
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': 'attachment; filename="deni-sawa-health-report.pdf"',
+        'Content-Disposition': `attachment; filename="${fileName}"`,
         'Cache-Control': 'no-store',
       },
     });
