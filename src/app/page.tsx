@@ -141,7 +141,7 @@ export default async function HomePage() {
             {/* Business Health Score card — between the top content and the image on
                 small screens so the image stays fully visible; floats over the image
                 on large screens */}
-            <div className="relative lg:absolute lg:bottom-24 lg:left-1/2 lg:-ml-10 lg:z-20">
+            <div className="relative lg:absolute lg:bottom-28 lg:left-1/2 lg:-ml-10 lg:z-20">
               <HealthScoreCard />
             </div>
 
