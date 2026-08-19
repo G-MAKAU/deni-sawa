@@ -405,6 +405,7 @@ export function HealthCheckWizardV2({ slug }: { slug: string }) {
     if (sectionIndex < totalSections - 1) {
       void saveProgress();
       setSectionIndex((s) => s + 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
       void submitAnswers();
     }

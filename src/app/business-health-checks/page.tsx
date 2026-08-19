@@ -81,7 +81,7 @@ export default async function HealthChecksPage() {
         <div className="container-lux">
           <SectionHeading
             eyebrow="Choose your assessment"
-            title="One standard of rigour."
+            title=""
           />
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             {checks.map((check, i) => {
@@ -98,7 +98,12 @@ export default async function HealthChecksPage() {
                     href={`/business-health-checks/${check.slug}`}
                     className="card-elevated group flex h-full flex-col overflow-hidden"
                   >
-                    {/* Cover image */}
+                    {/* Title first */}
+                    <div className="p-7 -mt-7 pb-0">
+                      <h2 className="text-h3 mb-2 font-semibold text-foreground">{check.title}</h2>
+                    </div>
+
+                    {/* Then image */}
                     <div className="relative aspect-[16/9] w-full overflow-hidden">
                       <Image
                         src={imageSrc}
@@ -119,9 +124,8 @@ export default async function HealthChecksPage() {
                       </div>
                     </div>
 
-                    {/* Body */}
-                    <div className="flex flex-1 flex-col p-7">
-                      <h2 className="text-h3 font-semibold text-foreground">{check.title}</h2>
+                    {/* Then rest of body */}
+                    <div className="flex flex-1 flex-col p-7 pt-0">
                       <p className="mt-3 flex-1 leading-relaxed text-muted-foreground">{check.description}</p>
                       <div className="mt-6 flex flex-wrap gap-2">
                         {check.tags.map((area) => (
