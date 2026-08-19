@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { requireAdmin, adminWriteClient, jsonAdminWriteError, AdminApiError } from '@/lib/admin-auth';
+import { getServiceClient } from '@/lib/supabase/service';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,6 +12,7 @@ const createSchema = z.object({
   full_name: z.string().min(1).max(200),
   email: z.string().email(),
   role: z.enum(ADMIN_ROLES),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
   is_active: z.boolean().optional(),
 });
 
@@ -53,6 +55,21 @@ export async function POST(request: NextRequest) {
     }
 
     const supabase = adminWriteClient(context);
+    const adminAuthClient = getServiceClient().auth;
+
+    const { data: authData, error: authError } = await adminAuthClient.adminCreateUser({
+      email: parsed.data.email.toLowerCase(),
+      password: parsed.data.password,
+      email_confirm: true,
+    });
+
+    if (authError) {
+      if ((authError as { code?: string }).code === '400') {
+        return NextResponse.json({ error: 'A Supabase Auth account already exists with this email.' }, { status: 409 });
+      }
+      throw authError;
+    }
+
     const { data, error } = await supabase
       .from('admin_users')
       .insert({
@@ -71,7 +88,7 @@ export async function POST(request: NextRequest) {
       throw error;
     }
 
-    return NextResponse.json({ member: data }, { status: 201 });
+    return NextResponse.json({ member: data, authUserId: authData?.user?.id }, { status: 201 });
   } catch (error) {
     return jsonAdminWriteError(error, 'Failed to add team member');
   }

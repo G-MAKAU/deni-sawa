@@ -38,6 +38,7 @@ export function TeamClient() {
   const [addOpen, setAddOpen] = React.useState(false);
   const [newName, setNewName] = React.useState('');
   const [newEmail, setNewEmail] = React.useState('');
+  const [newPassword, setNewPassword] = React.useState('');
   const [newRole, setNewRole] = React.useState<TeamMember['role']>('support');
   const [saving, setSaving] = React.useState(false);
 
@@ -85,20 +86,26 @@ export function TeamClient() {
       toast.error('Name and email are required.');
       return;
     }
+    if (!newPassword || newPassword.length < 8) {
+      toast.error('Password must be at least 8 characters.');
+      return;
+    }
     setSaving(true);
     try {
       const { member } = await adminPost<{ member: TeamMember }>('/api/admin/team', {
         full_name: newName.trim(),
         email: newEmail.trim(),
+        password: newPassword,
         role: newRole,
       });
       setMembers((prev) => [...prev, member]);
       setAddOpen(false);
       setNewName('');
       setNewEmail('');
+      setNewPassword('');
       toast.success('Team member added');
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Failed to add team member.');
+    } catch (e: any) {
+      toast.error(e?.message ?? 'Failed to add team member.');
     } finally {
       setSaving(false);
     }
@@ -257,6 +264,10 @@ export function TeamClient() {
             <input className={INPUT_CLASS} type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="you@denisawa.co.ke" />
           </div>
           <div>
+            <label className="mb-1.5 block text-[13px] font-semibold text-[var(--a-ink2)]">Password</label>
+            <input className={INPUT_CLASS} type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Min. 8 characters" />
+          </div>
+          <div>
             <label className="mb-1.5 block text-[13px] font-semibold text-[var(--a-ink2)]">Role</label>
             <select
               value={newRole}
@@ -269,7 +280,7 @@ export function TeamClient() {
               <option value="super_admin">super_admin</option>
             </select>
             <p className="mt-1 text-xs text-[var(--a-muted)]">
-              The user must also have a Supabase Auth account with this email to sign in.
+              Creates both a Supabase Auth account and an admin profile.
             </p>
           </div>
         </div>
