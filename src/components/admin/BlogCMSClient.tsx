@@ -46,8 +46,12 @@ export function BlogCMSClient() {
   const selectedPost = posts.find((p) => p.id === selectedPostId) ?? null;
 
   const getToken = useCallback(async () => {
-    const { data } = await supabase.auth.getSession();
-    return data.session?.access_token ?? null;
+    // getUser() forces a session refresh from the server, fixing cases where
+    // the browser client hasn't yet hydrated the session from the SSR cookie.
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+    const { data: { session } } = await supabase.auth.getSession();
+    return session?.access_token ?? null;
   }, [supabase]);
 
   const loadAdminAndData = useCallback(async () => {
@@ -84,6 +88,21 @@ export function BlogCMSClient() {
 
   useEffect(() => {
     loadAdminAndData();
+
+    // Listen for auth changes (sign-in, sign-out, token refresh)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        loadAdminAndData();
+      } else if (event === 'SIGNED_OUT') {
+        setAuthState('signedOut');
+        setAdmin(null);
+        setPosts([]);
+        setSelectedPostId(null);
+        setIsCreating(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
