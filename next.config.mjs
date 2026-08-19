@@ -1,47 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // Externalize problematic ESM-only packages for Turbopack/Node runtime
-  serverExternalPackages: [
-    'pdfkit',
-    '@react-pdf/renderer',
-    'jsdom',
-    'html-encoding-sniffer',
-    '@exodus/bytes',
-    '@lexical/headless',
-    '@lexical/html',
-    '@lexical/rich-text',
-    '@lexical/list',
-    '@lexical/code',
-    '@lexical/link',
-    '@lexical/mark',
-    '@lexical/table',
-    'lexical',
-    '@lexical/selection',
-    '@lexical/utils',
-    '@lexical/clipboard',
-    '@lexical/dragdrop',
-    '@lexical/file',
-    '@lexical/hashtag',
-    '@lexical/horizontal-rule',
-    '@lexical/inline-image',
-    '@lexical/markdown',
-    '@lexical/mention',
-    '@lexical/offset',
-    '@lexical/overflow',
-    '@lexical/react',
-    '@lexical/text',
-    '@lexical/yjs',
-  ],
-  experimental: {
-    turbo: {
-      resolveAlias: {
-        'jsdom': 'jsdom',
-        'html-encoding-sniffer': 'html-encoding-sniffer',
-        '@exodus/bytes': '@exodus/bytes',
-      },
-    },
-  },
+  // pdfkit's ESM build references __dirname and breaks when bundled by
+  // Turbopack; @react-pdf/renderer resolves to its browser build. Keep both
+  // external so route handlers load the Node builds at runtime.
+  serverExternalPackages: ['pdfkit', '@react-pdf/renderer'],
   images: {
     dangerouslyAllowSVG: true,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",

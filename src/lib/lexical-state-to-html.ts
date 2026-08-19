@@ -1,4 +1,3 @@
-import { JSDOM } from 'jsdom';
 import { createHeadlessEditor } from '@lexical/headless';
 import { $generateHtmlFromNodes } from '@lexical/html';
 import { DecoratorNode, ElementNode, type Klass, type LexicalNode, type SerializedLexicalNode } from 'lexical';
@@ -10,12 +9,9 @@ import { MarkNode } from '@lexical/mark';
 import { TableNode, TableCellNode, TableRowNode } from '@lexical/table';
 import { CalloutNode } from '@/features/lexical/nodes/CalloutNode';
 import { DividerNode } from '@/features/lexical/nodes/DividerNode';
+import { Window } from 'happy-dom';
 
 type GlobalKey = 'window' | 'document' | 'NodeFilter' | 'MutationObserver' | 'HTMLElement';
-
-/* Server-safe stand-ins for nodes that can't be imported server-side (the app's
-   editor config and decorator nodes are client-bound). They only need to
-   satisfy parse/serialize/export for HTML generation. */
 
 const NAMESPACE = 'deni-sawa';
 
@@ -48,10 +44,6 @@ class ServerHorizontalRuleNode extends ElementNode {
     return true;
   }
 }
-
-/* Server-safe stand-ins for the client-only decorator nodes. They only need to
-   satisfy parse/serialize/export for HTML generation — decorate() is never
-   invoked headlessly. */
 
 type ImageLayout = 'inline' | 'square-left' | 'square-right' | 'tight-left' | 'tight-right' | 'center' | 'behind' | 'front';
 
@@ -165,7 +157,8 @@ class ServerVariableNode extends DecoratorNode<null> {
   }
 }
 
-export const SERVER_NODES: Klass<LexicalNode>[] = [  HeadingNode,
+export const SERVER_NODES: Klass<LexicalNode>[] = [
+  HeadingNode,
   QuoteNode,
   ListNode,
   ListItemNode,
@@ -188,15 +181,15 @@ export const SERVER_NODES: Klass<LexicalNode>[] = [  HeadingNode,
  * Lossless Lexical → HTML conversion for server-side use (API routes).
  *
  * Uses Lexical's official HTML serializer (`$generateHtmlFromNodes`) through a
- * headless editor backed by a temporary jsdom document, so EVERY node the
+ * headless editor backed by happy-dom (lighter, ESM-friendly), so EVERY node the
  * editor can produce — including tables, images and custom nodes — serializes
  * faithfully. This is the source of truth for `blog_posts.content_html`.
  *
- * This module must only be imported by server code: it pulls in jsdom.
+ * This module must only be imported by server code.
  */
 export function lexicalStateToHtml(state: Record<string, unknown> | string): string {
-  const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>');
-  const { window } = dom;
+  const happyWindow = new Window();
+  const { document } = happyWindow;
 
   const saved = new Map<GlobalKey, unknown>([
     ['window', (globalThis as Record<string, unknown>).window],
@@ -207,11 +200,11 @@ export function lexicalStateToHtml(state: Record<string, unknown> | string): str
   ]);
 
   try {
-    (globalThis as Record<string, unknown>).window = window;
-    (globalThis as Record<string, unknown>).document = window.document;
-    (globalThis as Record<string, unknown>).NodeFilter = window.NodeFilter;
-    (globalThis as Record<string, unknown>).MutationObserver = window.MutationObserver;
-    (globalThis as Record<string, unknown>).HTMLElement = window.HTMLElement;
+    (globalThis as Record<string, unknown>).window = happyWindow;
+    (globalThis as Record<string, unknown>).document = document;
+    (globalThis as Record<string, unknown>).NodeFilter = happyWindow.NodeFilter;
+    (globalThis as Record<string, unknown>).MutationObserver = happyWindow.MutationObserver;
+    (globalThis as Record<string, unknown>).HTMLElement = happyWindow.HTMLElement;
 
     const editor = createHeadlessEditor({
       namespace: NAMESPACE,
@@ -227,6 +220,6 @@ export function lexicalStateToHtml(state: Record<string, unknown> | string): str
     return editor.read(() => $generateHtmlFromNodes(editor));
   } finally {
     for (const [key, value] of saved) (globalThis as Record<string, unknown>)[key] = value;
-    dom.window.close();
+    happyWindow.close();
   }
 }

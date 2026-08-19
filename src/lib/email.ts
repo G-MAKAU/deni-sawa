@@ -23,6 +23,7 @@ export interface EmailSendPayload {
   templateKey?: string;
   subject: string;
   html: string;
+  text?: string;
   variables?: Record<string, unknown>;
   replyTo?: string;
   reportId?: string;
@@ -53,6 +54,24 @@ export function renderTemplateText(template: string, variables: Record<string, u
 /** Renders a template's HTML body (already-generated body_html cache). */
 export function renderTemplateHtml(bodyHtml: string | null | undefined, variables: Record<string, unknown>): string {
   return renderTemplateText(bodyHtml ?? '', variables);
+}
+
+/**
+ * Generates a plain-text version from HTML for multipart emails.
+ */
+export function htmlToText(html: string): string {
+  return html
+    .replace(/<style[\s\S]*?<\/style>/gi, '')
+    .replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/<[^>]+>/g, '\n')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&/g, '&')
+    .replace(/</g, '<')
+    .replace(/>/g, '>')
+    .replace(/"/g, '"')
+    .replace(/'/g, "'")
+    .replace(/\n\s*\n/g, '\n\n')
+    .trim();
 }
 
 /**
@@ -236,6 +255,7 @@ export async function sendEmail(payload: EmailSendPayload): Promise<EmailSendRes
         to: payload.toName ? `"${payload.toName}" <${payload.to}>` : payload.to,
         subject: payload.subject,
         html: payload.html,
+        text: payload.text,
       });
       return { ok: true, messageId: info.messageId };
     } catch (error) {
@@ -313,6 +333,7 @@ export async function sendTemplatedEmail(
   const subject = renderTemplateText(template.subject, variables);
   const previewText = renderTemplateText(template.preview_text ?? '', variables).trim() || undefined;
   const body = buildBrandedEmailHtml(renderTemplateHtml(template.body_html, variables), previewText);
+  const text = htmlToText(body);
 
   const result = await sendEmail({
     to,
@@ -320,6 +341,7 @@ export async function sendTemplatedEmail(
     templateKey: template.template_key,
     subject,
     html: body,
+    text,
     variables,
     replyTo: template.reply_to ?? undefined,
     fromName: template.from_name,
