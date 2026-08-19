@@ -337,6 +337,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                     {admin.role.replace('_', ' ')}
                   </span>
                 </button>
+                {/*
                 <button
                   type="button"
                   onClick={() => setAccountOpen(true)}
@@ -346,6 +347,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                 >
                   <Settings className="h-4 w-4" />
                 </button>
+                */}
                 <button
                   type="button"
                   onClick={handleLogout}
