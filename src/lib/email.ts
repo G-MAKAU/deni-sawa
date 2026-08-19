@@ -58,10 +58,15 @@ export function renderTemplateHtml(bodyHtml: string | null | undefined, variable
 /**
  * Branded email shell — table layout with inline CSS (email-client safe).
  * The `juice` package inlines the stylesheet so no `<style>` block survives.
+ * `previewText` (optional) renders as a hidden preheader inside the body cell.
  */
-export function buildBrandedEmailHtml(bodyHtml: string): string {
+export function buildBrandedEmailHtml(bodyHtml: string, previewText?: string): string {
   const siteUrl = resolveSiteUrl();
   const year = new Date().getFullYear();
+
+  const preheader = previewText?.trim()
+    ? `<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;">${previewText.trim()}</div>\n`
+    : '';
 
   const html = `<!DOCTYPE html>
 <html lang="en">
@@ -105,7 +110,7 @@ export function buildBrandedEmailHtml(bodyHtml: string): string {
           />
           <div class="ds-tagline">Partners</div>
         </td></tr>
-        <tr><td class="ds-body">${bodyHtml}</td></tr>
+        <tr><td class="ds-body">${preheader}${bodyHtml}</td></tr>
         <tr><td class="ds-footer">
           <p style="margin:0 0 8px;">Deni Sawa Partners · Financial coaching, advisory &amp; debt solutions.</p>
           <p style="margin:0 0 8px;">Nairobi, Kenya</p>
@@ -306,7 +311,8 @@ export async function sendTemplatedEmail(
   const { template, to, toName, variables = {}, reportId, sessionId } = options;
 
   const subject = renderTemplateText(template.subject, variables);
-  const body = buildBrandedEmailHtml(renderTemplateHtml(template.body_html, variables));
+  const previewText = renderTemplateText(template.preview_text ?? '', variables).trim() || undefined;
+  const body = buildBrandedEmailHtml(renderTemplateHtml(template.body_html, variables), previewText);
 
   const result = await sendEmail({
     to,
@@ -316,6 +322,8 @@ export async function sendTemplatedEmail(
     html: body,
     variables,
     replyTo: template.reply_to ?? undefined,
+    fromName: template.from_name,
+    fromEmail: template.from_email,
     reportId,
     sessionId,
   });

@@ -15,6 +15,7 @@ const updateSchema = z.object({
   duration: z.string().min(1).max(100).optional(),
   level: z.string().min(1).max(100).optional(),
   description: z.string().max(2000).nullable().optional(),
+  image_url: z.string().max(500).nullable().optional(),
   is_featured: z.boolean().optional(),
   is_active: z.boolean().optional(),
   sort_order: z.number().int().optional(),

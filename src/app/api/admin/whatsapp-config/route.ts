@@ -14,6 +14,7 @@ const updateSchema = z.object({
   auth_token: z.string().max(2000).nullable().optional(),
   from_number: z.string().max(120).nullable().optional(),
   is_active: z.boolean().optional(),
+  webhook_verify_token: z.string().max(200).nullable().optional(),
 });
 
 function maskSecret(value: string): string {
@@ -36,6 +37,7 @@ export async function GET(request: NextRequest) {
             account_sid: data.account_sid,
             from_number: data.from_number,
             is_active: data.is_active,
+            webhook_verify_token: data.webhook_verify_token ?? null,
             has_access_token: Boolean(data.access_token_encrypted),
             has_auth_token: Boolean(data.auth_token_encrypted),
             access_token_masked: data.access_token_encrypted ? maskSecret(data.access_token_encrypted) : null,
@@ -77,6 +79,7 @@ export async function PUT(request: NextRequest) {
     if (parsed.data.account_sid !== undefined) payload.account_sid = parsed.data.account_sid ?? null;
     if (parsed.data.from_number !== undefined) payload.from_number = parsed.data.from_number ?? null;
     if (parsed.data.is_active !== undefined) payload.is_active = parsed.data.is_active;
+    if (parsed.data.webhook_verify_token !== undefined) payload.webhook_verify_token = parsed.data.webhook_verify_token ?? null;
     if (parsed.data.access_token !== undefined && parsed.data.access_token !== null && parsed.data.access_token !== '') {
       payload.access_token_encrypted = encryptSecret(parsed.data.access_token);
     }
@@ -102,6 +105,7 @@ export async function PUT(request: NextRequest) {
         account_sid: result.account_sid,
         from_number: result.from_number,
         is_active: result.is_active,
+        webhook_verify_token: result.webhook_verify_token ?? null,
         has_access_token: Boolean(result.access_token_encrypted),
         has_auth_token: Boolean(result.auth_token_encrypted),
         access_token_masked: result.access_token_encrypted ? maskSecret(result.access_token_encrypted) : null,

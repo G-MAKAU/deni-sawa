@@ -70,6 +70,7 @@ export interface LmsCourse {
   duration: string;
   level: string;
   description: string | null;
+  image_url: string | null;
   is_featured: boolean;
 }
 
@@ -164,7 +165,7 @@ async function fetchLmsCourses() {
 
   const { data, error } = await supabase
     .from('lms_courses')
-    .select('id,title,slug,category,format,duration,level,description,is_featured')
+    .select('id,title,slug,category,format,duration,level,description,image_url,is_featured')
     .eq('is_active', true)
     .order('sort_order');
 

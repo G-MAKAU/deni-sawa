@@ -12,6 +12,8 @@ const updateSchema = z.object({
   body_text: z.string().min(1).max(1024).optional(),
   available_variables: z.array(z.string()).max(40).optional(),
   wa_template_id: z.string().max(120).nullable().optional(),
+  category: z.enum(['MARKETING', 'UTILITY', 'AUTHENTICATION']).nullable().optional(),
+  language: z.string().max(10).optional(),
   is_active: z.boolean().optional(),
   action: z.enum(['save', 'submit', 'toggle_active', 'set_wa_id']).default('save'),
 });
@@ -103,6 +105,8 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         if (parsed.data.name !== undefined) payload.name = parsed.data.name;
         if (parsed.data.body_text !== undefined) payload.body_text = parsed.data.body_text;
         if (parsed.data.available_variables !== undefined) payload.available_variables = parsed.data.available_variables;
+        if (parsed.data.category !== undefined) payload.category = parsed.data.category ?? null;
+        if (parsed.data.language !== undefined) payload.language = parsed.data.language;
         // A rejected template returns to draft once edited.
         if (status === 'rejected') {
           payload.approval_status = 'draft';

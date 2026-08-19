@@ -66,7 +66,9 @@ export default async function CheckPage({ params }: { params: Promise<{ slug: st
           >
             <ArrowLeft className="h-3.5 w-3.5" /> All Health Checks
           </Link>
-          <span className="min-w-0 truncate text-[14px] font-bold text-foreground">{intro.name}</span>
+          <span className="min-w-0 flex-1 overflow-x-auto whitespace-nowrap text-[14px] font-bold text-foreground [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {intro.name}
+          </span>
           <span className="flex shrink-0 items-center gap-1.5 font-mono text-[11px] text-muted-foreground">
             <Clock className="h-3.5 w-3.5 text-brand" /> ~{intro.estimated_minutes} min · {intro.section_count} sections
             <Lock className="ml-1 h-3.5 w-3.5 text-growth" /> Confidential

@@ -3,7 +3,6 @@ import type { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { requireAdmin, jsonAdminError } from '@/lib/admin-auth';
 import { lexicalToHtml } from '@/lib/lexical-to-html';
-import { buildBrandedEmailHtml } from '@/lib/email';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,7 +12,8 @@ const updateSchema = z.object({
   name: z.string().min(1).max(200),
   subject: z.string().min(1).max(300),
   preview_text: z.string().max(200).nullable().optional(),
-  body_lexical: z.record(z.string(), z.unknown()),
+  body_lexical: z.record(z.string(), z.unknown()).nullable().optional(),
+  body_html: z.string().nullable().optional(),
   from_name: z.string().min(1).max(200).optional(),
   from_email: z.string().email().optional(),
   reply_to: z.string().email().nullable().optional(),
@@ -59,9 +59,16 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: 'Validation failed', details: parsed.error.flatten() }, { status: 422 });
     }
 
-    // Lexical → HTML → branded wrapper (regenerated on every save).
-    const rawHtml = lexicalToHtml(parsed.data.body_lexical);
-    const bodyHtml = buildBrandedEmailHtml(rawHtml);
+    if (parsed.data.body_lexical === undefined && parsed.data.body_html === undefined) {
+      return NextResponse.json({ error: 'body_html or body_lexical is required.' }, { status: 422 });
+    }
+
+    // Single-branch branding: the stored body_html is the RAW, unbranded body.
+    // buildBrandedEmailHtml runs once at send time (see lib/email sendTemplatedEmail).
+    const rawHtml = parsed.data.body_lexical
+      ? lexicalToHtml(parsed.data.body_lexical)
+      : (parsed.data.body_html ?? '');
+    const bodyHtml = rawHtml;
 
     const { data, error } = await supabase
       .from('email_templates')
@@ -69,7 +76,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         name: parsed.data.name,
         subject: parsed.data.subject,
         preview_text: parsed.data.preview_text,
-        body_lexical: parsed.data.body_lexical,
+        body_lexical: parsed.data.body_lexical ?? null,
         body_html: bodyHtml,
         from_name: parsed.data.from_name ?? 'Deni Sawa Partners',
         from_email: parsed.data.from_email ?? 'noreply@denisawa.co.ke',

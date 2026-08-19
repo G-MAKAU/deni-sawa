@@ -13,6 +13,7 @@ const courseSchema = z.object({
   duration: z.string().min(1).max(100),
   level: z.string().min(1).max(100).default('All Levels'),
   description: z.string().max(2000).optional().nullable(),
+  image_url: z.string().max(500).nullable().optional(),
   is_featured: z.boolean().optional(),
   is_active: z.boolean().optional(),
   sort_order: z.number().int().optional(),
@@ -53,7 +54,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Validation failed', details: parsed.error.flatten() }, { status: 422 });
     }
 
-    const { title, slug, category, format, duration, level, description, is_featured, is_active, sort_order } = parsed.data;
+    const { title, slug, category, format, duration, level, description, image_url, is_featured, is_active, sort_order } = parsed.data;
 
     const { data, error } = await supabase
       .from('lms_courses')
@@ -65,6 +66,7 @@ export async function POST(request: NextRequest) {
         duration,
         level,
         description,
+        image_url,
         is_featured: is_featured ?? false,
         is_active: is_active ?? true,
         sort_order: sort_order ?? 0,

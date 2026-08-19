@@ -1,0 +1,666 @@
+'use client';
+
+import * as React from 'react';
+import {
+  Activity, BookOpen, BookMarked, Building2, CheckCircle2, ClipboardList, FileText, GraduationCap,
+  Image as ImageIcon, Info, KeyRound, LayoutDashboard, ListChecks, Lock, Mail, MailOpen,
+  MessageCircle, MessageSquare, Network, PenLine, Plug, Save, Search, Send, Settings,
+  ShieldCheck, SlidersHorizontal, Sparkles, Table2, Upload, Users, Webhook, Zap, type LucideIcon,
+} from 'lucide-react';
+import { PageHeader, StatusPill } from '@/components/admin/ui';
+import { cn } from '@/lib/utils';
+
+/* ────────────────────────────────────────────────────────────────────────────
+   Documentation content model
+   ──────────────────────────────────────────────────────────────────────────── */
+
+interface DocTip {
+  tone: 'info' | 'success' | 'warning';
+  text: string;
+}
+
+interface DocCard {
+  title: string;
+  icon?: LucideIcon;
+  description?: string;
+  body: React.ReactNode;
+}
+
+interface DocSection {
+  id: string;
+  label: string;
+  icon: LucideIcon;
+  tagline: string;
+  intro: string;
+  cards: DocCard[];
+  tips?: DocTip[];
+}
+
+function Code({ children }: { children: React.ReactNode }) {
+  return (
+    <code className="rounded bg-[var(--a-subtle)] px-1.5 py-0.5 font-mono text-[11px] text-[#c94508] dark:text-[#E8510A]">
+      {children}
+    </code>
+  );
+}
+
+function Endpoint({ method, path }: { method: 'GET' | 'POST' | 'PUT' | 'DELETE'; path: string }) {
+  const tones: Record<'GET' | 'POST' | 'PUT' | 'DELETE', string> = {
+    GET: 'bg-sky-500/10 text-sky-600 border-sky-500/25',
+    POST: 'bg-[#5A9E28]/10 text-[#3f7a1a] border-[#5A9E28]/25',
+    PUT: 'bg-amber-500/10 text-amber-700 border-amber-500/25',
+    DELETE: 'bg-red-500/10 text-red-600 border-red-500/25',
+  };
+  return (
+    <span className="inline-flex items-center gap-2 rounded-md border border-[var(--a-border)] bg-[var(--a-subtle)] px-2.5 py-1 font-mono text-[11px] text-[var(--a-ink2)]">
+      <span className={cn('rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider', tones[method])}>{method}</span>
+      {path}
+    </span>
+  );
+}
+
+const SECTIONS: DocSection[] = [
+  {
+    id: 'overview',
+    label: 'Overview',
+    icon: Sparkles,
+    tagline: 'How the admin console works',
+    intro:
+      'The Deni Sawa admin console is a protected control centre for the website. Every module is guarded by role-based access — administrators sign in with their Supabase account and every mutating action is audited with the acting admin\u2019s identity.',
+    cards: [
+      {
+        title: 'Getting started',
+        icon: KeyRound,
+        body: (
+          <div className="space-y-3 text-sm leading-relaxed text-[var(--a-text2)]">
+            <p>
+              Visit <Code>/admin/login</Code>, sign in with your Supabase account and you land on the{' '}
+              <strong className="text-[var(--a-ink2)]">Dashboard</strong>. Your role badge (Super Admin, Admin, Manager
+              or Support) is shown in the top-right and controls what you can see and do.
+            </p>
+            <ul className="space-y-1.5">
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>Use the <strong>dark / light</strong> toggle and your <strong>account</strong> modal to update your display name or change your password.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>The mobile menu (top-left) exposes the same navigation in a drawer.</span></li>
+            </ul>
+          </div>
+        ),
+      },
+      {
+        title: 'Roles & permissions',
+        icon: ShieldCheck,
+        body: (
+          <div className="space-y-3 text-sm text-[var(--a-text2)]">
+            <p>Permissions are enforced per operation (read / create / update / delete) on every API route.</p>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between rounded-lg border border-[var(--a-border-soft)] bg-[var(--a-subtle)] px-3 py-2">
+                <span className="text-[13px] font-semibold text-[var(--a-ink2)]">Super Admin</span>
+                <StatusPill tone="orange">Full access</StatusPill>
+              </div>
+              <div className="flex items-center justify-between rounded-lg border border-[var(--a-border-soft)] bg-[var(--a-subtle)] px-3 py-2">
+                <span className="text-[13px] font-semibold text-[var(--a-ink2)]">Admin</span>
+                <StatusPill tone="green">Full access</StatusPill>
+              </div>
+              <div className="flex items-center justify-between rounded-lg border border-[var(--a-border-soft)] bg-[var(--a-subtle)] px-3 py-2">
+                <span className="text-[13px] font-semibold text-[var(--a-ink2)]">Manager</span>
+                <StatusPill tone="blue">Content & templates</StatusPill>
+              </div>
+              <div className="flex items-center justify-between rounded-lg border border-[var(--a-border-soft)] bg-[var(--a-subtle)] px-3 py-2">
+                <span className="text-[13px] font-semibold text-[var(--a-ink2)]">Support</span>
+                <StatusPill tone="grey">Read & delivery</StatusPill>
+              </div>
+            </div>
+            <p className="text-xs text-[var(--a-muted)]">Manage roles on the Team page.</p>
+          </div>
+        ),
+      },
+    ],
+    tips: [
+      { tone: 'info', text: 'All changes are saved against your admin account and shown as \u201cUpdated by\u201d in most modules.' },
+      { tone: 'success', text: 'There is no separate \u201cconfiguration required\u201d step — the console works as soon as you log in.' },
+    ],
+  },
+  {
+    id: 'dashboard',
+    label: 'Dashboard',
+    icon: LayoutDashboard,
+    tagline: 'At-a-glance business health',
+    intro:
+      'The dashboard summarises the whole platform: active health checks, recent sessions, report generation activity and engagement totals.',
+    cards: [
+      {
+        title: 'Key metrics',
+        icon: Activity,
+        body: (
+          <div className="space-y-3 text-sm leading-relaxed text-[var(--a-text2)]">
+            <ul className="space-y-1.5">
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong className="text-[var(--a-ink2)]">Active checks</strong> — health checks enabled on the public site.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong className="text-[var(--a-ink2)]">Sessions</strong> — assessments started by visitors, with completion status.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong className="text-[var(--a-ink2)]">Reports</strong> — generated diagnostics, delivery method and state.</span></li>
+            </ul>
+          </div>
+        ),
+      },
+    ],
+    tips: [{ tone: 'info', text: 'Click any count to jump into the corresponding management page.' }],
+  },
+  {
+    id: 'health-checks',
+    label: 'Health Checks',
+    icon: Activity,
+    tagline: 'The assessment engine',
+    intro:
+      'Health checks are the AI-powered assessments at the heart of the platform. Each check bundles a set of sections, questions, answer prompts, delivery settings and a report template.',
+    cards: [
+      {
+        title: 'All Health Checks',
+        icon: ListChecks,
+        body: (
+          <div className="space-y-3 text-sm leading-relaxed text-[var(--a-text2)]">
+            <p>Lists every check with its status. Use the header actions to create a new check and the row actions to edit or archive it.</p>
+            <div className="space-y-2">
+              <Endpoint method="GET" path="/api/admin/health-checks" />
+              <Endpoint method="POST" path="/api/admin/health-checks" />
+              <Endpoint method="PUT" path="/api/admin/health-checks/:id" />
+            </div>
+          </div>
+        ),
+      },
+      {
+        title: 'Check editor',
+        icon: Settings,
+        body: (
+          <div className="space-y-3 text-sm leading-relaxed text-[var(--a-text2)]">
+            <p>Configures the check&rsquo;s identity: name, slug, tagline, description, image, duration estimate, audience and the AI model used for report generation.</p>
+            <ul className="space-y-1.5">
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong className="text-[var(--a-ink2)]">Provider</strong> — the LLM provider (e.g. OpenRouter) and model.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong className="text-[var(--a-ink2)]">Image</strong> — uploaded via the storage picker for the public page.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong className="text-[var(--a-ink2)]">Max tokens</strong> — caps report generation length and cost.</span></li>
+            </ul>
+          </div>
+        ),
+      },
+      {
+        title: 'Sections & questions',
+        icon: Table2,
+        body: (
+          <div className="space-y-3 text-sm leading-relaxed text-[var(--a-text2)]">
+            <p>Structure the assessment. Sections group related topics; questions are answered by visitors and feed the AI report.</p>
+            <ul className="space-y-1.5">
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>Reorder with <strong>sort order</strong>, enable or archive each item.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>Question types and options determine how answers are captured.</span></li>
+            </ul>
+          </div>
+        ),
+      },
+      {
+        title: 'Prompts',
+        icon: PenLine,
+        body: (
+          <div className="space-y-3 text-sm leading-relaxed text-[var(--a-text2)]">
+            <p>Prompts are the AI instructions that turn raw answers into a polished, branded diagnostic report. Each section can have its own prompt for more targeted analysis.</p>
+          </div>
+        ),
+      },
+      {
+        title: 'Rate limits',
+        icon: Lock,
+        body: (
+          <div className="space-y-3 text-sm leading-relaxed text-[var(--a-text2)]">
+            <p>Protect the platform and the AI budget. Configure monthly limits per IP, per email and per WhatsApp number for each check.</p>
+            <div className="space-y-2">
+              <Endpoint method="GET" path="/api/admin/rate-limits" />
+              <Endpoint method="PUT" path="/api/admin/rate-limits/:id" />
+            </div>
+          </div>
+        ),
+      },
+      {
+        title: 'Delivery',
+        icon: Send,
+        body: (
+          <div className="space-y-3 text-sm leading-relaxed text-[var(--a-text2)]">
+            <p>Decide how completed reports reach visitors. Choose the email template and WhatsApp template used for report delivery, plus consent requirements.</p>
+            <ul className="space-y-1.5">
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>Select the <strong>email template</strong> and <strong>WhatsApp template</strong> for each check.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>Delivery only succeeds when the chosen templates are active.</span></li>
+            </ul>
+          </div>
+        ),
+      },
+      {
+        title: 'Sessions',
+        icon: ClipboardList,
+        body: (
+          <div className="space-y-3 text-sm leading-relaxed text-[var(--a-text2)]">
+            <p>Every visitor assessment, in progress or complete. Inspect answers, status and contact details, and resend delivery when needed.</p>
+          </div>
+        ),
+      },
+      {
+        title: 'Reports & report editor',
+        icon: FileText,
+        body: (
+          <div className="space-y-3 text-sm leading-relaxed text-[var(--a-text2)]">
+            <p>View generated reports and open the <strong>Lexical report editor</strong> to refine any report before it is delivered. The editor supports headings, lists, checklists, callouts, dividers, tables, quotes, links and images.</p>
+            <ul className="space-y-1.5">
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>Add an image from your machine or browse the media library.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>Save edits and re-deliver to the visitor via email or WhatsApp.</span></li>
+            </ul>
+          </div>
+        ),
+      },
+    ],
+    tips: [
+      { tone: 'warning', text: 'Reports are generated with the configured AI provider — generation can take 30\u201360 seconds.' },
+      { tone: 'info', text: 'Pending migrations must be applied before new check columns are visible (see Deployment section).' },
+    ],
+  },
+  {
+    id: 'email',
+    label: 'Email Templates',
+    icon: Mail,
+    tagline: 'Branded, variable-driven emails',
+    intro:
+      'Every outbound email (report delivery, consent confirmations) uses a template. Templates store subject, preview text, sender identity and an HTML body with {{variable}} placeholders.',
+    cards: [
+      {
+        title: 'Editing a template',
+        icon: PenLine,
+        body: (
+          <div className="space-y-3 text-sm leading-relaxed text-[var(--a-text2)]">
+            <ul className="space-y-1.5">
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>Use the <strong>editor / preview</strong> tabs — the preview renders a realistic email-client mockup in light and dark mode.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>Click a <strong>variable chip</strong> or the toolbar dropdown to insert {'{{variable}}'} tokens; green chips are referenced in the body, orange ones are unused.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>Insert images by upload or from storage, and set the sender name, sender email and reply-to.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Send test email</strong> fills variables with your chosen values and delivers to a real inbox.</span></li>
+            </ul>
+            <p className="text-xs text-[var(--a-muted)]">The stored body is unbranded; the branded shell (logo, footer, colours) is applied at send time.</p>
+          </div>
+        ),
+      },
+      {
+        title: 'API reference',
+        icon: Plug,
+        body: (
+          <div className="flex flex-wrap items-center gap-2">
+            <Endpoint method="GET" path="/api/admin/email-templates" />
+            <Endpoint method="GET" path="/api/admin/email-templates/:key" />
+            <Endpoint method="PUT" path="/api/admin/email-templates/:key" />
+            <Endpoint method="POST" path="/api/admin/email-templates/test" />
+          </div>
+        ),
+      },
+      {
+        title: 'Email log',
+        icon: MailOpen,
+        body: (
+          <div className="space-y-3 text-sm leading-relaxed text-[var(--a-text2)]">
+            <p>Every send is recorded — recipient, subject, status (pending / sent / failed / bounced), SMTP message ID and the variables used. Use it to debug delivery and confirm reports reached visitors.</p>
+          </div>
+        ),
+      },
+    ],
+    tips: [
+      { tone: 'warning', text: 'SMTP must be configured via EMAIL_HOST / EMAIL_USER / EMAIL_PASS environment variables for sends to succeed.' },
+      { tone: 'success', text: 'Templates support variables in subject, preview text and body.' },
+    ],
+  },
+  {
+    id: 'whatsapp',
+    label: 'WhatsApp',
+    icon: MessageCircle,
+    tagline: 'Business messaging with Meta',
+    intro:
+      'Deliver reports over WhatsApp using pre-approved templates. The console supports Twilio, Meta Cloud API and Infobip; the Meta Cloud API is the primary path.',
+    cards: [
+      {
+        title: 'Templates & approval',
+        icon: MessageSquare,
+        body: (
+          <div className="space-y-3 text-sm leading-relaxed text-[var(--a-text2)]">
+            <p>WhatsApp only allows <strong>pre-approved templates</strong>. Each template has a status lifecycle:</p>
+            <div className="flex flex-wrap items-center gap-2 text-[12px]">
+              <StatusPill tone="grey">draft</StatusPill> <Zap className="h-3 w-3 text-[var(--a-muted)]" />
+              <StatusPill tone="amber">submitted</StatusPill> <Zap className="h-3 w-3 text-[var(--a-muted)]" />
+              <StatusPill tone="green">approved</StatusPill> <Zap className="h-3 w-3 text-[var(--a-muted)]" />
+              <StatusPill tone="red">rejected</StatusPill>
+            </div>
+            <ul className="space-y-1.5">
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>Set the <strong>category</strong> (MARKETING / UTILITY / AUTHENTICATION) and <strong>language</strong> Meta requires.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>Variables are inserted in order — Meta positions them positionally, so the order of {'{{variables}}'} in the body must match.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>Only <strong>approved</strong> templates can be activated for live delivery.</span></li>
+            </ul>
+          </div>
+        ),
+      },
+      {
+        title: 'Configuration',
+        icon: Plug,
+        body: (
+          <div className="space-y-3 text-sm leading-relaxed text-[var(--a-text2)]">
+            <p>For the Meta Cloud API supply the <strong>Phone number ID</strong> and a <strong>system user access token</strong>. Secrets are encrypted with AES-256-GCM before storage and never returned to the browser.</p>
+            <div className="space-y-2">
+              <Endpoint method="GET" path="/api/admin/whatsapp-config" />
+              <Endpoint method="PUT" path="/api/admin/whatsapp-config" />
+              <Endpoint method="POST" path="/api/admin/whatsapp-config/test" />
+            </div>
+          </div>
+        ),
+      },
+      {
+        title: 'Webhook (Meta Cloud API)',
+        icon: Webhook,
+        body: (
+          <div className="space-y-3 text-sm leading-relaxed text-[var(--a-text2)]">
+            <p>Register the webhook URL in the Meta developer app to receive delivery receipts and template approval events.</p>
+            <ul className="space-y-1.5">
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>URL: <Code>/api/whatsapp/webhook</Code> — copy it from the config page.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>Generate a <strong>verify token</strong> and paste the same value into Meta&rsquo;s Verify Token field.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>Message statuses (<Code>sent / delivered / read / failed</Code>) update the WhatsApp log automatically.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>Template approval events flip templates to approved / rejected and store the WhatsApp template ID.</span></li>
+            </ul>
+          </div>
+        ),
+      },
+      {
+        title: 'WhatsApp log',
+        icon: MessageSquare,
+        body: (
+          <div className="space-y-3 text-sm leading-relaxed text-[var(--a-text2)]">
+            <p>Every message attempt is logged with provider, status, variables and timestamps — delivered / read timestamps arrive via the webhook.</p>
+          </div>
+        ),
+      },
+    ],
+    tips: [
+      { tone: 'warning', text: 'Meta only sends template messages to numbers that have opted in. Use the 24-hour session window for free-form replies.' },
+      { tone: 'info', text: 'If the send fails with a template error, confirm the template is approved, active and its language matches the recipient\u2019s.' },
+    ],
+  },
+  {
+    id: 'blog',
+    label: 'Blog',
+    icon: PenLine,
+    tagline: 'Publish articles & insights',
+    intro:
+      'Write, categorise and publish blog posts with a full Lexical editor, cover images and SEO metadata.',
+    cards: [
+      {
+        title: 'Post management',
+        icon: FileText,
+        body: (
+          <div className="space-y-3 text-sm leading-relaxed text-[var(--a-text2)]">
+            <ul className="space-y-1.5">
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>Create posts with a <strong>Lexical editor</strong>: headings, lists, images, links and callouts.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>Set category, cover image, publish date and SEO fields.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>Toggle publish state and moderate reader comments.</span></li>
+            </ul>
+          </div>
+        ),
+      },
+    ],
+  },
+  {
+    id: 'academy',
+    label: 'Academy',
+    icon: GraduationCap,
+    tagline: 'LMS course catalogue',
+    intro:
+      'Manage the academy course catalogue shown on the public Academy page. Courses carry a title, category, format, duration, level, description and an optional cover image.',
+    cards: [
+      {
+        title: 'Courses & cover images',
+        icon: ImageIcon,
+        body: (
+          <div className="space-y-3 text-sm leading-relaxed text-[var(--a-text2)]">
+            <ul className="space-y-1.5">
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>Create and edit courses with the modal form — upload a cover image or pick one from storage.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Featured</strong> courses are highlighted; <strong>Active</strong> courses appear publicly.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>The public catalogue pulls live from the database and falls back to the static catalogue if empty.</span></li>
+            </ul>
+            <div className="space-y-2">
+              <Endpoint method="GET" path="/api/admin/academy/courses" />
+              <Endpoint method="POST" path="/api/admin/academy/courses" />
+              <Endpoint method="PUT" path="/api/admin/academy/courses/:id" />
+              <Endpoint method="DELETE" path="/api/admin/academy/courses/:id" />
+            </div>
+          </div>
+        ),
+      },
+    ],
+    tips: [{ tone: 'success', text: 'Upload images under 5MB (JPEG, PNG, GIF, WebP) from the course form.' }],
+  },
+  {
+    id: 'team',
+    label: 'Team',
+    icon: Users,
+    tagline: 'Admins & roles',
+    intro: 'Invite colleagues, assign roles and disable access. Role changes take effect on their next request.',
+    cards: [
+      {
+        title: 'Managing administrators',
+        icon: ShieldCheck,
+        body: (
+          <div className="space-y-3 text-sm leading-relaxed text-[var(--a-text2)]">
+            <ul className="space-y-1.5">
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>Invite by email — the invitee receives a sign-up / password-reset flow.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>Change roles and disable accounts inline.</span></li>
+            </ul>
+          </div>
+        ),
+      },
+    ],
+  },
+  {
+    id: 'storage',
+    label: 'Storage',
+    icon: Upload,
+    tagline: 'Images & media library',
+    intro: 'The storage manager browses every public bucket, uploads new assets, deletes stale ones and reports quota usage.',
+    cards: [
+      {
+        title: 'Working with media',
+        icon: BookMarked,
+        body: (
+          <div className="space-y-3 text-sm leading-relaxed text-[var(--a-text2)]">
+            <ul className="space-y-1.5">
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>Upload files into a folder; everything is stored in Supabase Storage.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>Any image you upload here can be picked later from the <strong>image picker</strong> in blog, email, report and academy forms.</span></li>
+            </ul>
+          </div>
+        ),
+      },
+    ],
+  },
+  {
+    id: 'settings',
+    label: 'Settings',
+    icon: SlidersHorizontal,
+    tagline: 'Site-wide behaviour',
+    intro: 'Central settings that shape public behaviour — including the consent and cookie banner used across the site.',
+    cards: [
+      {
+        title: 'What you can change',
+        icon: Settings,
+        body: (
+          <div className="space-y-3 text-sm leading-relaxed text-[var(--a-text2)]">
+            <ul className="space-y-1.5">
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Cookie / consent banner</strong> — enabled/disabled site-wide, including GA4 consent gating.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>Health check consent requirements and other behavioural toggles.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>Everything is saved through authenticated admin endpoints with audit fields.</span></li>
+            </ul>
+          </div>
+        ),
+      },
+    ],
+  },
+];
+
+/* ────────────────────────────────────────────────────────────────────────────
+   Component
+   ──────────────────────────────────────────────────────────────────────────── */
+
+const TIP_STYLES: Record<DocTip['tone'], { wrap: string; icon: LucideIcon }> = {
+  info: { wrap: 'border-sky-500/25 bg-sky-500/5 text-sky-700 dark:text-sky-300', icon: Info },
+  success: { wrap: 'border-[#5A9E28]/25 bg-[#5A9E28]/5 text-[#3f7a1a]', icon: CheckCircle2 },
+  warning: { wrap: 'border-amber-500/25 bg-amber-500/5 text-amber-700 dark:text-amber-300', icon: Info },
+};
+
+function Tip({ tip }: { tip: DocTip }) {
+  const style = TIP_STYLES[tip.tone];
+  const Icon = style.icon;
+  return (
+    <div className={cn('flex items-start gap-2.5 rounded-lg border px-4 py-3 text-[13px] leading-relaxed', style.wrap)}>
+      <Icon className="mt-0.5 h-4 w-4 shrink-0" />
+      <span>{tip.text}</span>
+    </div>
+  );
+}
+
+export function DocsClient() {
+  const [query, setQuery] = React.useState('');
+  const [activeId, setActiveId] = React.useState(SECTIONS[0].id);
+
+  const q = query.trim().toLowerCase();
+  const sections = q
+    ? SECTIONS.map((section) => ({
+        ...section,
+        cards: section.cards.filter(
+          (card) =>
+            card.title.toLowerCase().includes(q) ||
+            card.description?.toLowerCase().includes(q) ||
+            (typeof card.body === 'string' ? card.body.toLowerCase().includes(q) : true)
+        ),
+      })).filter((section) => section.cards.length > 0 || section.label.toLowerCase().includes(q) || section.tagline.toLowerCase().includes(q))
+    : SECTIONS;
+
+  const scrollTo = (id: string) => {
+    setActiveId(id);
+    document.getElementById(`doc-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  return (
+    <>
+      <PageHeader
+        title="Documentation"
+        subtitle="A complete guide to every admin module, page and API."
+        crumbs={[{ label: 'Documentation' }]}
+      />
+
+      {/* Search */}
+      <div className="relative mb-6 max-w-xl">
+        <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--a-placeholder)]" />
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search the admin guide… (e.g. webhook, template, image)"
+          className="h-11 w-full rounded-lg border border-[var(--a-border)] bg-[var(--a-card)] pl-10 pr-4 text-sm text-[var(--a-ink)] placeholder:text-[var(--a-placeholder)] focus:border-[#E8510A] focus:outline-none focus:ring-2 focus:ring-[#E8510A]/20"
+        />
+      </div>
+
+      <div className="grid gap-8 lg:grid-cols-[230px_1fr]">
+        {/* Sidebar nav */}
+        <aside className="hidden lg:block">
+          <div className="sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto rounded-lg border border-[var(--a-border)] bg-[var(--a-card)] p-2">
+            <p className="px-3 pb-1.5 pt-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--a-muted)]">On this page</p>
+            <ul className="space-y-0.5">
+              {sections.map((section) => {
+                const Icon = section.icon;
+                const active = activeId === section.id;
+                return (
+                  <li key={section.id}>
+                    <button
+                      type="button"
+                      onClick={() => scrollTo(section.id)}
+                      className={cn(
+                        'flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-left text-[13px] font-medium transition-colors',
+                        active ? 'bg-[#E8510A]/10 text-[#E8510A]' : 'text-[var(--a-text)] hover:bg-[var(--a-subtle)]'
+                      )}
+                    >
+                      <Icon className={cn('h-4 w-4 shrink-0', active ? 'text-[#E8510A]' : 'text-[var(--a-muted)]')} />
+                      {section.label}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        </aside>
+
+        {/* Content */}
+        <div className="min-w-0 space-y-10">
+          {sections.map((section) => {
+            const Icon = section.icon;
+            return (
+              <section key={section.id} id={`doc-${section.id}`} className="scroll-mt-24">
+                <div className="mb-4">
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#E8510A]/10 text-[#E8510A]">
+                      <Icon className="h-5 w-5" />
+                    </span>
+                    <div>
+                      <h2 className="font-heading text-lg font-bold text-[var(--a-ink)]">{section.label}</h2>
+                      <p className="text-xs font-medium uppercase tracking-wider text-[var(--a-muted)]">{section.tagline}</p>
+                    </div>
+                  </div>
+                  <p className="mt-3 max-w-3xl text-sm leading-relaxed text-[var(--a-text2)]">{section.intro}</p>
+                </div>
+
+                <div className="grid gap-4 xl:grid-cols-2">
+                  {section.cards.map((card) => {
+                    const CardIcon = card.icon;
+                    return (
+                      <div
+                        key={card.title}
+                        className="rounded-lg border border-[var(--a-border)] bg-[var(--a-card)] shadow-[0_1px_3px_rgba(0,0,0,0.05)]"
+                      >
+                        <header className="flex items-center gap-2.5 border-b border-[var(--a-border-soft)] px-5 py-3.5">
+                          {CardIcon && <CardIcon className="h-4 w-4 text-[#E8510A]" />}
+                          <h3 className="font-heading text-sm font-semibold text-[var(--a-ink2)]">{card.title}</h3>
+                        </header>
+                        <div className="px-5 py-4">{card.body}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {section.tips && section.tips.length > 0 && (
+                  <div className="mt-4 space-y-2.5">
+                    {section.tips.map((tip, i) => (
+                      <Tip key={i} tip={tip} />
+                    ))}
+                  </div>
+                )}
+              </section>
+            );
+          })}
+
+          {sections.length === 0 && (
+            <div className="rounded-lg border border-[var(--a-border)] bg-[var(--a-card)] px-6 py-16 text-center">
+              <Search className="mx-auto mb-3 h-8 w-8 text-[var(--a-placeholder)]" />
+              <p className="text-sm font-semibold text-[var(--a-ink2)]">No results for &ldquo;{query}&rdquo;</p>
+              <p className="mt-1 text-xs text-[var(--a-muted)]">Try a different keyword like &ldquo;webhook&rdquo;, &ldquo;template&rdquo; or &ldquo;report&rdquo;.</p>
+            </div>
+          )}
+
+          <div className="rounded-lg border border-[var(--a-border)] bg-[var(--a-card)] px-6 py-5">
+            <div className="flex items-center gap-3">
+              <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#5A9E28]/10 text-[#5A9E28]">
+                <Building2 className="h-4 w-4" />
+              </span>
+              <div>
+                <p className="text-sm font-semibold text-[var(--a-ink2)]">Deployment notes</p>
+                <p className="mt-0.5 text-xs leading-relaxed text-[var(--a-muted)]">
+                  Database schema changes live in <Code>supabase/migrations</Code>. Run <Code>supabase db push</Code> to
+                  apply pending migrations (report editing, UI copy, consent, WhatsApp Meta fields, academy images) before
+                  the new columns appear in the console. New env vars: <Code>CREDENTIALS_ENCRYPTION_KEY</Code> (already
+                  required) and the Meta webhook uses the stored verify token.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}

@@ -21,6 +21,8 @@ export interface WhatsAppTemplateRow {
   approval_status: 'draft' | 'submitted' | 'approved' | 'rejected';
   rejection_reason: string | null;
   wa_template_id: string | null;
+  category: string | null;
+  language: string | null;
   is_active: boolean;
 }
 
@@ -117,7 +119,7 @@ async function sendTwilio(creds: DecryptedCredentials, to: string, body: string,
   return { ok: true, messageId: json.sid };
 }
 
-async function sendMeta(creds: DecryptedCredentials, to: string, body: string, templateName?: string, parameters?: string[]): Promise<WhatsAppSendResult> {
+async function sendMeta(creds: DecryptedCredentials, to: string, body: string, templateName?: string, parameters?: string[], language = 'en'): Promise<WhatsAppSendResult> {
   const { phoneNumberId, accessToken } = creds;
   if (!phoneNumberId || !accessToken) return { ok: false, error: 'Meta Cloud API credentials are incomplete.' };
 
@@ -131,7 +133,7 @@ async function sendMeta(creds: DecryptedCredentials, to: string, body: string, t
       type: 'template',
       template: {
         name: templateName,
-        language: { code: 'en' },
+        language: { code: language },
         components: parameters.length ? [{ type: 'body', parameters: parameters.map((p) => ({ type: 'text', text: p })) }] : [],
       },
     };
@@ -184,16 +186,17 @@ export interface SendWhatsAppPayload {
   body: string;
   templateName?: string;
   parameters?: string[];
+  language?: string;
 }
 
 /** Dispatches to the configured WhatsApp provider. */
 export async function sendWhatsAppMessage(payload: SendWhatsAppPayload): Promise<WhatsAppSendResult> {
-  const { creds, to, body, templateName, parameters } = payload;
+  const { creds, to, body, templateName, parameters, language } = payload;
   switch (creds.provider) {
     case 'twilio':
       return sendTwilio(creds, to, body, templateName, parameters);
     case 'meta_cloud_api':
-      return sendMeta(creds, to, body, templateName, parameters);
+      return sendMeta(creds, to, body, templateName, parameters, language);
     case 'infobip':
       return sendInfobip(creds, to, body);
     default:
@@ -335,6 +338,7 @@ export async function sendTemplatedWhatsApp(
     body,
     templateName: creds.provider === 'meta_cloud_api' && template.wa_template_id ? template.template_key : undefined,
     parameters: creds.provider === 'meta_cloud_api' ? parameters : undefined,
+    language: creds.provider === 'meta_cloud_api' ? template.language ?? 'en' : undefined,
   });
 
   await logWhatsApp(supabase, {

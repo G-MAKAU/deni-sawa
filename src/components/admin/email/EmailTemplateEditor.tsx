@@ -10,6 +10,7 @@ import { adminFetch, adminPut, adminPost } from '@/lib/admin-client';
 import { SimpleHtmlEditor } from '@/features/lexical/SimpleHtmlEditor';
 import { SimpleHtmlRenderer } from '@/features/lexical/SimpleHtmlRenderer';
 import { AdminCard, AsyncButton, ErrorBanner, Field, Loading, Modal, PageHeader, Toggle } from '@/components/admin/ui';
+import { StorageImagePicker } from '@/components/admin/StorageImagePicker';
 import { cn } from '@/lib/utils';
 
 interface EmailTemplateDetail {
@@ -116,6 +117,8 @@ export function EmailTemplateEditor() {
   const [sendingTest, setSendingTest] = React.useState(false);
   const [previewKey, setPreviewKey] = React.useState(0);
   const [isPreviewSticky, setIsPreviewSticky] = React.useState(false);
+  const browseResolveRef = React.useRef<((url: string | null) => void) | null>(null);
+  const [pickerOpen, setPickerOpen] = React.useState(false);
 
   const handleUploadImage = async (file: File): Promise<string> => {
     const formData = new FormData();
@@ -130,12 +133,22 @@ export function EmailTemplateEditor() {
   };
 
   const handleBrowseImage = async (): Promise<string | null> => {
-    try {
-      const res = await adminFetch<{ url: string }>('/api/admin/media/browse');
-      return res.url ?? null;
-    } catch {
-      return null;
-    }
+    setPickerOpen(true);
+    return new Promise<string | null>((resolve) => {
+      browseResolveRef.current = resolve;
+    });
+  };
+
+  const handlePickerClose = () => {
+    setPickerOpen(false);
+    browseResolveRef.current?.(null);
+    browseResolveRef.current = null;
+  };
+
+  const handlePickerPick = (url: string) => {
+    setPickerOpen(false);
+    browseResolveRef.current?.(url);
+    browseResolveRef.current = null;
   };
 
   const handleInsertImage = async (url: string) => {
@@ -227,7 +240,8 @@ export function EmailTemplateEditor() {
       el.setSelectionRange(start + token.length, start + token.length);
       el.focus();
     } else {
-      setSubject((s) => s + token);
+      // Fallback: append into the email body (matches the SimpleHtmlEditor flow).
+      setBodyHtml((prev) => `${prev ?? ''}${token}`);
     }
   };
 
@@ -517,6 +531,8 @@ export function EmailTemplateEditor() {
           ))}
         </div>
       </Modal>
+
+      <StorageImagePicker open={pickerOpen} onClose={handlePickerClose} onSelect={handlePickerPick} />
     </>
   );
 }

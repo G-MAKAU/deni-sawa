@@ -1,13 +1,24 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Clock, Tag, ArrowRight, GraduationCap, Monitor, Users, Building2, BookOpen, BookMarked,
   type LucideIcon,
 } from 'lucide-react';
 import { Reveal } from '@/components/Reveal';
 import { academyCourses } from '@/data/content';
+import { createBrowserClient } from '@/lib/supabase/browser';
 import { cn } from '@/lib/utils';
+
+interface CatalogCourse {
+  title: string;
+  category: string;
+  format: string;
+  duration: string;
+  level: string;
+  description: string;
+  image_url?: string | null;
+}
 
 const formatIcons: Record<string, LucideIcon> = {
   'Workshop Series': Users,
@@ -16,11 +27,36 @@ const formatIcons: Record<string, LucideIcon> = {
   'On-Site Training': Building2,
 };
 
-const categories = ['All', 'Coaching', 'Wellness', 'Debt Management', 'Corporate'];
+const STATIC_COURSES: CatalogCourse[] = academyCourses.map((c) => ({ ...c, image_url: undefined }));
 
 export function AcademyCatalog() {
   const [active, setActive] = useState('All');
-  const filtered = active === 'All' ? academyCourses : academyCourses.filter((c) => c.category === active);
+  const [courses, setCourses] = useState<CatalogCourse[]>(STATIC_COURSES);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const supabase = createBrowserClient();
+        const { data, error } = await supabase
+          .from('lms_courses')
+          .select('title,category,format,duration,level,description,image_url,is_active')
+          .eq('is_active', true)
+          .order('sort_order', { ascending: true });
+        if (error) throw error;
+        const rows = (data ?? []) as CatalogCourse[];
+        if (!cancelled && rows.length > 0) setCourses(rows);
+      } catch {
+        // Keep the static catalogue as a resilient fallback.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const categories = ['All', ...Array.from(new Set(courses.map((c) => c.category).filter(Boolean)))];
+  const filtered = active === 'All' ? courses : courses.filter((c) => c.category === active);
 
   return (
     <section id="catalog" className="relative overflow-hidden py-24 lg:py-32">
@@ -75,6 +111,18 @@ export function AcademyCatalog() {
                       ? 'bg-[radial-gradient(circle_at_center,rgba(255,116,1,0.10),transparent_72%)]'
                       : 'bg-[radial-gradient(circle_at_center,rgba(45,157,120,0.10),transparent_72%)]'
                   )} />
+                  {course.image_url && (
+                    <div className="relative -mx-8 -mt-8 mb-6 h-44 overflow-hidden bg-ink-25 dark:bg-ink-800">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={course.image_url}
+                        alt={course.title}
+                        loading="lazy"
+                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/15 to-transparent" />
+                    </div>
+                  )}
                   <div className="mb-6 flex items-center justify-between">
                     <div className={cn(
                       'flex h-12 w-12 items-center justify-center rounded-2xl transition-all duration-500 group-hover:scale-110',

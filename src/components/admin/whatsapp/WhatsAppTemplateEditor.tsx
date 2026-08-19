@@ -19,10 +19,29 @@ interface WhatsAppTemplateDetail {
   approval_status: 'draft' | 'submitted' | 'approved' | 'rejected';
   rejection_reason: string | null;
   wa_template_id: string | null;
+  category: string | null;
+  language: string;
   is_active: boolean;
   updated_by_name: string | null;
   updated_at: string;
 }
+
+const META_CATEGORIES = ['MARKETING', 'UTILITY', 'AUTHENTICATION'];
+
+const META_LANGUAGES = [
+  { code: 'en', label: 'English' },
+  { code: 'sw', label: 'Kiswahili' },
+  { code: 'fr', label: 'French' },
+  { code: 'de', label: 'German' },
+  { code: 'es', label: 'Spanish' },
+  { code: 'pt', label: 'Portuguese' },
+  { code: 'ar', label: 'Arabic' },
+  { code: 'hi', label: 'Hindi' },
+  { code: 'zh_CN', label: 'Chinese (Simplified)' },
+  { code: 'it', label: 'Italian' },
+  { code: 'nl', label: 'Dutch' },
+  { code: 'tr', label: 'Turkish' },
+];
 
 const INPUT_CLASS =
   'h-11 w-full rounded-lg border border-[var(--a-border)] bg-[var(--a-subtle)] px-3.5 text-sm text-[var(--a-ink)] placeholder:text-[var(--a-placeholder)] focus:border-[#E8510A] focus:outline-none focus:ring-2 focus:ring-[#E8510A]/20';
@@ -62,6 +81,8 @@ export function WhatsAppTemplateEditor() {
   const [bodyText, setBodyText] = React.useState('');
   const [charCount, setCharCount] = React.useState(0);
   const [waTemplateId, setWaTemplateId] = React.useState('');
+  const [category, setCategory] = React.useState<string>('');
+  const [language, setLanguage] = React.useState('en');
   const [isActive, setIsActive] = React.useState(false);
   const [testVariables, setTestVariables] = React.useState<Record<string, string>>({});
   const [previewMode, setPreviewMode] = React.useState<'editor' | 'preview'>('editor');
@@ -87,6 +108,8 @@ export function WhatsAppTemplateEditor() {
         setCharCount(t.body_text.length);
         setBodyHtml(renderHighlighted(t.body_text));
         setWaTemplateId(t.wa_template_id ?? '');
+        setCategory(t.category ?? '');
+        setLanguage(t.language || 'en');
         setIsActive(t.is_active);
         setTestVariables(Object.fromEntries(t.available_variables.map((v) => [v, SAMPLE_VALUES[v] ?? `[${v}]`])));
         setTestTo('');
@@ -162,7 +185,12 @@ export function WhatsAppTemplateEditor() {
     }
     setSaving(true);
     try {
-      await adminPut(`/api/admin/whatsapp-templates/${templateKey}`, { body_text: bodyText, action: 'save' });
+      await adminPut(`/api/admin/whatsapp-templates/${templateKey}`, {
+        body_text: bodyText,
+        category: category || null,
+        language,
+        action: 'save',
+      });
       toast.success('Template saved');
       const { template: t } = await adminFetch<{ template: WhatsAppTemplateDetail }>(`/api/admin/whatsapp-templates/${templateKey}`);
       setTemplate(t);
@@ -271,6 +299,31 @@ export function WhatsAppTemplateEditor() {
               </div>
             </Field>
           )}
+          <Field label="Template category" hint="Meta requires a category for approval.">
+            <select
+              className={cn(INPUT_CLASS, 'disabled:cursor-not-allowed disabled:opacity-60')}
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              disabled={!canEdit}
+            >
+              <option value="">Select category…</option>
+              {META_CATEGORIES.map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Template language" hint="Language code sent to Meta at delivery time.">
+            <select
+              className={cn(INPUT_CLASS, 'disabled:cursor-not-allowed disabled:opacity-60')}
+              value={language}
+              onChange={(e) => setLanguage(e.target.value)}
+              disabled={!canEdit}
+            >
+              {META_LANGUAGES.map((lang) => (
+                <option key={lang.code} value={lang.code}>{lang.label}</option>
+              ))}
+            </select>
+          </Field>
         </div>
       </AdminCard>
 

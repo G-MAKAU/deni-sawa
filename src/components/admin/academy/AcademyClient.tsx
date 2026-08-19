@@ -2,10 +2,11 @@
 
 import * as React from 'react';
 import { toast } from 'sonner';
-import { Loader2, Plus, Save, Trash2 } from 'lucide-react';
-import { adminFetch, adminPost, adminPut, adminDelete } from '@/lib/admin-client';
+import { ImagePlus, Loader2, Plus, Save, Trash2, Upload, X } from 'lucide-react';
+import { adminFetch, adminPost, adminPut, adminDelete, adminUpload } from '@/lib/admin-client';
 import { useConfirm } from '@/components/admin/confirm';
 import { AdminCard, AsyncButton, EmptyState, ErrorBanner, Field, Loading, Modal, PageHeader, StatusPill, Toggle } from '@/components/admin/ui';
+import { StorageImagePicker } from '@/components/admin/StorageImagePicker';
 
 interface Course {
   id: string;
@@ -16,6 +17,7 @@ interface Course {
   duration: string;
   level: string;
   description: string | null;
+  image_url: string | null;
   is_featured: boolean;
   is_active: boolean;
   sort_order: number;
@@ -24,7 +26,7 @@ interface Course {
 const INPUT_CLASS =
   'h-11 w-full rounded-lg border border-[var(--a-border)] bg-[var(--a-subtle)] px-3.5 text-sm text-[var(--a-ink)] placeholder:text-[var(--a-placeholder)] focus:border-[#E8510A] focus:outline-none focus:ring-2 focus:ring-[#E8510A]/20';
 
-const EMPTY_FORM = { title: '', category: '', format: '', duration: '', level: 'All Levels', description: '' };
+const EMPTY_FORM = { title: '', category: '', format: '', duration: '', level: 'All Levels', description: '', image_url: '' };
 
 export function AcademyClient() {
   const confirm = useConfirm();
@@ -39,6 +41,8 @@ export function AcademyClient() {
   const [isActive, setIsActive] = React.useState(true);
   const [sortOrder, setSortOrder] = React.useState('0');
   const [saving, setSaving] = React.useState(false);
+  const [uploadingImage, setUploadingImage] = React.useState(false);
+  const [pickerOpen, setPickerOpen] = React.useState(false);
 
   const load = React.useCallback(async () => {
     try {
@@ -73,6 +77,7 @@ export function AcademyClient() {
       duration: course.duration,
       level: course.level,
       description: course.description ?? '',
+      image_url: course.image_url ?? '',
     });
     setIsFeatured(course.is_featured);
     setIsActive(course.is_active);
@@ -93,6 +98,7 @@ export function AcademyClient() {
       duration: form.duration.trim(),
       level: form.level,
       description: form.description.trim() || null,
+      image_url: form.image_url.trim() || null,
       is_featured: isFeatured,
       is_active: isActive,
       sort_order: Number(sortOrder || 0),
@@ -137,6 +143,22 @@ export function AcademyClient() {
       setCourses((prev) => prev.map((c) => (c.id === course.id ? updated : c)));
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Failed to update course.');
+    }
+  };
+
+  const handleUploadImage = async (file: File | null) => {
+    if (!file) return;
+    setUploadingImage(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await adminUpload<{ url: string }>('/api/admin/upload-image', formData);
+      setForm((f) => ({ ...f, image_url: res.url }));
+      toast.success('Image uploaded');
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Image upload failed.');
+    } finally {
+      setUploadingImage(false);
     }
   };
 
@@ -241,6 +263,65 @@ export function AcademyClient() {
               onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
             />
           </Field>
+          <Field label="Cover image" hint="Shown on the public course card. Upload or pick from storage." className="sm:col-span-2">
+            <div className="space-y-3">
+              {form.image_url ? (
+                <div className="relative overflow-hidden rounded-lg border border-[var(--a-border)]">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={form.image_url} alt="Course cover" className="h-44 w-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => setForm((f) => ({ ...f, image_url: '' }))}
+                    aria-label="Remove image"
+                    className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-lg bg-[#111111]/70 text-white transition-colors hover:bg-[#111111]/90"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => document.getElementById('academy-course-image-input')?.click()}
+                  disabled={uploadingImage}
+                  className="flex h-44 w-full flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-[var(--a-border)] bg-[var(--a-subtle)] text-[var(--a-muted)] transition-colors hover:border-[#E8510A]/40 hover:text-[#E8510A] disabled:opacity-60"
+                >
+                  {uploadingImage ? <Loader2 className="h-6 w-6 animate-spin text-[#E8510A]" /> : <ImagePlus className="h-6 w-6" />}
+                  <span className="text-[13px] font-semibold">{uploadingImage ? 'Uploading…' : 'Click to upload cover image'}</span>
+                  <span className="text-[11px]">JPEG, PNG, GIF or WebP · up to 5MB</span>
+                </button>
+              )}
+              <input
+                id="academy-course-image-input"
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  void handleUploadImage(e.target.files?.[0] ?? null);
+                  e.target.value = '';
+                }}
+              />
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => document.getElementById('academy-course-image-input')?.click()}
+                  disabled={uploadingImage}
+                  className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-[var(--a-border)] bg-[var(--a-card)] px-3 text-[12px] font-semibold text-[var(--a-text)] hover:border-[#E8510A]/40 hover:text-[#E8510A] disabled:opacity-50"
+                >
+                  <Upload className="h-3.5 w-3.5" /> Upload
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPickerOpen(true)}
+                  className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-[var(--a-border)] bg-[var(--a-card)] px-3 text-[12px] font-semibold text-[var(--a-text)] hover:border-[#E8510A]/40 hover:text-[#E8510A]"
+                >
+                  <ImagePlus className="h-3.5 w-3.5" /> Browse storage
+                </button>
+                {form.image_url && (
+                  <span className="max-w-[240px] truncate font-mono text-[10px] text-[var(--a-muted)]">{form.image_url}</span>
+                )}
+              </div>
+            </div>
+          </Field>
           <div className="flex gap-4 sm:col-span-2">
             <div className="flex flex-1 items-center justify-between rounded-lg border border-[var(--a-border-soft)] bg-[var(--a-subtle)] px-4 py-3">
               <div>
@@ -259,6 +340,8 @@ export function AcademyClient() {
           </div>
         </div>
       </Modal>
+
+      <StorageImagePicker open={pickerOpen} onClose={() => setPickerOpen(false)} onSelect={(url) => setForm((f) => ({ ...f, image_url: url }))} />
     </>
   );
 }

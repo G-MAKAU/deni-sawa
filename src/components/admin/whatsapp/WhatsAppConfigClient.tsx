@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { toast } from 'sonner';
-import { Loader2, Lock, Save, Zap } from 'lucide-react';
+import { ClipboardCopy, Loader2, Lock, RefreshCw, Save, Zap } from 'lucide-react';
 import { adminFetch, adminPut, adminPost } from '@/lib/admin-client';
 import { AdminCard, AsyncButton, ErrorBanner, Field, Loading, PageHeader, Toggle } from '@/components/admin/ui';
 import { cn } from '@/lib/utils';
@@ -15,6 +15,7 @@ interface WhatsAppConfigDetail {
   account_sid: string | null;
   from_number: string | null;
   is_active: boolean;
+  webhook_verify_token: string | null;
   has_access_token: boolean;
   has_auth_token: boolean;
   access_token_masked: string | null;
@@ -41,10 +42,29 @@ export function WhatsAppConfigClient() {
   const [phoneNumberId, setPhoneNumberId] = React.useState('');
   const [accessToken, setAccessToken] = React.useState('');
   const [fromNumber, setFromNumber] = React.useState('');
+  const [verifyToken, setVerifyToken] = React.useState('');
   const [isActive, setIsActive] = React.useState(false);
 
   const [saving, setSaving] = React.useState(false);
   const [testing, setTesting] = React.useState(false);
+
+  const webhookUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/api/whatsapp/webhook`;
+
+  const generateToken = () => {
+    const buf = new Uint8Array(18);
+    crypto.getRandomValues(buf);
+    const token = Array.from(buf, (b) => b.toString(16).padStart(2, '0')).join('');
+    setVerifyToken(token);
+  };
+
+  const copyWebhook = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success('Copied to clipboard');
+    } catch {
+      toast.error('Could not copy to clipboard');
+    }
+  };
 
   React.useEffect(() => {
     let cancelled = false;
@@ -58,6 +78,7 @@ export function WhatsAppConfigClient() {
           setAccountSid(row.account_sid ?? '');
           setPhoneNumberId(row.phone_number_id ?? '');
           setFromNumber(row.from_number ?? '');
+          setVerifyToken(row.webhook_verify_token ?? '');
           setIsActive(row.is_active);
         }
       } catch (e) {
@@ -81,6 +102,7 @@ export function WhatsAppConfigClient() {
         account_sid: accountSid || null,
         auth_token: authToken || null,
         from_number: fromNumber || null,
+        webhook_verify_token: verifyToken || null,
         is_active: isActive,
       });
       setConfig(row);
@@ -203,6 +225,54 @@ export function WhatsAppConfigClient() {
                 <p className="text-xs text-[var(--a-muted)]">Enables WhatsApp delivery to visitors</p>
               </div>
               <Toggle checked={isActive} onChange={setIsActive} label="Provider active" />
+            </div>
+          </div>
+        </AdminCard>
+
+        <AdminCard
+          title="Meta webhook"
+          subtitle="Delivers message status (delivered/read) and template approval updates from the Meta Cloud API. Configure this in the Meta developer app."
+          bodyClassName="p-4"
+        >
+          <div className="space-y-4">
+            <div className="flex items-center justify-between gap-3 rounded-lg border border-[var(--a-border)] bg-[var(--a-subtle)] px-4 py-3">
+              <div className="min-w-0">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--a-muted)]">Webhook URL</p>
+                <p className="mt-0.5 truncate font-mono text-[12px] text-[var(--a-ink2)]">{webhookUrl}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => copyWebhook(webhookUrl)}
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-[var(--a-border)] bg-[var(--a-card)] px-3 py-2 text-[12px] font-semibold text-[var(--a-text)] hover:border-[#E8510A]/40 hover:text-[#E8510A]"
+              >
+                <ClipboardCopy className="h-3.5 w-3.5" /> Copy
+              </button>
+            </div>
+
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <label className="mb-1.5 block text-[13px] font-semibold text-[var(--a-ink2)]">Verify token</label>
+                <div className="flex gap-2">
+                  <input
+                    className={cn(INPUT_CLASS, 'font-mono')}
+                    value={verifyToken}
+                    onChange={(e) => setVerifyToken(e.target.value)}
+                    placeholder="Generate or paste a shared secret"
+                  />
+                  <button
+                    type="button"
+                    onClick={generateToken}
+                    title="Generate a random token"
+                    className="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-lg border border-[var(--a-border)] bg-[var(--a-card)] px-3 text-[13px] font-semibold text-[var(--a-text)] hover:border-[#E8510A]/40 hover:text-[#E8510A]"
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                  </button>
+                </div>
+                <p className="mt-1.5 text-xs text-[var(--a-muted)]">
+                  Paste this into Meta&rsquo;s <span className="font-semibold">Verify Token</span> field when setting up the webhook. Save the
+                  configuration after changing it.
+                </p>
+              </div>
             </div>
           </div>
         </AdminCard>
