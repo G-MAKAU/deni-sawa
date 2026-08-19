@@ -4,6 +4,7 @@ import { site, services } from '@/data/site';
 import { socialLinks } from '@/components/SocialLinks';
 import { cn } from '@/lib/utils';
 import { Logo } from '@/components/Logo';
+import { CookieSettingsButton } from '@/components/CookieSettingsButton';
 
 const columns = [
   {
@@ -166,13 +167,14 @@ export function Footer() {
           <p className="text-[13px] text-white">
             © {new Date().getFullYear()} {site.name}. All rights reserved.
           </p>
-          <div className="flex items-center gap-8">
+          <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-2">
             <Link href="/privacy" className="text-[13px] text-white/40 transition-colors hover:text-white">
               Privacy Policy
             </Link>
             <Link href="/terms" className="text-[13px] text-white/40 transition-colors hover:text-white">
               Terms of Use
             </Link>
+            <CookieSettingsButton className="text-[13px] text-white/40 transition-colors hover:text-white" />
             <Link
               href="/contact"
               className="group inline-flex items-center gap-1.5 text-[13px] font-semibold text-brand transition-all hover:text-brand-400"
@@ -180,6 +182,14 @@ export function Footer() {
               Investor & Partner Enquiries
               <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
             </Link>
+          </div>
+        </div>
+        <div className="border-t border-white/[0.06]">
+          <div className="container-lux py-5 text-center">
+            <p className="text-[12px] leading-relaxed text-white/35">
+              {site.name} provides professional advisory services. Our services do not constitute regulated financial advice.
+              Governed by the laws of Kenya.
+            </p>
           </div>
         </div>
       </div>

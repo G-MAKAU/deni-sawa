@@ -284,3 +284,377 @@ Individual health check pages: slim info bar + remove intro screen + direct to Q
 Final CTA section copy updates
 
 Do not rebuild any page. Surgical edits only. Show each changed file with the specific lines modified.
+PRIVACY POLICY, TERMS OF USE & HEALTH CHECK CONSENT — DENI SAWA PARTNERS
+
+You are working on the existing Deni Sawa Partners Next.js 14 codebase. Generate legally grounded, professionally written Privacy Policy and Terms of Use pages specific to Deni Sawa Partners' services, jurisdiction, and data practices. Then integrate consent into the Health Check flow. Surgical edits only — do not rebuild existing pages.
+
+1. Privacy Policy Page — /privacy
+
+Generate a complete, professionally written Privacy Policy. It must be specific to Deni Sawa Partners — not a generic template. Every clause must reflect the actual data practices of this platform.
+
+Company Identity
+Business name:     Deni Sawa Partners
+Country:           Kenya
+Primary contact:   advisory@denisawa.co.ke
+Phone:             +254 702 448 601
+Website:           https://denisawa.co.ke
+Effective date:    [current date on generation]
+Governing Law
+Primary: Kenya Data Protection Act, 2019 (DPA 2019) and the Kenya Data Protection (General) Regulations, 2021
+Secondary: GDPR principles applied as best practice for international users
+Data Protection Officer contact: advisory@denisawa.co.ke
+Data We Collect — be specific to this platform
+
+Health Check assessments:
+
+Full name
+Business name (Business Health Check only)
+Email address
+WhatsApp number
+Assessment responses (paragraph answers, single and multi-select choices)
+IP address and user agent (for rate limiting and security)
+Time taken to complete the assessment
+Assessment start and completion timestamps
+
+Report delivery:
+
+Preferred delivery channel (email, WhatsApp, or both)
+Report access timestamp (when report URL is opened)
+Report type accessed (summary or detailed)
+
+Communications:
+
+Email correspondence via SMTP (domain mail — no third-party email provider)
+WhatsApp messages via Meta Business Cloud API
+Contact form submissions
+
+Website usage:
+
+Google Analytics 4 (GA4) data: page views, session duration, events, device type
+Cookie consent preferences
+Referral source
+
+Admin and team:
+
+Admin user accounts: name, email, role, last active timestamp
+Session activity for security (inactivity timeout enforcement)
+How We Use Data — specific clauses
+To deliver Health Check reports — assessment responses are processed to generate a structured diagnostic report. Reports are delivered to the email address or WhatsApp number provided.
+To provide fractional advisory and business support services — contact details and assessment data inform advisory engagements.
+To communicate with you — confirmation messages, report delivery, follow-up communications via email and WhatsApp.
+To improve our services — anonymised, aggregated assessment data may be used to improve diagnostic accuracy and service design. No individual is identifiable in this analysis.
+For security and fraud prevention — IP addresses and session data are used solely to enforce rate limits and prevent abuse of the assessment system.
+For analytics — website usage data via GA4 is used to understand how visitors use the site and improve the user experience.
+AI Processing — honest and specific
+
+Include a dedicated section titled "How Your Assessment Data is Processed":
+
+"When you complete a Health Check assessment, your responses are submitted to Anthropic's Claude API — a third-party AI service operated by Anthropic, PBC (USA) — to generate your diagnostic report. Your responses are processed by this service for the sole purpose of generating your report. Anthropic's data processing is governed by their privacy policy, available at anthropic.com/privacy. We do not use your assessment responses to train AI models. Your report is stored securely in our database and accessible only via your unique, private report link."
+
+Data Retention
+Data type	Retention period
+Health Check session and responses	24 months from completion date
+Health Check reports	36 months from generation date
+Email and WhatsApp logs	12 months
+Contact form submissions	24 months
+GA4 analytics data	Per GA4 default (14 months)
+Admin session logs	6 months
+
+After retention periods, data is permanently deleted from all systems including backups within 30 days of the retention date.
+
+Data Sharing — be specific
+
+We share data only with:
+
+Anthropic, PBC — assessment responses sent to Claude API for report generation only
+Meta Platforms — WhatsApp number and message content sent via Meta Business Cloud API for report delivery (only when WhatsApp delivery is selected)
+Supabase, Inc. — our database and authentication provider. Data is stored in Supabase-managed PostgreSQL infrastructure
+Google LLC — anonymised analytics data via Google Analytics 4
+Vercel, Inc. — our hosting provider. No user data is stored by Vercel beyond standard server logs
+
+We do not sell, rent, or share personal data with any third party for marketing purposes. Ever.
+
+User Rights under Kenya DPA 2019
+
+Users have the right to:
+
+Access their personal data
+Correct inaccurate data
+Delete their data (right to erasure)
+Object to processing
+Data portability
+Withdraw consent at any time
+
+To exercise any right: email advisory@denisawa.co.ke with subject line "Data Rights Request — [your name]". We will respond within 21 days as required by the Kenya DPA 2019.
+
+Cookies
+Cookie	Purpose	Duration
+ds_admin_last_active	Admin session inactivity timeout	Session
+_ga, _ga_*	Google Analytics 4	2 years
+sb-*	Supabase authentication	Session
+Cookie consent preference	Remembers your consent choice	12 months
+
+Users can withdraw cookie consent at any time via the cookie settings link in the footer.
+
+Health Check Report Links
+
+Report links (/health-checks/report/[token]) are private and unique. The token is a 64-character cryptographic random string. Anyone with the link can access the report — users are advised not to share their report link with unintended recipients.
+
+Changes to This Policy
+
+We will notify users of material changes via email (if provided) and by posting the updated policy on this page with a revised effective date. Continued use of the platform after changes constitutes acceptance.
+
+Page Design
+Clean, readable, no hero image
+Table of contents with anchor links at the top (jump to each section)
+Section headings in green 
+#5A9E28
+Last updated date prominent below the page title
+"Download as PDF" button (orange) — generates a clean PDF of the policy
+Mobile: full single-column, generous padding
+Max content width: 800px centred
+2. Terms of Use Page — /terms
+
+Generate a complete, professionally written Terms of Use document specific to Deni Sawa Partners.
+
+Sections to include
+
+1. Acceptance of Terms
+By accessing or using the Deni Sawa Partners website or completing a Health Check assessment, you agree to these Terms. If you do not agree, do not use the platform.
+
+2. About Deni Sawa Partners
+Describe the platform: strategic advisory and fractional business support. Not a law firm, accounting firm, or financial services licensee in the regulatory sense. Advisory services are professional guidance — not regulated financial advice under the Capital Markets Authority (Kenya) or any equivalent body.
+
+3. Health Check Assessments — specific terms
+
+Include all of the following:
+
+Health Check assessments are diagnostic tools designed to provide structured insight into business or personal financial situations
+Results are indicative only and do not constitute professional financial, legal, tax, or investment advice
+The diagnostic report is generated using an AI language model (Anthropic Claude) based on your responses. The accuracy and relevance of the report depends on the accuracy and completeness of your responses
+Deni Sawa Partners advisors may review reports as part of a follow-up engagement but are not obligated to do so for free summary reports
+The detailed (paid) report is for your personal or business use only — you may not resell, republish, or distribute the report
+Rate limits apply: a maximum of 5 assessments per email address, WhatsApp number, or IP address per calendar month. This limit may be adjusted at Deni Sawa Partners' discretion
+Deni Sawa Partners reserves the right to refuse, suspend, or terminate access to the assessment system for any user who attempts to abuse, circumvent, or manipulate the assessment process
+
+4. Report Access and Security
+
+Your report is accessible via a unique private link
+You are responsible for keeping your report link private
+Deni Sawa Partners cannot be held responsible for unauthorised access to a report resulting from a user sharing their report link
+Reports are stored for 36 months and then permanently deleted
+
+5. Paid Reports
+
+Detailed (full) reports require payment before delivery
+Payment terms and pricing are as listed on the platform at the time of purchase
+Refunds: if a report fails to generate due to a technical error, a full refund will be issued. No refund is available once a report has been successfully generated and delivered
+Deni Sawa Partners reserves the right to change pricing at any time
+
+6. Intellectual Property
+
+All content on this website including text, design, methodology (Deni Sawa Method™), and reports generated by the platform are the intellectual property of Deni Sawa Partners
+The Deni Sawa Method™ is a proprietary framework. Unauthorised reproduction or commercial use is prohibited
+Your assessment responses remain your own data. By submitting them, you grant Deni Sawa Partners a limited licence to process them for the purpose of generating your report and improving the diagnostic system (in anonymised, aggregated form only)
+
+7. Limitation of Liability
+
+Deni Sawa Partners provides the platform and advisory services in good faith
+We are not liable for any business decisions made in reliance on a Health Check report or any advisory engagement
+Our total liability to any user is limited to the amount paid for the service that gave rise to the claim
+We are not liable for indirect, consequential, or loss of profit claims
+
+8. WhatsApp Communication
+
+By providing your WhatsApp number, you consent to receive your Health Check report and related communications via WhatsApp
+You can opt out at any time by replying STOP to any WhatsApp message or by emailing advisory@denisawa.co.ke
+
+9. Governing Law
+
+These Terms are governed by the laws of Kenya
+Any dispute shall be subject to the exclusive jurisdiction of the courts of Nairobi, Kenya
+We will always attempt to resolve disputes amicably before any legal process
+
+10. Contact
+For any queries regarding these Terms: advisory@denisawa.co.ke
+
+Page Design
+
+Same design as Privacy Policy page — consistent layout, table of contents, green headings, last updated date, PDF download button.
+
+3. Health Check Consent Integration
+
+Update the Health Check wizard Step 1 (user details capture) to include consent before the user can begin the assessment.
+
+Step 1 form — add consent block
+
+Place the consent block below the name/email/WhatsApp fields and above the "Begin Assessment" button.
+
+┌─────────────────────────────────────────────────────────┐
+│  By starting this assessment you confirm that you have  │
+│  read and agree to our:                                 │
+│                                                         │
+│  [☐] Privacy Policy  and  Terms of Use         *       │
+│                                                         │
+│  Your responses will be used to generate your           │
+│  diagnostic report. Data is handled confidentially      │
+│  in accordance with the Kenya Data Protection           │
+│  Act, 2019.                                             │
+│                                                         │
+│  [☐] I consent to receive my report via                 │
+│      [email / WhatsApp / both — matches their           │
+│       preferred_delivery selection above]      *        │
+└─────────────────────────────────────────────────────────┘
+
+Checkbox 1 — Privacy & Terms:
+
+Label: I have read and agree to the [Privacy Policy] and [Terms of Use]
+"Privacy Policy" and "Terms of Use" are inline links opening in a new tab
+Required: true — cannot submit without checking
+Unchecked state: normal border
+Attempted submit without checking: red border + error message "You must agree to the Privacy Policy and Terms of Use to continue"
+Checkbox colour when checked: orange 
+#E8510A
+
+Checkbox 2 — Communications consent:
+
+Label dynamically updates based on preferred_delivery selection:
+email selected → "I consent to receive my report and related communications at the email address provided"
+whatsapp selected → "I consent to receive my report and related communications via WhatsApp at the number provided"
+both selected → "I consent to receive my report and related communications via email and WhatsApp at the details provided"
+Required: true
+Same validation behaviour as Checkbox 1
+
+Consent record — store in database:
+
+Add the following columns to health_check_sessions table:
+
+sql
+ALTER TABLE public.health_check_sessions
+  ADD COLUMN IF NOT EXISTS terms_agreed boolean NOT NULL DEFAULT false,
+  ADD COLUMN IF NOT EXISTS terms_agreed_at timestamptz,
+  ADD COLUMN IF NOT EXISTS terms_version text,
+  -- store which version of terms was agreed to e.g. '2026-08'
+  -- so if terms change, historical records show which version user agreed to
+  ADD COLUMN IF NOT EXISTS comms_consent boolean NOT NULL DEFAULT false,
+  ADD COLUMN IF NOT EXISTS comms_consent_at timestamptz,
+  ADD COLUMN IF NOT EXISTS consent_ip inet;
+  -- record IP at time of consent for compliance audit trail
+
+API update — POST /api/health-check/start:
+
+Add to request body schema (Zod):
+
+typescript
+terms_agreed: z.literal(true, {
+  errorMap: () => ({ message: 'You must agree to the Privacy Policy and Terms of Use' })
+}),
+comms_consent: z.literal(true, {
+  errorMap: () => ({ message: 'You must consent to receive your report' })
+})
+
+If either is false → return 400 with error message. Never create a session record without confirmed consent.
+
+On session creation — store:
+
+typescript
+terms_agreed: true,
+terms_agreed_at: new Date().toISOString(),
+terms_version: process.env.TERMS_VERSION ?? '2026-08',
+comms_consent: true,
+comms_consent_at: new Date().toISOString(),
+consent_ip: request_ip
+
+Add TERMS_VERSION=2026-08 to .env.local. Update this string whenever Privacy Policy or Terms of Use are materially changed — creates a clear audit trail of which version each user consented to.
+
+Consent confirmation — display in sessions admin viewer:
+
+In /admin/health-checks/sessions table, add two columns:
+
+"Terms agreed" — green tick or red cross
+"Comms consent" — green tick or red cross
+
+In the session detail modal (when admin clicks a row), show:
+
+Terms agreed:       ✓ Yes — [timestamp] — Version 2026-08
+Communications:     ✓ Yes — [timestamp]
+Consent IP:         [ip address]
+4. Footer Updates
+
+Add to footer — legal links row (already has Privacy Policy and Terms of Use links — verify they point to /privacy and /terms correctly)
+
+Add below the existing footer bottom bar:
+
+© 2026 Deni Sawa Partners. All rights reserved.
+Deni Sawa Partners provides professional advisory services.
+Our services do not constitute regulated financial advice.
+Governed by the laws of Kenya.
+
+Add cookie settings link in the footer bottom bar:
+
+Privacy Policy  |  Terms of Use  |  Cookie Settings  |  Investor & Partner Enquiries
+
+"Cookie Settings" opens the cookie consent modal allowing users to review and change their preferences.
+
+5. Cookie Consent Banner
+
+Implement a GDPR/Kenya DPA compliant cookie consent banner if not already present.
+
+Design:
+
+Slides up from the bottom of the screen on first visit
+Dark charcoal 
+#2C2C2C background, white text
+Max width 600px on desktop, full width on mobile, centred
+Rounded top corners 8px
+Shadow above
+
+Content:
+
+We use cookies to improve your experience and analyse site usage.
+Read our [Privacy Policy] for details.
+
+[ Accept all ]   [ Essential only ]   [ Manage preferences ]
+"Accept all" → orange button
+"Essential only" → green outline button
+"Manage preferences" → text link, opens preferences modal
+
+Preferences modal:
+
+Three toggles:
+Essential cookies (always on, cannot toggle off)
+Analytics cookies (GA4) — off by default until accepted
+Communications cookies — off by default
+
+Storage:
+
+Save preference to localStorage key ds_cookie_consent
+Value: { essential: true, analytics: boolean, comms: boolean, timestamp: ISO string, version: '2026-08' }
+Re-show banner if version in stored preference does not match current version
+
+GA4 consent mode:
+
+Only initialise GA4 if analytics: true in stored consent
+Use GA4 Consent Mode v2: set analytics_storage: 'granted' or 'denied' accordingly
+6. Environment Variable
+
+Add to .env.local:
+
+env
+TERMS_VERSION=2026-08
+
+Update this value whenever Privacy Policy or Terms of Use are materially amended.
+
+Output Order
+/app/privacy/page.tsx — full Privacy Policy page
+/app/terms/page.tsx — full Terms of Use page
+SQL migration — ALTER TABLE health_check_sessions ADD COLUMN statements
+Updated Zod schema for POST /api/health-check/start
+Updated API route /api/health-check/start with consent storage
+Updated Health Check Step 1 component with consent checkboxes
+Cookie consent banner component
+Cookie preferences modal component
+Updated footer with new legal line and cookie settings link
+Updated /admin/health-checks/sessions table and detail modal with consent columns
+
+Surgical edits only. Show each changed file with specific lines modified. No placeholder comments.

@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { ArrowLeft, ArrowRight, Check, Clock, Loader2, Lock, Mail, MessageCircle, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -175,6 +176,11 @@ export function HealthCheckWizardV2({ slug }: { slug: string }) {
   const [preferredDelivery, setPreferredDelivery] = React.useState<'email' | 'whatsapp' | 'both'>('email');
   const [reportSelection, setReportSelection] = React.useState<ReportSelection>('summary');
 
+  // Consent (required before the assessment can begin)
+  const [termsAgreed, setTermsAgreed] = React.useState(false);
+  const [commsConsent, setCommsConsent] = React.useState(false);
+  const [consentError, setConsentError] = React.useState<string | null>(null);
+
   // Payment state for paid reports.
   const [paymentAmount, setPaymentAmount] = React.useState(0);
   const [paymentPhone, setPaymentPhone] = React.useState('');
@@ -233,6 +239,8 @@ export function HealthCheckWizardV2({ slug }: { slug: string }) {
               setWhatsapp(rb.session.whatsapp ?? '');
               if (rb.session.preferred_delivery) setPreferredDelivery(rb.session.preferred_delivery);
               if (rb.session.report_selection) setReportSelection(rb.session.report_selection);
+              setTermsAgreed(rb.session.terms_agreed ?? false);
+              setCommsConsent(rb.session.comms_consent ?? false);
             }
             const saved = (rb.answers ?? {}) as Record<string, Answer>;
             setAnswers(saved);
@@ -309,6 +317,15 @@ export function HealthCheckWizardV2({ slug }: { slug: string }) {
       setError('A WhatsApp number is required for the Detailed + Advisory Call option so we can schedule your call.');
       return;
     }
+    if (!termsAgreed) {
+      setConsentError('You must agree to the Privacy Policy and Terms of Use to continue');
+      return;
+    }
+    if (!commsConsent) {
+      setConsentError('You must consent to receive your report');
+      return;
+    }
+    setConsentError(null);
 
     setPhase('submitting');
     try {
@@ -323,6 +340,8 @@ export function HealthCheckWizardV2({ slug }: { slug: string }) {
           whatsapp: whatsapp.trim(),
           preferred_delivery: preferredDelivery,
           report_selection: reportSelection,
+          terms_agreed: true,
+          comms_consent: true,
         }),
       });
       const body = await res.json();
@@ -678,6 +697,70 @@ export function HealthCheckWizardV2({ slug }: { slug: string }) {
               <p className="mt-1.5 text-xs text-muted-foreground">
                 {email.trim() && !whatsapp.trim() && 'WhatsApp delivery unlocks once you add a number.'}
               </p>
+            </div>
+
+            {/* Consent — required before the assessment can begin */}
+            <div className="rounded-lg border border-card-border bg-bgalt/50 p-4">
+              <p className="text-[13px] font-semibold text-foreground">
+                By starting this assessment you confirm that you have read and agree to our:
+              </p>
+              <div className="mt-3 space-y-2.5">
+                <label
+                  className={cn(
+                    'flex cursor-pointer items-start gap-3 rounded-lg border bg-card p-3 transition-colors',
+                    consentError && !termsAgreed ? 'border-red-500' : termsAgreed ? 'border-brand/50' : 'border-card-border'
+                  )}
+                >
+                  <input
+                    type="checkbox"
+                    checked={termsAgreed}
+                    onChange={(e) => {
+                      setTermsAgreed(e.target.checked);
+                      setConsentError(null);
+                    }}
+                    className="mt-0.5 h-4 w-4 shrink-0 accent-[#E8510A]"
+                  />
+                  <span className="text-[13px] leading-relaxed text-foreground">
+                    I have read and agree to the{' '}
+                    <Link href="/privacy" target="_blank" rel="noopener noreferrer" className="font-semibold text-brand underline underline-offset-2 hover:text-brand-600">
+                      Privacy Policy
+                    </Link>{' '}
+                    and{' '}
+                    <Link href="/terms" target="_blank" rel="noopener noreferrer" className="font-semibold text-brand underline underline-offset-2 hover:text-brand-600">
+                      Terms of Use
+                    </Link>
+                  </span>
+                </label>
+
+                <label
+                  className={cn(
+                    'flex cursor-pointer items-start gap-3 rounded-lg border bg-card p-3 transition-colors',
+                    consentError && !commsConsent ? 'border-red-500' : commsConsent ? 'border-brand/50' : 'border-card-border'
+                  )}
+                >
+                  <input
+                    type="checkbox"
+                    checked={commsConsent}
+                    onChange={(e) => {
+                      setCommsConsent(e.target.checked);
+                      setConsentError(null);
+                    }}
+                    className="mt-0.5 h-4 w-4 shrink-0 accent-[#E8510A]"
+                  />
+                  <span className="text-[13px] leading-relaxed text-foreground">
+                    {email.trim() && whatsapp.trim()
+                      ? 'I consent to receive my report and related communications via email and WhatsApp at the details provided'
+                      : whatsapp.trim()
+                        ? 'I consent to receive my report and related communications via WhatsApp at the number provided'
+                        : 'I consent to receive my report and related communications via email at the address provided'}
+                  </span>
+                </label>
+              </div>
+              <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
+                Your responses will be used to generate your diagnostic report. Data is handled confidentially in accordance
+                with the Kenya Data Protection Act, 2019.
+              </p>
+              {consentError && <p className="mt-2 text-xs font-semibold text-red-600">{consentError}</p>}
             </div>
           </div>
 

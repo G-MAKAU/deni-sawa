@@ -5,10 +5,11 @@ import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
 import { ArrowLeft, CheckCircle2, Eye, Loader2, Save } from 'lucide-react';
 import { toast } from 'sonner';
-import { adminFetch, adminPut } from '@/lib/admin-client';
+import { adminFetch, adminPut, adminUpload } from '@/lib/admin-client';
 import { LexicalEditor } from '@/features/lexical/LexicalEditor';
 import { LexicalRenderer } from '@/features/lexical/LexicalRenderer';
 import { ErrorBanner, Loading, PageHeader, StatusPill } from '@/components/admin/ui';
+import { StorageImagePicker } from '@/components/admin/StorageImagePicker';
 
 interface ReportDetail {
   id: string;
@@ -43,6 +44,9 @@ export function ReportEditor({ reportId }: ReportEditorProps) {
   const [view, setView] = React.useState<'edit' | 'preview'>('edit');
   const [saving, setSaving] = React.useState(false);
   const [savedFlash, setSavedFlash] = React.useState(false);
+  // Storage picker (Browse storage from the editor toolbar).
+  const browseResolveRef = React.useRef<((url: string | null) => void) | null>(null);
+  const [pickerOpen, setPickerOpen] = React.useState(false);
 
   const load = React.useCallback(async () => {
     setLoading(true);
@@ -61,6 +65,37 @@ export function ReportEditor({ reportId }: ReportEditorProps) {
   React.useEffect(() => {
     void load();
   }, [load]);
+
+  const handleBrowseImage = React.useCallback(() => {
+    return new Promise<string | null>((resolve) => {
+      browseResolveRef.current = resolve;
+      setPickerOpen(true);
+    });
+  }, []);
+
+  const handleUploadImage = React.useCallback(async (file: File): Promise<string> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    try {
+      const { url } = await adminUpload<{ url: string }>('/api/admin/upload-image', formData);
+      return url;
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Image upload failed.');
+      return '';
+    }
+  }, []);
+
+  const handlePickerClose = React.useCallback(() => {
+    browseResolveRef.current?.(null);
+    browseResolveRef.current = null;
+    setPickerOpen(false);
+  }, []);
+
+  const handlePickerPick = React.useCallback((publicUrl: string) => {
+    browseResolveRef.current?.(publicUrl);
+    browseResolveRef.current = null;
+    setPickerOpen(false);
+  }, []);
 
   const handleSave = async () => {
     if (!editorState) return;
@@ -165,6 +200,8 @@ export function ReportEditor({ reportId }: ReportEditorProps) {
               onChange={(state) => setEditorState(state as Record<string, unknown>)}
               placeholder="Edit the report content…"
               floatingToolbar
+              onUploadImage={handleUploadImage}
+              onBrowseImage={handleBrowseImage}
               className="min-h-0"
             />
           ) : (
@@ -182,6 +219,8 @@ export function ReportEditor({ reportId }: ReportEditorProps) {
           </div>
         )}
       </div>
+
+      <StorageImagePicker open={pickerOpen} onClose={handlePickerClose} onSelect={handlePickerPick} />
     </div>
   );
 }

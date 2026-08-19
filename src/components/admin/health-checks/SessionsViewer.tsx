@@ -9,7 +9,7 @@ import {
   flexRender,
   type ColumnDef,
 } from '@tanstack/react-table';
-import { ChevronLeft, ChevronRight, FileText, Loader2, Pencil, Search, Trash2 } from 'lucide-react';
+import { Check, ChevronLeft, ChevronRight, FileText, Loader2, Pencil, Search, Trash2, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { adminDelete, adminFetch, adminPost } from '@/lib/admin-client';
 import { useConfirm } from '@/components/admin/confirm';
@@ -27,6 +27,8 @@ interface SessionRow {
   time_taken_seconds: number | null;
   is_complete: boolean;
   report_count: number;
+  terms_agreed: boolean;
+  comms_consent: boolean;
 }
 
 interface SessionDetail {
@@ -41,6 +43,12 @@ interface SessionDetail {
   completed_at: string | null;
   time_taken_seconds: number | null;
   is_complete: boolean;
+  terms_agreed: boolean;
+  terms_agreed_at: string | null;
+  terms_version: string | null;
+  comms_consent: boolean;
+  comms_consent_at: string | null;
+  consent_ip: string | null;
 }
 
 interface AnswerGroupQuestion {
@@ -72,6 +80,14 @@ interface SessionReport {
 }
 
 const PAGE_SIZE_DEFAULT = 20;
+
+function ConsentMark({ agreed }: { agreed: boolean }) {
+  return agreed ? (
+    <Check className="h-4 w-4 text-[#5A9E28]" aria-label="Yes" />
+  ) : (
+    <X className="h-4 w-4 text-red-500" aria-label="No" />
+  );
+}
 
 /** Builds the list of page numbers with ellipsis markers for wide ranges. */
 function getPageList(current: number, total: number): Array<number | '…'> {
@@ -221,6 +237,16 @@ export function SessionsViewer() {
         accessorKey: 'report_count',
         header: 'Reports',
         cell: ({ getValue }) => <span className="font-semibold">{getValue() as number}</span>,
+      },
+      {
+        accessorKey: 'terms_agreed',
+        header: 'Terms agreed',
+        cell: ({ getValue }) => <ConsentMark agreed={getValue() as boolean} />,
+      },
+      {
+        accessorKey: 'comms_consent',
+        header: 'Comms consent',
+        cell: ({ getValue }) => <ConsentMark agreed={getValue() as boolean} />,
       },
       {
         id: 'actions',
@@ -456,6 +482,31 @@ export function SessionsViewer() {
                 <span className="text-[var(--a-muted)]">Status:</span>{' '}
                 <StatusPill tone={detail.is_complete ? 'green' : 'amber'}>{detail.is_complete ? 'Complete' : 'In progress'}</StatusPill>
               </p>
+            </div>
+
+            <div className="rounded-lg border border-[var(--a-border-soft)] bg-[var(--a-subtle)] p-4 text-sm">
+              <p className="mb-2 text-xs font-bold uppercase tracking-wider text-[var(--a-muted)]">Consent</p>
+              <div className="space-y-1.5">
+                <p>
+                  <span className="text-[var(--a-muted)]">Terms agreed:</span>{' '}
+                  <span className={detail.terms_agreed ? 'font-semibold text-[#5A9E28]' : 'font-semibold text-red-600'}>
+                    {detail.terms_agreed ? '✓ Yes' : '✗ No'}
+                  </span>
+                  {detail.terms_agreed_at && ` — ${format(new Date(detail.terms_agreed_at), 'd MMM yyyy, HH:mm')}`}
+                  {detail.terms_version && ` — Version ${detail.terms_version}`}
+                </p>
+                <p>
+                  <span className="text-[var(--a-muted)]">Communications:</span>{' '}
+                  <span className={detail.comms_consent ? 'font-semibold text-[#5A9E28]' : 'font-semibold text-red-600'}>
+                    {detail.comms_consent ? '✓ Yes' : '✗ No'}
+                  </span>
+                  {detail.comms_consent_at && ` — ${format(new Date(detail.comms_consent_at), 'd MMM yyyy, HH:mm')}`}
+                </p>
+                <p>
+                  <span className="text-[var(--a-muted)]">Consent IP:</span>{' '}
+                  <span className="font-mono text-[var(--a-ink2)]">{detail.consent_ip ?? '—'}</span>
+                </p>
+              </div>
             </div>
 
             {reports.length > 0 && (

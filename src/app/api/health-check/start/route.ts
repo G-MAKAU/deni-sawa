@@ -15,6 +15,12 @@ const startSchema = z.object({
   whatsapp: z.string().trim().max(40).optional().or(z.literal('')),
   preferred_delivery: z.enum(['email', 'whatsapp', 'both']).optional(),
   report_selection: z.enum(['summary', 'detailed', 'detailed_call']).optional(),
+  terms_agreed: z.literal(true, {
+    message: 'You must agree to the Privacy Policy and Terms of Use',
+  }),
+  comms_consent: z.literal(true, {
+    message: 'You must consent to receive your report',
+  }),
 });
 
 function parseIp(request: NextRequest): string | null {
@@ -33,7 +39,15 @@ export async function POST(request: NextRequest) {
 
   const parsed = startSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: 'Validation failed', details: parsed.error.flatten() }, { status: 422 });
+    // Consent is mandatory — surface the specific missing consent as a 400 so
+    // the client can highlight the checkbox. A session is never created without it.
+    const details = parsed.error.flatten();
+    const termsError = details.fieldErrors.terms_agreed?.[0];
+    const commsError = details.fieldErrors.comms_consent?.[0];
+    if (termsError || commsError) {
+      return NextResponse.json({ error: termsError ?? commsError }, { status: 400 });
+    }
+    return NextResponse.json({ error: 'Validation failed', details }, { status: 422 });
   }
 
   try {
@@ -107,6 +121,12 @@ export async function POST(request: NextRequest) {
         payment_status: requiresPayment ? 'pending' : 'none',
         ip_address: ipAddress,
         user_agent: request.headers.get('user-agent'),
+        terms_agreed: true,
+        terms_agreed_at: new Date().toISOString(),
+        terms_version: process.env.TERMS_VERSION ?? '2026-08',
+        comms_consent: true,
+        comms_consent_at: new Date().toISOString(),
+        consent_ip: ipAddress,
       })
       .select()
       .single();

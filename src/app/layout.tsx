@@ -3,6 +3,7 @@ import '@/index.css';
 import { AppShell } from './AppShell';
 import { Inter, Playfair_Display, JetBrains_Mono } from 'next/font/google';
 import { GoogleAnalytics } from '@/components/GoogleAnalytics';
+import { CookieConsent } from '@/components/CookieConsent';
 import { site } from '@/data/site';
 
 const inter = Inter({
@@ -94,6 +95,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <GoogleAnalytics />
         <AppShell>{children}</AppShell>
+        <CookieConsent />
       </body>
     </html>
   );

@@ -627,3 +627,27 @@
 .animate-chat-in {
   animation: chat-in 0.25s ease-out both;
 }
+
+/* Legal documents (Privacy Policy / Terms of Use) — PDF download via print.
+   The browser print dialog only renders the .print-area; everything else
+   (navbar, footer, chat widget, cookie banner) is hidden. */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .print-area,
+  .print-area * {
+    visibility: visible;
+  }
+  .print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    padding: 0;
+    margin: 0;
+  }
+  .no-print {
+    display: none !important;
+  }
+}
