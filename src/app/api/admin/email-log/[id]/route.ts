@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { requireAdmin, jsonAdminError } from '@/lib/admin-auth';
+import { requireAdmin, adminWriteClient, jsonAdminError } from '@/lib/admin-auth';
 import { sendEmail } from '@/lib/email';
 
 export const dynamic = 'force-dynamic';
@@ -16,7 +16,8 @@ async function loadEntry(supabase: Awaited<ReturnType<typeof requireAdmin>>['sup
 /** Re-sends the stored email for a log entry and updates that row in place. */
 export async function POST(request: NextRequest, context: RouteContext) {
   try {
-    const { supabase } = await requireAdmin(request, 'update');
+    const adminCtx = await requireAdmin(request, 'update');
+    const supabase = adminWriteClient(adminCtx);
     const { id } = await context.params;
 
     const entry = await loadEntry(supabase, id);
@@ -75,7 +76,8 @@ export async function POST(request: NextRequest, context: RouteContext) {
 /** Deletes a single email log entry. */
 export async function DELETE(request: NextRequest, context: RouteContext) {
   try {
-    const { supabase } = await requireAdmin(request, 'delete');
+    const adminCtx = await requireAdmin(request, 'delete');
+    const supabase = adminWriteClient(adminCtx);
     const { id } = await context.params;
 
     const { error } = await supabase.from('email_log').delete().eq('id', id);
