@@ -29,8 +29,8 @@ export async function GET(request: NextRequest) {
       .from('blog_posts')
       .select(
         `*,
-         author:blog_authors(full_name,slug),
-         category:blog_categories(name,slug)`,
+         author:author_id(full_name,slug),
+         category:primary_category_id(name,slug)`,
         { count: 'exact' }
       )
       .order('updated_at', { ascending: false });
@@ -89,8 +89,8 @@ export async function POST(request: NextRequest) {
       })
       .select(
         `*,
-         author:blog_authors(full_name,slug),
-         category:blog_categories(name,slug)`
+         author:author_id(full_name,slug),
+         category:primary_category_id(name,slug)`
       )
       .single();
 

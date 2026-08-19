@@ -51,8 +51,8 @@ export async function PUT(
       .eq('id', id)
       .select(
         `*,
-         author:blog_authors(full_name,slug),
-         category:blog_categories(name,slug)`
+         author:author_id(full_name,slug),
+         category:primary_category_id(name,slug)`
       )
       .single();
 
