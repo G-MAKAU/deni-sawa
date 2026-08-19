@@ -4,7 +4,7 @@ const nextConfig = {
   // pdfkit's ESM build references __dirname and breaks when bundled by
   // Turbopack; @react-pdf/renderer resolves to its browser build. Keep both
   // external so route handlers load the Node builds at runtime.
-  serverExternalPackages: ['pdfkit', '@react-pdf/renderer'],
+  serverExternalPackages: ['pdfkit', '@react-pdf/renderer', 'jsdom'],
   images: {
     dangerouslyAllowSVG: true,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
