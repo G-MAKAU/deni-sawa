@@ -100,15 +100,15 @@ Use one highlight per section maximum so the page stays clean, not cluttered.
 You may insert a tasteful image to anchor a section. ONLY use these exact URLs
 (layout "center" or "square-right" with width 240–320px is usually best):
 
-- https://denisawa.co.ke/images/growth.jpg — Growth & business development
-- https://denisawa.co.ke/images/recovery.jpg — Recovery & restructuring
-- https://denisawa.co.ke/images/leadership.jpg — Leadership & strategy
-- https://denisawa.co.ke/images/governance.jpg — Governance & controls
-- https://denisawa.co.ke/images/exec-finance.jpg — Finance & cashflow
-- https://denisawa.co.ke/images/strategy.jpg — Strategic planning
+- https://deni-sawa.vercel.app/images/growth.jpg — Growth & business development
+- https://deni-sawa.vercel.app/images/recovery.jpg — Recovery & restructuring
+- https://deni-sawa.vercel.app/images/leadership.jpg — Leadership & strategy
+- https://deni-sawa.vercel.app/images/governance.jpg — Governance & controls
+- https://deni-sawa.vercel.app/images/exec-finance.jpg — Finance & cashflow
+- https://deni-sawa.vercel.app/images/strategy.jpg — Strategic planning
 
 Example:
-{"type":"image","src":"https://denisawa.co.ke/images/growth.jpg","alt":"Growth path","width":280,"layout":"center"}
+{"type":"image","src":"https://deni-sawa.vercel.app/images/growth.jpg","alt":"Growth path","width":280,"layout":"center"}
 
 Never invent an image URL. At most one image per section, and omit images if
 they do not genuinely add value to the finding.

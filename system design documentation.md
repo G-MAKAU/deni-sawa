@@ -487,9 +487,9 @@ All pages must include the following meta tags in &lt;head&gt;:
 
 &lt;meta property="og:description" content="\[Page Description\]" /&gt;
 
-&lt;meta property="og:image" content="<https://denisawa.co.ke/og-image.png>" /&gt;
+&lt;meta property="og:image" content="<https://deni-sawa.vercel.app/og-image.png>" /&gt;
 
-&lt;meta property="og:url" content="<https://denisawa.co.ke/\[page-path\>]" /&gt;
+&lt;meta property="og:url" content="<https://deni-sawa.vercel.app/\[page-path\>]" /&gt;
 
 &lt;meta property="og:type" content="website" /&gt;
 
@@ -501,7 +501,7 @@ All pages must include the following meta tags in &lt;head&gt;:
 
 &lt;meta name="twitter:description" content="\[Page Description\]" /&gt;
 
-&lt;meta name="twitter:image" content="<https://denisawa.co.ke/og-image.png>" /&gt;
+&lt;meta name="twitter:image" content="<https://deni-sawa.vercel.app/og-image.png>" /&gt;
 
 _💡 OG image dimensions: 1200×630px. Create a branded image with the Deni Sawa logo, the tagline, and the orange/green colour palette._
 
@@ -509,7 +509,7 @@ _💡 OG image dimensions: 1200×630px. Create a branded image with the Deni Saw
 
 Every page must have a self-referencing canonical tag:
 
-&lt;link rel="canonical" href="<https://denisawa.co.ke/\[page-path\>]" /&gt;
+&lt;link rel="canonical" href="<https://deni-sawa.vercel.app/\[page-path\>]" /&gt;
 
 If content is served from multiple URLs (e.g., www and non-www), ensure 301 redirects to the canonical version. Use non-www as the canonical base or configure based on DNS setup.
 
@@ -531,7 +531,7 @@ Implement JSON-LD schema on relevant pages:
 
 Example Organization schema:
 
-{"@context":"<https://schema.org","@type":"Organization","name":"Deni> Sawa Partners","url":"<https://denisawa.co.ke","logo":"https://denisawa.co.ke/logo.png","contactPoint":{"@type":"ContactPoint","contactType":"customer> service","email":"<info@denisawa.co.ke>"}}
+{"@context":"<https://schema.org","@type":"Organization","name":"Deni> Sawa Partners","url":"<https://denisawa.co.ke","logo":"https://deni-sawa.vercel.app/logo.png","contactPoint":{"@type":"ContactPoint","contactType":"customer> service","email":"<info@denisawa.co.ke>"}}
 
 ## 7.5 robots.txt
 
@@ -551,7 +551,7 @@ Disallow: /health-check/results/
 
 Disallow: /\_next/
 
-Sitemap: <https://denisawa.co.ke/sitemap.xml>
+Sitemap: <https://deni-sawa.vercel.app/sitemap.xml>
 
 _💡 Adjust Disallow paths to match the actual framework routing structure (Next.js, etc.). The Health Check results pages should be disallowed to prevent indexing of private user report content._
 
