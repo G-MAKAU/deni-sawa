@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
     const supabase = adminWriteClient(context);
     const adminAuthClient = getServiceClient().auth;
 
-    const { data: authData, error: authError } = await adminAuthClient.adminCreateUser({
+    const { data: authData, error: authError } = await adminAuthClient.admin.createUser({
       email: parsed.data.email.toLowerCase(),
       password: parsed.data.password,
       email_confirm: true,
