@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { toast } from 'sonner';
-import { ImagePlus, Loader2, Plus, Save, Trash2, Upload, X } from 'lucide-react';
+import { GraduationCap, ImagePlus, Loader2, Plus, Save, Trash2, Upload, X } from 'lucide-react';
 import { adminFetch, adminPost, adminPut, adminDelete, adminUpload } from '@/lib/admin-client';
 import { useConfirm } from '@/components/admin/confirm';
 import { AdminCard, AsyncButton, EmptyState, ErrorBanner, Field, Loading, Modal, PageHeader, StatusPill, Toggle } from '@/components/admin/ui';
@@ -185,15 +185,28 @@ export function AcademyClient() {
         ) : (
           <div className="divide-y divide-[var(--a-border-soft)]">
             {courses.map((course) => (
-              <div key={course.id} className="flex items-center gap-4 px-5 py-4 transition-colors hover:bg-[var(--a-subtle)]">
+              <div key={course.id} className="group/card flex items-center gap-4 px-5 py-4 transition-colors hover:bg-[var(--a-subtle)]">
+                <div className="h-14 w-20 shrink-0 overflow-hidden rounded-lg border border-[var(--a-border)] bg-[var(--a-subtle)]">
+                  {course.image_url ? (
+                    <img src={course.image_url} alt={course.title} loading="lazy" className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[var(--a-brand)/10] to-[var(--a-accent)/10]">
+                      <GraduationCap className="h-6 w-6 text-[var(--a-muted)]" strokeWidth={1.5} />
+                    </div>
+                  )}
+                </div>
                 <div className="min-w-0 flex-1">
                   <p className="flex items-center gap-2 font-semibold text-[var(--a-ink2)]">
-                    {course.title}
+                    <span className="truncate">{course.title}</span>
                     {course.is_featured && <StatusPill tone="orange">Featured</StatusPill>}
                   </p>
-                  <p className="mt-0.5 text-xs text-[var(--a-muted)]">
-                    {course.category} · {course.format} · {course.duration} · {course.level}
-                  </p>
+                  <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                    {[course.category, course.format, course.duration, course.level].filter(Boolean).map((chip) => (
+                      <span key={chip} className="rounded-full border border-[var(--a-border)] bg-[var(--a-card)] px-2 py-0.5 text-[10px] font-medium tracking-wide text-[var(--a-muted)]">
+                        {chip}
+                      </span>
+                    ))}
+                  </div>
                 </div>
                 <div className="flex shrink-0 items-center gap-4">
                   <div className="flex items-center gap-2">
@@ -341,7 +354,14 @@ export function AcademyClient() {
         </div>
       </Modal>
 
-      <StorageImagePicker open={pickerOpen} onClose={() => setPickerOpen(false)} onSelect={(url) => setForm((f) => ({ ...f, image_url: url }))} />
+      <StorageImagePicker
+        open={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        onSelect={(url) => {
+          setForm((f) => ({ ...f, image_url: url }));
+          setPickerOpen(false);
+        }}
+      />
     </>
   );
 }

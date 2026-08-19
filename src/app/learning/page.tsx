@@ -9,6 +9,13 @@ import { MediaBand } from '@/components/MediaBand';
 import { Button } from '@/components/ui/button';
 import { Reveal } from '@/components/Reveal';
 import { cn } from '@/lib/utils';
+import { getLmsCourses, type LmsCourse } from '@/lib/supabase/queries';
+
+const STATIC_PATHWAY_SLUGS = new Set(['business-recovery', 'governance', 'financial-resilience']);
+
+function courseHref(course: LmsCourse): string {
+  return STATIC_PATHWAY_SLUGS.has(course.slug) ? `/learning/${course.slug}` : '/academy#catalog';
+}
 
 export const metadata: Metadata = {
   title: 'Learning Centre | Executive Programmes & Pathways | Deni Sawa',
@@ -17,7 +24,14 @@ export const metadata: Metadata = {
   alternates: { canonical: `${site.url}/learning` },
 };
 
-export default function LearningPage() {
+export default async function LearningPage() {
+  let courses: LmsCourse[] = [];
+  try {
+    courses = await getLmsCourses();
+  } catch {
+    courses = [];
+  }
+
   return (
     <>
       <PageHero
@@ -85,6 +99,48 @@ export default function LearningPage() {
             title="Keep building beyond the classroom"
             subtitle="Short, focused pathways on the situations that matter most — available to members and programme alumni."
           />
+          {courses.length > 0 ? (
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {courses.map((course, i) => (
+                <Reveal key={course.id} delay={i * 80} className="h-full">
+                  <Link
+                    href={courseHref(course)}
+                    className="card-elevated group flex h-full flex-col overflow-hidden p-0 transition-transform duration-300 hover:-translate-y-1"
+                  >
+                    {course.image_url ? (
+                      <div className="relative h-44 overflow-hidden">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={course.image_url}
+                          alt={course.title}
+                          loading="lazy"
+                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        />
+                      </div>
+                    ) : (
+                      <div className="flex h-44 items-center justify-center bg-bgalt">
+                        <GraduationCap className="h-10 w-10 text-brand/30" strokeWidth={1.5} />
+                      </div>
+                    )}
+                    <div className="flex flex-1 flex-col p-7">
+                      <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-growth">{course.category}</span>
+                      <h3 className="mt-2 text-lg font-semibold text-foreground">{course.title}</h3>
+                      <p className="mt-2 flex-1 text-[15px] leading-relaxed text-muted-foreground">{course.description}</p>
+                      <div className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+                        {[course.format, course.duration, course.level].filter(Boolean).map((meta) => (
+                          <span key={meta}>{meta}</span>
+                        ))}
+                      </div>
+                      <span className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-brand">
+                        Explore pathway
+                        <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
+                      </span>
+                    </div>
+                  </Link>
+                </Reveal>
+              ))}
+            </div>
+          ) : (
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             {learningPathways.map((pathway, i) => (
               <Reveal key={pathway.title} delay={i * 80} className="h-full">
@@ -121,6 +177,7 @@ export default function LearningPage() {
               </Reveal>
             ))}
           </div>
+          )}
         </div>
       </section>
 

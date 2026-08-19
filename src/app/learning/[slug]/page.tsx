@@ -8,6 +8,7 @@ import { SectionHeading } from '@/components/SectionHeading';
 import { CTASection } from '@/components/CTASection';
 import { Button } from '@/components/ui/button';
 import { Reveal } from '@/components/Reveal';
+import { getLmsCourses } from '@/lib/supabase/queries';
 
 const pathways = {
   'business-recovery': {
@@ -96,6 +97,15 @@ export default async function LearningPathwayPage({ params }: { params: Promise<
   const pathway = pathways[slug as PathwaySlug];
   if (!pathway) notFound();
 
+  let courseImage: string = pathway.image;
+  try {
+    const courses = await getLmsCourses();
+    const match = courses.find((c) => c.slug === slug);
+    if (match?.image_url) courseImage = match.image_url;
+  } catch {
+    courseImage = pathway.image;
+  }
+
   return (
     <>
       <PageHero
@@ -103,7 +113,7 @@ export default async function LearningPathwayPage({ params }: { params: Promise<
         title={pathway.title}
         subtitle={pathway.description}
         crumbs={[{ label: 'Learning', href: '/learning' }, { label: pathway.title }]}
-        image={{ src: pathway.image, alt: pathway.title }}
+        image={{ src: courseImage, alt: pathway.title }}
       >
         <Button asChild size="lg">
           <Link href="/contact?subject=Learning%20Pathway">Enquire About This Pathway</Link>

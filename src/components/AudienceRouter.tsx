@@ -62,10 +62,12 @@ export function AudienceRouter({ audiences }: { audiences: AudienceInput[] }) {
           const Icon = ICONS[i] ?? Briefcase;
           const highlighted = active === null || active === i;
           return (
-            <div
+            <Link
               key={audience.title}
+              href={audience.href}
+              aria-label={`${audience.title} — ${audience.cta}`}
               className={cn(
-                'card-elevated flex h-full flex-col overflow-hidden p-0 transition-all duration-300',
+                'card-elevated group flex h-full flex-col overflow-hidden p-0 transition-all duration-300 hover:-translate-y-1 hover:shadow-soft-lg',
                 active !== null && !highlighted && 'opacity-45 saturate-50'
               )}
             >
@@ -74,25 +76,24 @@ export function AudienceRouter({ audiences }: { audiences: AudienceInput[] }) {
                 <span
                   className={cn(
                     'inline-flex h-11 w-11 items-center justify-center rounded-lg',
-                    audience.accent === 'brand' ? 'bg-brand/10 text-brand' : 'bg-growth/10 text-growth'
+                    audience.accent === 'brand' ? 'bg-brand/10 text-brand group-hover:bg-brand group-hover:text-white' : 'bg-growth/10 text-growth group-hover:bg-growth group-hover:text-white'
                   )}
                 >
                   <Icon className="h-5 w-5" strokeWidth={1.8} />
                 </span>
-                <h3 className="mt-5 text-h3 font-semibold text-foreground">{audience.title}</h3>
+                <h3 className="mt-5 text-h3 font-semibold text-foreground transition-colors group-hover:text-brand">
+                  {audience.title}
+                </h3>
                 <p className="mt-3 font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
                   {audience.journey}
                 </p>
                 <p className="mt-4 flex-1 text-[15px] leading-relaxed text-muted-foreground">{audience.description}</p>
-                <Link
-                  href={audience.href}
-                  className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-brand transition-colors hover:text-brand-600"
-                >
+                <span className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-brand transition-all duration-200 group-hover:gap-3">
                   {audience.cta}
                   <ArrowUpRight className="h-4 w-4" />
-                </Link>
+                </span>
               </div>
-            </div>
+            </Link>
           );
         })}
       </div>

@@ -5,13 +5,13 @@ import { cn } from '@/lib/utils';
 
 const LINKS = [
   { label: 'Overview', id: 'overview' },
-  { label: 'Services', id: 'services' },
   { label: 'Who We Serve', id: 'who-we-serve' },
   { label: 'Health Checks', id: 'health-checks' },
-  { label: 'The Method', id: 'the-method' },
   { label: 'The Journey', id: 'the-journey' },
-  { label: 'Insights', id: 'insights' },
+  { label: 'Services', id: 'services' },
+  { label: 'The Method', id: 'the-method' },
   { label: 'The Network', id: 'the-network' },
+  { label: 'Insights', id: 'insights' },
   { label: 'Get Started', id: 'get-started' },
 ];
 
@@ -36,19 +36,28 @@ export function HomepageSectionNav() {
 
   useEffect(() => {
     if (!visible) return;
-    const sections = LINKS.map((l) => document.getElementById(l.id)).filter(
-      (el): el is HTMLElement => el !== null
-    );
-    const io = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) setActive(entry.target.id);
-        }
-      },
-      { rootMargin: '-30% 0px -60% 0px', threshold: 0 }
-    );
-    sections.forEach((s) => io.observe(s));
-    return () => io.disconnect();
+    const ids = LINKS.map((l) => l.id);
+    const onScroll = () => {
+      // Follow the document flow: the active section is the last one whose top
+      // has crossed above the sticky nav (with a small buffer).
+      const pos = window.scrollY + 80;
+      let current = ids[0];
+      for (const id of ids) {
+        const el = document.getElementById(id);
+        if (!el) continue;
+        const top = el.getBoundingClientRect().top + window.scrollY;
+        if (top <= pos) current = id;
+        else break;
+      }
+      setActive(current);
+    };
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+    };
   }, [visible]);
 
   return (
