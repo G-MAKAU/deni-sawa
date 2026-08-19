@@ -4,6 +4,8 @@ import { AppShell } from './AppShell';
 import { Inter, Playfair_Display, JetBrains_Mono } from 'next/font/google';
 import { GoogleAnalytics } from '@/components/GoogleAnalytics';
 import { CookieConsent } from '@/components/CookieConsent';
+import { SWRegistration } from '@/components/pwa/SWRegistration';
+import { OfflineBanner } from '@/components/pwa/OfflineBanner';
 import { site } from '@/data/site';
 
 const inter = Inter({
@@ -92,10 +94,20 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       suppressHydrationWarning
       className={`${inter.variable} ${playfair.variable} ${jetbrains.variable} scroll-smooth`}
     >
+      <head>
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#E8510A" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="Deni Sawa" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+      </head>
       <body>
         <GoogleAnalytics />
         <AppShell>{children}</AppShell>
         <CookieConsent />
+        <SWRegistration />
+        <OfflineBanner />
       </body>
     </html>
   );
