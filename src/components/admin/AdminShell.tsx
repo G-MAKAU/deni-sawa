@@ -67,6 +67,7 @@ const NAV_SECTIONS: { label: string; items: NavItem[] }[] = [
     label: 'Content',
     items: [
       { label: 'Blog', href: '/admin/blog', icon: <IconPen /> },
+      { label: 'Comments', href: '/admin/blog/comments', icon: <IconMessageSquare /> },
       { label: 'Academy', href: '/admin/academy', icon: <IconGraduation /> },
     ],
   },
@@ -91,6 +92,7 @@ const TITLES: { prefix: string; title: string }[] = [
   { prefix: '/admin/whatsapp-log', title: 'WhatsApp Log' },
   { prefix: '/admin/whatsapp/config', title: 'WhatsApp Configuration' },
   { prefix: '/admin/whatsapp', title: 'WhatsApp Templates' },
+  { prefix: '/admin/blog/comments', title: 'Blog Comments' },
   { prefix: '/admin/blog', title: 'Blog' },
   { prefix: '/admin/academy', title: 'Academy' },
   { prefix: '/admin/team', title: 'Team' },
@@ -122,7 +124,7 @@ function Logo() {
   );
 }
 
-function NavLinks({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) {
+function NavLinks({ pathname, onNavigate, badges }: { pathname: string; onNavigate?: () => void; badges?: Record<string, number> }) {
   return (
     <nav className="flex-1 space-y-5 overflow-y-auto px-3 py-5" aria-label="Admin navigation">
       {NAV_SECTIONS.map((section) => (
@@ -131,6 +133,7 @@ function NavLinks({ pathname, onNavigate }: { pathname: string; onNavigate?: () 
           <ul className="space-y-0.5">
             {section.items.map((item) => {
               const active = item.exact ? pathname === item.href : pathname.startsWith(item.href);
+              const badge = badges?.[item.href] ?? 0;
               return (
                 <li key={item.href}>
                   <Link
@@ -144,6 +147,11 @@ function NavLinks({ pathname, onNavigate }: { pathname: string; onNavigate?: () 
                     {active && <span className="absolute inset-y-1.5 left-0 w-0.5 rounded-full bg-[#E8510A]" />}
                     <span className={cn('transition-colors', active ? 'text-[#E8510A]' : 'text-[var(--a-muted)] group-hover:text-white')}>{item.icon}</span>
                     {item.label}
+                    {badge > 0 && (
+                      <span className="ml-auto rounded-full bg-[#E8510A] px-1.5 py-0.5 text-[10px] font-bold leading-none text-white">
+                        {badge}
+                      </span>
+                    )}
                   </Link>
                 </li>
               );
@@ -163,6 +171,24 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   const [signingOut, setSigningOut] = React.useState(false);
   const [accountOpen, setAccountOpen] = React.useState(false);
   const [dark, setDark] = React.useState(false);
+  const [pendingComments, setPendingComments] = React.useState(0);
+
+  // Show an unmoderated-comment badge on the nav item.
+  React.useEffect(() => {
+    if (pathname === '/admin/login') return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const data = await adminFetch<{ counts: { pending: number } }>('/api/admin/blog/comments?status=pending&limit=1');
+        if (!cancelled) setPendingComments(data.counts.pending);
+      } catch {
+        // non-fatal — badge just stays hidden
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [pathname]);
 
   // Sync the toggle with the site-wide theme applied by ThemeProvider.
   React.useEffect(() => {
@@ -235,7 +261,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         <div className="flex h-16 items-center border-b border-white/5 px-5">
           <Logo />
         </div>
-        <NavLinks pathname={pathname} />
+        <NavLinks pathname={pathname} badges={{ '/admin/blog/comments': pendingComments }} />
         <div className="border-t border-white/5 px-5 py-4 text-[10px] uppercase tracking-widest text-[#5C5751]">
           Deni Sawa Partners
         </div>
@@ -254,7 +280,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                 </svg>
               </button>
             </div>
-            <NavLinks pathname={pathname} onNavigate={() => setDrawerOpen(false)} />
+            <NavLinks pathname={pathname} badges={{ '/admin/blog/comments': pendingComments }} onNavigate={() => setDrawerOpen(false)} />
           </aside>
         </div>
       )}
