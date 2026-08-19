@@ -12,6 +12,8 @@ export default function WhatsAppLogPage() {
       title="WhatsApp Log"
       subtitle="Every outbound WhatsApp message attempt."
       endpoint="/api/admin/whatsapp-log"
+      entryApiPath="/api/admin/whatsapp-log"
+      retryableStatuses={['pending', 'failed']}
       statuses={['pending', 'sent', 'delivered', 'failed', 'read']}
       columns={[
         { key: 'to_number', label: 'To' },

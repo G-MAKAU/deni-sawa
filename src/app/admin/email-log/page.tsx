@@ -12,6 +12,8 @@ export default function EmailLogPage() {
       title="Email Log"
       subtitle="Every outbound email attempt for audit and retry."
       endpoint="/api/admin/email-log"
+      entryApiPath="/api/admin/email-log"
+      retryableStatuses={['pending', 'failed', 'bounced']}
       statuses={['pending', 'sent', 'failed', 'bounced']}
       columns={[
         { key: 'to_email', label: 'To' },
