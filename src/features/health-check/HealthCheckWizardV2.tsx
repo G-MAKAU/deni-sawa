@@ -933,7 +933,7 @@ export function HealthCheckWizardV2({ slug }: { slug: string }) {
         </p>
         <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
           {phase === 'generating'
-            ? 'This typically takes about 30 seconds. We are building your personalised diagnostic report.'
+            ? 'This typically takes about 2 minutes. We are building your personalised diagnostic report.'
             : 'Just a moment.'}
         </p>
       </div>

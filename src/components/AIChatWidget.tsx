@@ -24,6 +24,18 @@ const welcomeMessage: Message = {
 
 const suggestionGroups = [
   {
+    label: 'Services',
+    prompts: [
+      'What services do you offer?',
+      'What services are available for professionals?',
+      'What does a fractional CFO actually do?',
+      'How can you help entrepreneurs and founders?',
+      'How can you help me as an investor?',
+      'What is Special Situations support?',
+      'How do I know which service fits my business?',
+    ],
+  },
+  {
     label: 'Health Checks',
     prompts: [
       'Tell me about the Business Health Check',
@@ -34,22 +46,13 @@ const suggestionGroups = [
     ],
   },
   {
-    label: 'Business Support',
-    prompts: [
-      'What does a fractional CFO actually do?',
-      'What is fractional CEO support?',
-      'How does Special Situations support work?',
-      'What is the Deni Sawa Method?',
-      'How do I know which service fits my business?',
-    ],
-  },
-  {
     label: 'Learning & Network',
     prompts: [
       learningPrograms[0] ? `Tell me about ${learningPrograms[0].title}` : 'What learning programmes do you offer?',
       'What learning pathways do you offer?',
       'Tell me about the SpecialSit Network',
       'Who is the Executive Finance programme for?',
+      'What is the Deni Sawa Method?',
     ],
   },
   {

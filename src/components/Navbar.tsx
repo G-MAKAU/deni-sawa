@@ -87,6 +87,8 @@ export function Navbar() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [mobileOpen, setMobileOpen] = useState<string | null>(null);
+  const [lmsTip, setLmsTip] = useState(false);
+  const lmsTipTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const dropdownTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -98,7 +100,15 @@ export function Navbar() {
     setDrawerOpen(false);
     setOpenDropdown(null);
     setMobileOpen(null);
+    setLmsTip(false);
+    if (lmsTipTimer.current) clearTimeout(lmsTipTimer.current);
   }, [pathname]);
+
+  const showLmsTip = useCallback(() => {
+    setLmsTip(true);
+    if (lmsTipTimer.current) clearTimeout(lmsTipTimer.current);
+    lmsTipTimer.current = setTimeout(() => setLmsTip(false), 2500);
+  }, []);
 
   const handleDropdownEnter = useCallback((label: string) => {
     if (dropdownTimeout.current) clearTimeout(dropdownTimeout.current);
@@ -232,9 +242,24 @@ export function Navbar() {
                             onMouseEnter={() => handleDropdownEnter(item.label)}
                             onMouseLeave={handleDropdownLeave}
                           >
-                            <div className="relative w-[380px] overflow-hidden rounded-2xl border border-card-border bg-card shadow-[0_32px_80px_rgba(0,0,0,0.12),0_0_0_1px_rgba(0,0,0,0.02)]">
+                            <div className="relative w-[420px] overflow-hidden rounded-2xl border border-card-border bg-card shadow-[0_32px_80px_rgba(0,0,0,0.12),0_0_0_1px_rgba(0,0,0,0.02)]">
                               <div className="h-[2px] w-full bg-gradient-to-r from-brand via-brand/80 to-growth" />
                               <div className="p-2">
+                                <Link
+                                  href="/services"
+                                  onClick={() => setOpenDropdown(null)}
+                                  className="group mb-1 flex items-center justify-between gap-4 rounded-xl bg-brand/[0.06] px-4 py-3 transition-all duration-200 hover:bg-brand/10"
+                                >
+                                  <span className="flex flex-col gap-0.5">
+                                    <span className="text-[14px] font-bold text-brand">All Services</span>
+                                    <span className="text-[12px] leading-relaxed text-muted-foreground">
+                                      Explore every pathway in one place
+                                    </span>
+                                  </span>
+                                  <span className="inline-flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-brand text-white transition-all duration-300 group-hover:scale-105">
+                                    <ArrowUpRight className="h-3.5 w-3.5" />
+                                  </span>
+                                </Link>
                                 {item.children.map((child, i) => {
                                   const childActive = isActive(child.href, pathname);
                                   return (
@@ -323,6 +348,26 @@ export function Navbar() {
 
             <div className="flex items-center gap-3">
               <ThemeToggle />
+
+              {/* LMS Login — Phase 2 placeholder with "Coming Soon" tooltip */}
+              <div className="relative hidden md:block">
+                <button
+                  type="button"
+                  onClick={showLmsTip}
+                  className="group inline-flex items-center gap-2 rounded-none border border-growth px-5 py-3 text-[12px] font-semibold text-growth transition-all duration-300 hover:bg-growth/10 active:scale-[0.97]"
+                >
+                  LMS Login
+                </button>
+                <span
+                  className={cn(
+                    'pointer-events-none absolute right-0 top-full mt-2 z-50 whitespace-nowrap rounded-md bg-[#2C2C2C] px-3.5 py-2 text-xs font-medium text-white shadow-soft-xl transition-all duration-200',
+                    lmsTip ? 'translate-y-0 opacity-100' : '-translate-y-1 opacity-0'
+                  )}
+                >
+                  Coming Soon — Learning Centre launching soon
+                </span>
+              </div>
+
               <Link
 href="/business-health-checks#choose-your-assessment"
                 className="group relative hidden overflow-hidden rounded-none bg-brand px-6 py-3 text-[12px] font-semibold text-white shadow-[0_2px_20px_rgba(232,81,10,0.3)] transition-all duration-300 hover:shadow-[0_4px_30px_rgba(232,81,10,0.45)] hover:brightness-110 active:scale-[0.97] md:inline-flex md:items-center md:gap-2"
@@ -407,6 +452,14 @@ href="/business-health-checks#choose-your-assessment"
                           expanded ? 'max-h-[400px] pb-2 opacity-100' : 'max-h-0 opacity-0'
                         )}
                       >
+                        <Link
+                          href="/services"
+                          onClick={() => setDrawerOpen(false)}
+                          className="mb-1 flex items-center justify-between rounded-md bg-brand/15 px-4 py-2.5 text-sm font-semibold text-brand transition-colors hover:bg-brand/25"
+                        >
+                          All Services
+                          <ArrowRight className="h-3.5 w-3.5 text-brand" />
+                        </Link>
                         {item.children.map((child) => (
                           <Link
                             key={child.href}

@@ -49,7 +49,7 @@ export default function MethodPage() {
         <div className="container-lux">
           <SectionHeading
             eyebrow="The journey"
-            title="Recovery → Resilience → Growth → Best-in-Class"
+            title="Recovery → Resilience → Growth → Sustainability → Best-in-Class"
             description="The method plays out as a staged journey. Each stage builds on the last — and each one is measured, not assumed."
           />
           <JourneyProgression />

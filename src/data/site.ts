@@ -33,14 +33,13 @@ export const navItems: NavItem[] = [
   { label: 'Home', href: '/' },
   {
     label: 'Services',
-    href: '/business-support',
+    href: '/services',
     children: [
-      { label: 'Business Support', href: '/business-support', description: 'Explore every service area' },
-      { label: 'Fractional CFO', href: '/business-support/fractional-cfo', description: 'Financial leadership on demand' },
-      { label: 'Fractional CEO', href: '/business-support/fractional-ceo', description: 'Strategic leadership and execution' },
-      { label: 'Governance & Controls', href: '/business-support/governance-controls', description: 'Structures, policies and accountability' },
-      { label: 'Growth & Development', href: '/business-support/growth-support', description: 'Revenue, partnerships and investor readiness' },
-      { label: 'Special Situations', href: '/business-support/special-situations', description: 'Distress, restructuring and recovery' },
+      { label: '01 · Professionals & Individuals', href: '/services/professionals', description: 'Financial Health → Resilience → Leadership' },
+      { label: '02 · Entrepreneurs & Founders', href: '/services/entrepreneurs', description: 'Stability → Structure → Growth → Best-in-Class' },
+      { label: '03 · Investors', href: '/services/investors', description: 'Visibility → Governance → Accountability → Portfolio Performance' },
+      { label: '04 · Business Health Checks', href: '/health-checks', description: 'Know Your Status → Diagnose → Take Action' },
+      { label: '05 · Learning & Programs', href: '/services/learning', description: 'Learn → Apply → Lead → Transform' },
     ],
   },
   { label: 'Business Health Checks', href: '/business-health-checks' },
@@ -233,6 +232,21 @@ export const audiences = [
       'Personal financial health is the foundation of professional performance. Build resilience, clarity and the confidence to lead.',
     cta: 'Professional Financial Health Check',
     href: '/business-health-checks/professional-health-check',
+    servicesHref: '/services/professionals',
+    pathway: [
+      {
+        stage: 'Financial Health',
+        description: 'Assessment and a clear picture of where you stand.',
+      },
+      {
+        stage: 'Resilience',
+        description: 'Debt, cashflow and savings discipline that protects you.',
+      },
+      {
+        stage: 'Leadership',
+        description: 'Capability and confidence to lead and decide.',
+      },
+    ],
   },
   {
     title: 'Entrepreneurs & Founders',
@@ -242,6 +256,25 @@ export const audiences = [
       'From stabilising cashflow to building governance and growth systems — the support founders need at every stage.',
     cta: 'Business Health Check',
     href: '/business-health-checks/business-health-check',
+    servicesHref: '/services/entrepreneurs',
+    pathway: [
+      {
+        stage: 'Stability',
+        description: 'Stabilise cashflow, debt and operations first.',
+      },
+      {
+        stage: 'Structure',
+        description: 'Governance, controls, KPIs and reporting.',
+      },
+      {
+        stage: 'Growth',
+        description: 'Model, revenue, partnerships and expansion.',
+      },
+      {
+        stage: 'Best-in-Class',
+        description: 'Excellence, investment readiness and independence.',
+      },
+    ],
   },
   {
     title: 'Investors',
@@ -251,6 +284,25 @@ export const audiences = [
       'Independent oversight, governance monitoring and portfolio performance reporting that protect and grow investment value.',
     cta: 'Investor & Partner Enquiry',
     href: '/investors',
+    servicesHref: '/services/investors',
+    pathway: [
+      {
+        stage: 'Visibility',
+        description: 'Real financials, cashflow and management information.',
+      },
+      {
+        stage: 'Governance',
+        description: 'Board, reporting and control standards.',
+      },
+      {
+        stage: 'Accountability',
+        description: 'KPIs, milestones and disciplined review cadence.',
+      },
+      {
+        stage: 'Portfolio Performance',
+        description: 'Protect and grow the value of your holdings.',
+      },
+    ],
   },
 ];
 
@@ -338,6 +390,11 @@ export const journeyStages = [
     icon: 'TrendingUp',
   },
   {
+    stage: 'Sustainability',
+    description: 'Embed the systems, buffers and disciplines that make performance durable across cycles.',
+    icon: 'Recycle',
+  },
+  {
     stage: 'Best-in-Class',
     description: 'Embed the standards, reporting and culture that keep performance compounding.',
     icon: 'Award',
@@ -350,7 +407,7 @@ export const conversionSteps = [
   { step: '03', title: 'Understand', description: 'Receive your Health Report' },
   { step: '04', title: 'Choose', description: 'Self-Learning | Mentorship | Fractional Support | Advisory' },
   { step: '05', title: 'Implement', description: 'LMS + Tools + Advisory + Accountability' },
-  { step: '06', title: 'Transform', description: 'Recovery → Resilience → Growth → Best-in-Class' },
+  { step: '06', title: 'Transform', description: 'Recovery → Resilience → Growth → Sustainability → Best-in-Class' },
 ];
 
 export const learningPrograms = [

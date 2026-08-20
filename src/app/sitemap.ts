@@ -1,6 +1,5 @@
 import type { MetadataRoute } from 'next';
 import { site } from '@/data/site';
-import { services as contentServices } from '@/data/content';
 import { services as businessServices } from '@/data/site';
 import { getBlogPosts } from '@/lib/supabase/queries';
 
@@ -8,7 +7,7 @@ export const dynamic = 'force-static';
 
 const staticRoutes: string[] = [
   '',
-'/about',
+  '/about',
   '/about/leadership',
   '/about/philosophy',
   '/about/experience',
@@ -25,6 +24,10 @@ const staticRoutes: string[] = [
   '/learning/financial-resilience',
   '/privacy',
   '/services',
+  '/services/professionals',
+  '/services/entrepreneurs',
+  '/services/investors',
+  '/services/learning',
   '/about/specialsit-network',
   '/terms',
   '/investors',
@@ -43,14 +46,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: route === '' ? 1 : 0.7,
   }));
 
-  // Service + business-support pages from their data sources.
-  contentServices.forEach((service) => {
-    entries.push({
-      url: `${base}/services/${service.slug}`,
-      changeFrequency: 'monthly',
-      priority: 0.7,
-    });
-  });
+  // Business-support pages from their data source.
   businessServices.forEach((service) => {
     entries.push({
       url: `${base}/business-support/${service.slug}`,

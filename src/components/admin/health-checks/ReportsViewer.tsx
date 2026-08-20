@@ -9,7 +9,7 @@ import {
   flexRender,
   type ColumnDef,
 } from '@tanstack/react-table';
-import { Columns, Eye, Loader2, Pencil, RefreshCw, Search } from 'lucide-react';
+import { Check, Columns, Copy, ExternalLink, Eye, Loader2, Pencil, RefreshCw, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { adminFetch, adminPut } from '@/lib/admin-client';
 import { useConfirm } from '@/components/admin/confirm';
@@ -36,6 +36,7 @@ interface ReportDetail {
   created_at: string;
   session_name: string;
   check_name: string;
+  report_url_token?: string | null;
 }
 
 const PAGE_SIZE = 20;
@@ -66,6 +67,19 @@ export function ReportsViewer() {
   const [detail, setDetail] = React.useState<ReportDetail | null>(null);
   const [detailLoading, setDetailLoading] = React.useState(false);
   const [regeneratingId, setRegeneratingId] = React.useState<string | null>(null);
+  const [copiedId, setCopiedId] = React.useState<string | null>(null);
+
+  const copyLink = async (report: ReportRow) => {
+    const url = `${window.location.origin}/business-health-checks/report/${report.report_url_token}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopiedId(report.id);
+      toast.success('Report link copied to clipboard');
+      window.setTimeout(() => setCopiedId((id) => (id === report.id ? null : id)), 2000);
+    } catch {
+      toast.error('Could not copy link. Copy manually below.');
+    }
+  };
 
   const load = React.useCallback(async (targetPage: number, type: string, del: string, q: string) => {
     setLoading(true);
@@ -202,6 +216,25 @@ export function ReportsViewer() {
         ),
       },
       {
+        id: 'link',
+        header: '',
+        cell: ({ row }) => (
+          <button
+            type="button"
+            onClick={() => copyLink(row.original)}
+            title="Copy public report link"
+            className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[12px] font-semibold text-[var(--a-text2)] transition-colors hover:bg-[#E8510A]/10 hover:text-[#E8510A]"
+          >
+            {copiedId === row.original.id ? (
+              <Check className="h-3.5 w-3.5 text-[#5A9E28]" />
+            ) : (
+              <Copy className="h-3.5 w-3.5" />
+            )}
+            {copiedId === row.original.id ? 'Copied' : 'Link'}
+          </button>
+        ),
+      },
+      {
         id: 'regenerate',
         header: '',
         cell: ({ row }) => (
@@ -223,7 +256,7 @@ export function ReportsViewer() {
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [canTogglePaid, regeneratingId, handleRegenerate]
+    [canTogglePaid, regeneratingId, handleRegenerate, copyLink, copiedId]
   );
 
   const table = useReactTable({
@@ -411,6 +444,13 @@ export function ReportsViewer() {
           <Loading label="Loading report…" />
         ) : (
           <div className="space-y-4">
+            {(() => {
+              const reportUrlToken =
+                detail.report_url_token ??
+                reports.find((r) => r.id === detail.id)?.report_url_token ??
+                '';
+              return (
+            <>
             <div className="flex flex-wrap items-center gap-2 text-sm text-[var(--a-muted)]">
               <span className="font-semibold text-[var(--a-ink2)]">{detail.session_name}</span>
               · {detail.check_name}
@@ -418,9 +458,46 @@ export function ReportsViewer() {
               <StatusPill tone={detail.is_paid ? 'green' : 'grey'}>{detail.is_paid ? 'Paid' : 'Unpaid'}</StatusPill>
               <StatusPill tone={DELIVERY_TONE[detail.delivery_status as ReportRow['delivery_status']] ?? 'amber'}>{detail.delivery_status}</StatusPill>
             </div>
+            <div className="rounded-lg border border-[var(--a-border-soft)] bg-[var(--a-card)] p-4">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--a-muted)]">Report link</p>
+              <div className="mt-2 flex items-center gap-2">
+                <input
+                  readOnly
+                  value={`${window.location.origin}/business-health-checks/report/${reportUrlToken}`}
+                  className="h-9 min-w-0 flex-1 rounded-lg border border-[var(--a-border)] bg-[var(--a-subtle)] px-3 text-[12px] text-[var(--a-muted)] focus:outline-none"
+                  onFocus={(e) => e.target.select()}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    void navigator.clipboard.writeText(
+                      `${window.location.origin}/business-health-checks/report/${reportUrlToken}`
+                    );
+                    toast.success('Report link copied');
+                  }}
+                  className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-[#E8510A] px-3 text-[12px] font-semibold text-white transition-colors hover:bg-[#d34a08]"
+                >
+                  <Copy className="h-3.5 w-3.5" /> Copy
+                </button>
+                <a
+                  href={`/business-health-checks/report/${reportUrlToken}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-[var(--a-border)] bg-[var(--a-card)] px-3 text-[12px] font-semibold text-[var(--a-text)] transition-colors hover:border-[#E8510A]/40 hover:text-[#E8510A]"
+                >
+                  <ExternalLink className="h-3.5 w-3.5" /> Open
+                </a>
+              </div>
+              <p className="mt-2 text-[11px] text-[var(--a-muted)]">
+                Share this link with the client to view or download the report without logging in.
+              </p>
+            </div>
             <div className="max-h-[60vh] overflow-y-auto rounded-lg border border-[var(--a-border-soft)] bg-[var(--a-card)] p-6">
               <LexicalRenderer state={detail.lexical_state} />
             </div>
+            </>
+              );
+            })()}
           </div>
         )}
       </Modal>

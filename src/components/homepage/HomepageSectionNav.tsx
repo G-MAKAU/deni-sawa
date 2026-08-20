@@ -7,10 +7,6 @@ const LINKS = [
   { label: 'Overview', id: 'overview' },
   { label: 'Who We Serve', id: 'who-we-serve' },
   { label: 'Health Checks', id: 'health-checks' },
-  { label: 'The Journey', id: 'the-journey' },
-  { label: 'Services', id: 'services' },
-  { label: 'The Method', id: 'the-method' },
-  { label: 'The Network', id: 'the-network' },
   { label: 'Insights', id: 'insights' },
   { label: 'Get Started', id: 'get-started' },
 ];

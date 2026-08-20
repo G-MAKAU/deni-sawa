@@ -229,12 +229,12 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ── 04. Your Journey ─────────────────────────────────── */}
+      {/* ── 04. Your Journey ─────────────────────────────────── 
       <section id="the-journey" className="section-pad bg-background scroll-mt-20">
         <div className="container-lux">
           <SectionHeading
             eyebrow="Your Journey"
-            title="Recovery → Resilience → Growth → Best-in-Class"
+            title="Recovery → Resilience → Growth → Sustainability → Best-in-Class"
             subtitle="We do not promise overnight transformation. We build it in stages that compound."
           />
 
@@ -242,15 +242,16 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Photography band */}
+      {/*- Photography band -}
       <MediaBand
         src="/images/hero-3.jpg"
         alt="Deni Sawa Partners leadership in session"
-        caption="Recovery → Resilience → Growth → Best-in-Class"
+        caption="Recovery → Resilience → Growth → Sustainability → Best-in-Class"
         height="md"
       />
+      */}
 
-      {/* ── 05. How We Help ──────────────────────────────────── */}
+      {/* ── 05. How We Help ──────────────────────────────────── 
       <section id="services" className="section-pad bg-bgalt scroll-mt-20">
         <div className="container-lux">
           <SectionHeading
@@ -259,7 +260,7 @@ export default async function HomePage() {
             subtitle="A seasoned operating bench for organisations that need boardroom capability without boardroom payroll."
           />
 
-          {/* Featured — Growth & Business Development */}
+          {/*- Featured card - Growth and Business Development -}
           <Reveal className="h-full">
             {(() => {
               const featured = services.find((s) => s.slug === 'growth-support')!;
@@ -332,8 +333,9 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+      */}
 
-      {/* ── 06. The Deni Sawa Method™ ────────────────────────── */}
+      {/* ── 06. The Deni Sawa Method™ ────────────────────────── 
       <section id="the-method" className="section-pad bg-background scroll-mt-20">
         <div className="container-lux">
           <SectionHeading
@@ -354,8 +356,9 @@ export default async function HomePage() {
           </Reveal>
         </div>
       </section>
+      */}
 
-      {/* ── 07. Proof ────────────────────────────────────────── */}
+      {/* ── 07. Proof ────────────────────────────────────────── 
       <section className="hero-pattern section-pad bg-charcoal text-white">
         <div className="container-lux">
           <SectionHeading
@@ -365,10 +368,10 @@ export default async function HomePage() {
             subtitle="A track record built in banking, finance, risk and restructuring — applied to the situations our clients face."
           />
 
-          {/* Stats */}
+          {/* Stats 
           <StatBand stats={stats} dark />
 
-          {/* Testimonial */}
+          {/* Testimonial 
           <Reveal className="mt-16">
             <PullQuote
               quote={testimonials[0].quote}
@@ -388,8 +391,9 @@ export default async function HomePage() {
           </Reveal>
         </div>
       </section>
+      */}
 
-      {/* ── 08. Ecosystem ────────────────────────────────────── */}
+      {/* ── 08. Ecosystem ────────────────────────────────────── 
       <section id="the-network" className="section-pad bg-bgalt scroll-mt-20">
         <div className="container-lux">
           <SectionHeading
@@ -471,6 +475,7 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+      */}
 
       {/* ── 09. Intelligence ─────────────────────────────────── */}
       <section id="insights" className="section-pad bg-background scroll-mt-20">

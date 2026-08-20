@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, useReducedMotion } from 'motion/react';
-import { HeartPulse, Shield, TrendingUp, Award } from 'lucide-react';
+import { HeartPulse, Shield, TrendingUp, Recycle, Award } from 'lucide-react';
 import { journeyStages } from '@/data/site';
 import { cn } from '@/lib/utils';
 import { useMounted } from '@/lib/hooks';
@@ -10,11 +10,12 @@ const ICONS: Record<string, React.ComponentType<{ className?: string; strokeWidt
   HeartPulse,
   Shield,
   TrendingUp,
+  Recycle,
   Award,
 };
 
 /**
- * Signature visual for the Recovery → Resilience → Growth → Best-in-Class
+ * Signature visual for the Recovery → Resilience → Growth → Sustainability → Best-in-Class
  * narrative. A connected progression line with numbered stages, designed to
  * feel like a deliberate editorial device rather than another card grid.
  */
@@ -30,7 +31,7 @@ export function JourneyProgression() {
         className="absolute left-6 top-0 h-full w-px bg-gradient-to-b from-brand/40 via-brand/20 to-transparent lg:left-0 lg:top-7 lg:h-px lg:w-full lg:bg-gradient-to-r"
       />
 
-      <ol className="grid grid-cols-1 gap-10 lg:grid-cols-4 lg:gap-6">
+      <ol className="grid grid-cols-1 gap-10 lg:grid-cols-5 lg:gap-6">
         {journeyStages.map((stage, i) => {
           const Icon = ICONS[stage.icon] ?? TrendingUp;
           const last = i === journeyStages.length - 1;
