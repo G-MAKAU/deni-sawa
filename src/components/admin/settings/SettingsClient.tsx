@@ -8,10 +8,29 @@ import { socialLinks } from '@/components/SocialLinks';
 import { cn } from '@/lib/utils';
 import { AdminCard, ErrorBanner, Loading, PageHeader, StatusPill } from '@/components/admin/ui';
 
+interface SmtpProfileInfo {
+  key: string;
+  label: string;
+  host: string | null;
+  port: number;
+  secure: boolean;
+  user: string | null;
+  senderDomains: string[];
+}
+
+interface SmtpTestResult {
+  ok: boolean;
+  error?: string;
+  host?: string | null;
+  port?: number;
+  user?: string;
+  profiles?: { key: string; label: string; host: string; port: number; secure: boolean; user: string; ok: boolean; error?: string }[];
+}
+
 interface SettingsData {
   settings: {
     siteUrl: string;
-    smtp: { configured: boolean; host: string | null; fromName: string; fromEmail: string };
+    smtp: { configured: boolean; host: string | null; fromName: string; fromEmail: string; profiles?: SmtpProfileInfo[] };
     whatsapp: {
       provider: string;
       encryptionKeyConfigured: boolean;
@@ -28,7 +47,7 @@ export function SettingsClient() {
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [smtpTesting, setSmtpTesting] = React.useState(false);
-  const [smtpResult, setSmtpResult] = React.useState<{ ok: boolean; error?: string; host?: string | null; port?: number; user?: string } | null>(null);
+  const [smtpResult, setSmtpResult] = React.useState<SmtpTestResult | null>(null);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -125,12 +144,41 @@ export function SettingsClient() {
               <p>
                 <span className="font-semibold text-[var(--a-ink2)]">From:</span> {settings.smtp.fromName} &lt;{settings.smtp.fromEmail}&gt;
               </p>
+              {settings.smtp.profiles && settings.smtp.profiles.length > 1 && (
+                <div className="space-y-1.5 rounded-md border border-[var(--a-border)] bg-[var(--a-card)]/60 p-2.5">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-[var(--a-ink2)]">Profiles (routed by From domain)</p>
+                  {settings.smtp.profiles.map((p) => (
+                    <div key={p.key} className="text-xs text-[var(--a-text2)]">
+                      <span className="font-semibold text-[var(--a-ink2)]">{p.label}:</span> {p.user}@{p.host}:{p.port}
+                      <span className="text-[var(--a-text2)]"> → {p.senderDomains.join(', ')}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
               {smtpResult && (
-                <p className={cn('rounded-md px-2 py-1.5 text-xs font-medium', smtpResult.ok ? 'bg-[#5A9E28]/10 text-[#5A9E28]' : 'bg-red-500/10 text-red-600')}>
-                  {smtpResult.ok
-                    ? `SMTP connection OK (${smtpResult.host}:${smtpResult.port ?? '?'} as ${smtpResult.user ?? '?'})`
-                    : `SMTP connection FAILED: ${smtpResult.error ?? 'Unknown error'}`}
-                </p>
+                <div className="space-y-1.5">
+                  {(smtpResult.profiles ?? []).length > 0 ? (
+                    smtpResult.profiles!.map((p) => (
+                      <p
+                        key={p.key}
+                        className={cn(
+                          'rounded-md px-2 py-1.5 text-xs font-medium',
+                          p.ok ? 'bg-[#5A9E28]/10 text-[#5A9E28]' : 'bg-red-500/10 text-red-600'
+                        )}
+                      >
+                        {p.ok
+                          ? `${p.label} SMTP OK (${p.host}:${p.port} as ${p.user})`
+                          : `${p.label} SMTP FAILED: ${p.error ?? 'Unknown error'}`}
+                      </p>
+                    ))
+                  ) : (
+                    <p className={cn('rounded-md px-2 py-1.5 text-xs font-medium', smtpResult.ok ? 'bg-[#5A9E28]/10 text-[#5A9E28]' : 'bg-red-500/10 text-red-600')}>
+                      {smtpResult.ok
+                        ? `SMTP connection OK (${smtpResult.host}:${smtpResult.port ?? '?'} as ${smtpResult.user ?? '?'})`
+                        : `SMTP connection FAILED: ${smtpResult.error ?? 'Unknown error'}`}
+                    </p>
+                  )}
+                </div>
               )}
               <button
                 type="button"
@@ -138,7 +186,7 @@ export function SettingsClient() {
                   setSmtpTesting(true);
                   setSmtpResult(null);
                   try {
-                    setSmtpResult(await adminFetch<{ ok: boolean; error?: string; host?: string | null; port?: number; user?: string }>('/api/admin/email/test'));
+                    setSmtpResult(await adminFetch<SmtpTestResult>('/api/admin/email/test'));
                   } catch (e) {
                     setSmtpResult({ ok: false, error: e instanceof Error ? e.message : 'Failed to run SMTP test.' });
                   } finally {

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { requireAdmin, jsonAdminError } from '@/lib/admin-auth';
+import { smtpProfiles } from '@/lib/email';
 
 export const dynamic = 'force-dynamic';
 
@@ -33,11 +34,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       supabase.from('whatsapp_config').select('*').limit(1).maybeSingle(),
     ]);
 
-    const smtpConfigured = Boolean(
-      (process.env.EMAIL_HOST ?? process.env.SMTP_HOST) &&
-        (process.env.EMAIL_USER ?? process.env.SMTP_USER) &&
-        (process.env.EMAIL_PASS ?? process.env.SMTP_PASSWORD)
-    );
+    const profiles = smtpProfiles();
+    const smtpConfigured = profiles.length > 0;
     const waConfig = waConfigResult.data as
       | { provider: string; is_active: boolean; from_number: string | null; account_sid: string | null; phone_number_id: string | null }
       | null
@@ -49,9 +47,18 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       whatsappTemplates: whatsappResult.data ?? [],
       smtp: {
         configured: smtpConfigured,
-        host: process.env.EMAIL_HOST ?? process.env.SMTP_HOST ?? null,
+        host: profiles[0]?.host ?? null,
         fromName: process.env.SMTP_FROM_NAME ?? 'Deni Sawa Partners',
         fromEmail: process.env.SMTP_FROM_EMAIL ?? 'noreply@denisawa.co.ke',
+        profiles: profiles.map((p) => ({
+          key: p.key,
+          label: p.label,
+          host: p.host,
+          port: p.port,
+          secure: p.secure,
+          user: p.user,
+          senderDomains: p.senderDomains,
+        })),
       },
       whatsapp: {
         configured: Boolean(waConfig),

@@ -15,7 +15,7 @@ const saveSchema = z
     system_prompt: z.string().max(20000).optional(),
     header_lexical: z.record(z.string(), z.unknown()).nullable().optional(),
     footer_lexical: z.record(z.string(), z.unknown()).nullable().optional(),
-    provider: z.enum(['anthropic', 'google']).optional(),
+    provider: z.enum(['anthropic', 'google', 'openrouter']).optional(),
     model: z.string().min(1).max(120).optional(),
     max_tokens: z.number().int().min(500).max(200000).optional(),
     is_active: z.boolean().optional(),

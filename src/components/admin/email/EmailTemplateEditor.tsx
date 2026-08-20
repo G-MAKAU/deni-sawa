@@ -7,7 +7,9 @@ import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { Loader2, Mail, Moon, Save, Send, Sun } from 'lucide-react';
 import { adminFetch, adminPut, adminPost } from '@/lib/admin-client';
-import { SimpleHtmlEditor } from '@/features/lexical/SimpleHtmlEditor';
+import { LexicalEditor } from '@/features/lexical/LexicalEditor';
+import { htmlToLexicalState } from '@/features/lexical/htmlToState';
+import { lexicalToHtml } from '@/lib/lexical-to-html';
 import { SimpleHtmlRenderer } from '@/features/lexical/SimpleHtmlRenderer';
 import { AdminCard, AsyncButton, ErrorBanner, Field, Loading, Modal, PageHeader, Toggle } from '@/components/admin/ui';
 import { StorageImagePicker } from '@/components/admin/StorageImagePicker';
@@ -19,6 +21,7 @@ interface EmailTemplateDetail {
   name: string;
   subject: string;
   preview_text: string | null;
+  body_lexical: Record<string, unknown> | null;
   body_html: string | null;
   from_name: string;
   from_email: string;
@@ -105,7 +108,8 @@ export function EmailTemplateEditor() {
   const [fromEmail, setFromEmail] = React.useState('noreply@denisawa.co.ke');
   const [replyTo, setReplyTo] = React.useState('');
   const [isActive, setIsActive] = React.useState(true);
-  const [bodyHtml, setBodyHtml] = React.useState<string | null>(null);
+  const [bodyLexical, setBodyLexical] = React.useState<Record<string, unknown> | null>(null);
+  const [bodyHtml, setBodyHtml] = React.useState<string>('');
 
   const [saving, setSaving] = React.useState(false);
   const [previewMode, setPreviewMode] = React.useState<'editor' | 'preview'>('editor');
@@ -151,31 +155,14 @@ export function EmailTemplateEditor() {
     browseResolveRef.current = null;
   };
 
-  const handleInsertImage = async (url: string) => {
-    const imgHtml = `<img src="${url}" alt="" style="max-width:100%;height:auto;border-radius:0.5rem;">`;
-    setBodyHtml(prev => prev + imgHtml);
-  };
-
-  const handleImageUpload = async (file: File) => {
-    if (!file) return;
-    try {
-      const url = await handleUploadImage(file);
-      if (url) {
-        const imgHtml = `<img src="${url}" alt="" style="max-width:100%;height:auto;border-radius:0.5rem;">`;
-        setBodyHtml(prev => prev + imgHtml);
-      }
-    } catch (e) {
-      toast.error('Image upload failed');
-    }
-  };
-
   const previewHtml = bodyHtml ? substituteInHtml(bodyHtml, testVariables) : '';
   const previewKeyString = JSON.stringify(previewHtml);
 
   React.useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    setBodyHtml(null);
+    setBodyLexical(null);
+    setBodyHtml('');
     (async () => {
       try {
         const [templateResult, meResult] = await Promise.all([
@@ -191,10 +178,13 @@ export function EmailTemplateEditor() {
         setFromEmail(t.from_email);
         setReplyTo(t.reply_to ?? '');
         setIsActive(t.is_active);
-        setBodyHtml(t.body_html ?? '');
         setAdminEmail(meResult?.admin.email ?? '');
         setTestTo(meResult?.admin.email ?? '');
         setTestVariables(Object.fromEntries(t.available_variables.map((v) => [v, SAMPLE_VALUES[v] ?? `[${v}]`])));
+        const state = t.body_lexical ?? (await htmlToLexicalState(t.body_html ?? ''));
+        if (cancelled) return;
+        setBodyLexical(state);
+        setBodyHtml(lexicalToHtml(state));
       } catch (e) {
         if (!cancelled) setError(e instanceof Error ? e.message : 'Failed to load template.');
       } finally {
@@ -239,20 +229,19 @@ export function EmailTemplateEditor() {
       el.dispatchEvent(new Event('input', { bubbles: true }));
       el.setSelectionRange(start + token.length, start + token.length);
       el.focus();
-    } else {
-      // Fallback: append into the email body (matches the SimpleHtmlEditor flow).
-      setBodyHtml((prev) => `${prev ?? ''}${token}`);
     }
+    // When the cursor is in the body editor, variables are inserted via the
+    // editor toolbar's "Insert variable" dropdown instead.
   };
 
   const handleSave = async () => {
-    if (!bodyHtml) return;
     setSaving(true);
     try {
       await adminPut(`/api/admin/email-templates/${templateKey}`, {
         name: template?.name ?? '',
         subject,
         preview_text: previewText || null,
+        body_lexical: bodyLexical,
         body_html: bodyHtml,
         from_name: fromName,
         from_email: fromEmail,
@@ -357,13 +346,16 @@ export function EmailTemplateEditor() {
         </p>
       </AdminCard>
 
-      <AdminCard title="Body" subtitle="Edit HTML — variables render as orange pills.">
-        <SimpleHtmlEditor
-          html={bodyHtml ?? ''}
-          onChange={setBodyHtml}
+      <AdminCard title="Body" subtitle="Edit visually — formatting is converted to HTML automatically. Variables render as orange pills.">
+        <LexicalEditor
+          state={bodyLexical ?? undefined}
+          onChange={(state) => {
+            const next = state as Record<string, unknown>;
+            setBodyLexical(next);
+            setBodyHtml(lexicalToHtml(next));
+          }}
           placeholder="Write your email body…"
           variables={template.available_variables}
-          onInsertVariable={insertVariable}
           onUploadImage={handleUploadImage}
           onBrowseImage={handleBrowseImage}
           className="min-h-[440px]"

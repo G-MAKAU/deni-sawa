@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { requireAdmin, jsonAdminError } from '@/lib/admin-auth';
+import { smtpProfiles } from '@/lib/email';
 
 export const dynamic = 'force-dynamic';
 
@@ -8,18 +9,25 @@ export async function GET(request: NextRequest) {
   try {
     await requireAdmin(request, 'read');
 
+    const profiles = smtpProfiles();
+
     return NextResponse.json({
       settings: {
         siteUrl: process.env.NEXT_PUBLIC_SITE_URL ?? 'https://denisawa.co.ke',
         smtp: {
-          configured: Boolean(
-            (process.env.EMAIL_HOST ?? process.env.SMTP_HOST) &&
-              (process.env.EMAIL_USER ?? process.env.SMTP_USER) &&
-              (process.env.EMAIL_PASS ?? process.env.SMTP_PASSWORD)
-          ),
-          host: process.env.EMAIL_HOST ?? process.env.SMTP_HOST ?? null,
+          configured: profiles.length > 0,
+          host: profiles[0]?.host ?? null,
           fromName: process.env.SMTP_FROM_NAME ?? 'Deni Sawa Partners',
           fromEmail: process.env.SMTP_FROM_EMAIL ?? 'noreply@denisawa.co.ke',
+          profiles: profiles.map((p) => ({
+            key: p.key,
+            label: p.label,
+            host: p.host,
+            port: p.port,
+            secure: p.secure,
+            user: p.user,
+            senderDomains: p.senderDomains,
+          })),
         },
         whatsapp: {
           provider: process.env.WHATSAPP_PROVIDER ?? 'twilio',

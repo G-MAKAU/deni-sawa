@@ -470,10 +470,10 @@ export function ReportsViewer() {
                 <button
                   type="button"
                   onClick={() => {
-                    void navigator.clipboard.writeText(
-                      `${window.location.origin}/business-health-checks/report/${reportUrlToken}`
-                    );
-                    toast.success('Report link copied');
+                    void navigator.clipboard
+                      .writeText(`${window.location.origin}/business-health-checks/report/${reportUrlToken}`)
+                      .then(() => toast.success('Report link copied'))
+                      .catch(() => toast.error('Could not copy. Copy the link above manually.'));
                   }}
                   className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-[#E8510A] px-3 text-[12px] font-semibold text-white transition-colors hover:bg-[#d34a08]"
                 >

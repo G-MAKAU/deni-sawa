@@ -157,6 +157,17 @@ export function buildBrandedEmailHtml(bodyHtml: string, previewText?: string): s
   }
 }
 
+export interface SmtpProfile {
+  key: 'primary' | 'secondary';
+  label: string;
+  host: string | null;
+  port: number;
+  secure: boolean;
+  user: string | null;
+  pass: string | null;
+  senderDomains: string[];
+}
+
 export interface SmtpStatus {
   ok: boolean;
   error?: string;
@@ -164,48 +175,150 @@ export interface SmtpStatus {
   port?: number;
   secure?: boolean;
   user?: string;
+  profiles?: {
+    key: string;
+    label: string;
+    host: string;
+    port: number;
+    secure: boolean;
+    user: string;
+    ok: boolean;
+    error?: string;
+  }[];
 }
 
-/** Reads the SMTP connection settings from env. EMAIL_* are canonical; SMTP_* legacy. */
+function readSmtpProfile(suffix: '' | '2', label: string): SmtpProfile {
+  const host = process.env[`EMAIL${suffix}_HOST`] ?? process.env[`SMTP${suffix}_HOST`] ?? null;
+  const user = process.env[`EMAIL${suffix}_USER`] ?? process.env[`SMTP${suffix}_USER`] ?? null;
+  const pass = process.env[`EMAIL${suffix}_PASS`] ?? process.env[`SMTP${suffix}_PASSWORD`] ?? null;
+  const port = Number(process.env[`EMAIL${suffix}_PORT`] ?? process.env[`SMTP${suffix}_PORT`] ?? 587);
+  // Port 465 is implicit TLS; 587/25 are STARTTLS (plaintext then upgrade).
+  // Default from the port and only override when explicitly configured.
+  const secureEnv = process.env[`EMAIL${suffix}_SECURE`] ?? process.env[`SMTP${suffix}_SECURE`];
+  const secure = secureEnv !== undefined ? secureEnv.toLowerCase() === 'true' : port === 465;
+  const senderDomains = (
+    process.env[`EMAIL${suffix}_SENDER_DOMAINS`] ??
+    process.env[`SMTP${suffix}_SENDER_DOMAINS`] ??
+    ''
+  )
+    .split(',')
+    .map((d) => d.trim().toLowerCase())
+    .filter(Boolean);
+  return { key: suffix ? 'secondary' : 'primary', label, host, port, secure, user, pass, senderDomains };
+}
+
+/**
+ * All configured SMTP profiles. Primary comes from EMAIL_* (SMTP_* legacy);
+ * the secondary profile comes from EMAIL2_* (SMTP2_* legacy). A profile is
+ * only included when host, user and pass are all present.
+ */
+export function smtpProfiles(): SmtpProfile[] {
+  return [readSmtpProfile('', 'Primary'), readSmtpProfile('2', 'Secondary')].filter(
+    (p): p is SmtpProfile => Boolean(p.host && p.user && p.pass)
+  );
+}
+
+/** Reads the primary SMTP connection settings from env. EMAIL_* are canonical; SMTP_* legacy. */
 export function smtpConfig() {
-  const host = process.env.EMAIL_HOST ?? process.env.SMTP_HOST;
-  const user = process.env.EMAIL_USER ?? process.env.SMTP_USER;
-  const pass = process.env.EMAIL_PASS ?? process.env.SMTP_PASSWORD;
-  const port = Number(process.env.EMAIL_PORT ?? process.env.SMTP_PORT ?? 587);
-  const secure = (process.env.EMAIL_SECURE ?? process.env.SMTP_SECURE ?? '').toLowerCase() === 'true';
-  return { host, user, pass, port, secure };
+  const primary = smtpProfiles()[0];
+  return primary
+    ? { host: primary.host, user: primary.user, pass: primary.pass, port: primary.port, secure: primary.secure }
+    : { host: null, user: null, pass: null, port: 587, secure: false };
 }
 
-let smtpTransporter: ReturnType<typeof nodemailer.createTransport> | null = null;
-let smtpChecked: string | null = null;
+/**
+ * Picks the SMTP profile allowed to send a given From address. The From
+ * domain is matched against each profile's senderDomains; falls back to the
+ * primary profile when no profile authorises that domain.
+ */
+export function resolveSmtpProfile(fromEmail?: string): SmtpProfile | null {
+  const profiles = smtpProfiles();
+  if (!profiles.length) return null;
+  const domain = fromEmail?.split('@')[1]?.toLowerCase();
+  if (domain) {
+    const match = profiles.find((p) => p.senderDomains.includes(domain));
+    if (match) return match;
+  }
+  return profiles[0];
+}
 
-/** Verifies the SMTP connection and caches the result (per host/user). Never throws. */
+/** Builds the Nodemailer transport options for a profile. */
+function smtpTransportOptions(profile: SmtpProfile) {
+  return {
+    host: profile.host!,
+    port: profile.port,
+    secure: profile.secure,
+    // STARTTLS ports (587/25) begin in plaintext then upgrade; require the
+    // upgrade so Gmail and similar providers never fall back to an insecure
+    // connection. Implicit-TLS ports (465) skip this.
+    requireTLS: !profile.secure,
+    auth: profile.user && profile.pass ? { user: profile.user, pass: profile.pass } : undefined,
+  };
+}
+
+type SmtpTransporter = ReturnType<typeof nodemailer.createTransport>;
+
+const smtpTransporters = new Map<string, SmtpTransporter>();
+
+function transporterCacheKey(profile: SmtpProfile) {
+  return `${profile.key}:${profile.host}:${profile.port}:${profile.user}`;
+}
+
+function getTransporter(profile: SmtpProfile): SmtpTransporter {
+  const key = transporterCacheKey(profile);
+  const cached = smtpTransporters.get(key);
+  if (cached) return cached;
+  const transporter = nodemailer.createTransport(smtpTransportOptions(profile));
+  smtpTransporters.set(key, transporter);
+  return transporter;
+}
+
+/** Verifies the SMTP connection(s) and reports per-profile status. Never throws. */
 export async function verifySmtpConnection(): Promise<SmtpStatus> {
-  const { host, user, pass, port, secure } = smtpConfig();
-  if (!host || !user || !pass) {
-    return { ok: false, error: 'SMTP is not configured.', host, port, secure, user };
+  const profiles = smtpProfiles();
+  if (!profiles.length) {
+    return { ok: false, error: 'SMTP is not configured.' };
   }
 
-  const cacheKey = `${host}:${port}:${user}`;
-  if (smtpTransporter && smtpChecked === cacheKey) {
-    return { ok: true, host, port, secure, user };
-  }
-
-  const transporter = nodemailer.createTransport({ host, port, secure, auth: { user, pass } });
-  try {
-    await transporter.verify();
-    smtpTransporter = transporter;
-    smtpChecked = cacheKey;
-    return { ok: true, host, port, secure, user };
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown SMTP error';
+  const statuses: NonNullable<SmtpStatus['profiles']> = [];
+  for (const profile of profiles) {
     try {
-      transporter.close();
-    } catch {
-      /* ignore */
+      await getTransporter(profile).verify();
+      statuses.push({
+        key: profile.key,
+        label: profile.label,
+        host: profile.host!,
+        port: profile.port,
+        secure: profile.secure,
+        user: profile.user!,
+        ok: true,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown SMTP error';
+      statuses.push({
+        key: profile.key,
+        label: profile.label,
+        host: profile.host!,
+        port: profile.port,
+        secure: profile.secure,
+        user: profile.user!,
+        ok: false,
+        error: message,
+      });
     }
-    return { ok: false, error: message, host, port, secure, user };
   }
+
+  const primary = profiles[0];
+  const primaryStatus = statuses.find((s) => s.key === primary.key) ?? statuses[0];
+  return {
+    ok: primaryStatus?.ok ?? false,
+    error: primaryStatus?.ok ? undefined : primaryStatus?.error,
+    host: primary.host ?? undefined,
+    port: primary.port,
+    secure: primary.secure,
+    user: primary.user ?? undefined,
+    profiles: statuses,
+  };
 }
 
 /** True for transient SMTP errors worth retrying (network/TLS issues, not auth rejections). */
@@ -223,34 +336,30 @@ function isTransientSmtpError(error: unknown): boolean {
   );
 }
 
-/** Sends email via Nodemailer + domain SMTP. Best-effort — never throws. */
+/** Sends email via Nodemailer, routing to the SMTP profile that owns the From domain. Best-effort — never throws. */
 export async function sendEmail(payload: EmailSendPayload): Promise<EmailSendResult> {
-  const { host, user, pass, port, secure } = smtpConfig();
-  if (!host || !user || !pass) {
+  const fromName = payload.fromName ?? process.env.SMTP_FROM_NAME ?? 'Deni Sawa Partners';
+  const fromEmail = payload.fromEmail ?? process.env.SMTP_FROM_EMAIL ?? 'noreply@denisawa.co.ke';
+
+  const profile = resolveSmtpProfile(fromEmail);
+  if (!profile) {
     return { ok: false, error: 'SMTP is not configured.' };
   }
 
-  const transporter = smtpTransporter && smtpChecked === `${host}:${port}:${user}` ? smtpTransporter : nodemailer.createTransport({ host, port, secure, auth: { user, pass } });
+  const transporter = getTransporter(profile);
 
   try {
     await transporter.verify();
-    if (!smtpTransporter) {
-      smtpTransporter = transporter;
-      smtpChecked = `${host}:${port}:${user}`;
-    }
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown SMTP error';
-    console.error(`SMTP verify failed (${user}@${host}:${port}):`, message);
+    console.error(`SMTP verify failed (${profile.user}@${profile.host}:${profile.port}):`, message);
     return { ok: false, error: `SMTP connection failed: ${message}` };
   }
 
   const attemptSend = async (): Promise<EmailSendResult> => {
     try {
       const info = await transporter.sendMail({
-        from: {
-          name: payload.fromName ?? process.env.SMTP_FROM_NAME ?? 'Deni Sawa Partners',
-          address: payload.fromEmail ?? process.env.SMTP_FROM_EMAIL ?? 'noreply@denisawa.co.ke',
-        },
+        from: { name: fromName, address: fromEmail },
         replyTo: payload.replyTo,
         to: payload.toName ? `"${payload.toName}" <${payload.to}>` : payload.to,
         subject: payload.subject,

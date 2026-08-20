@@ -28,7 +28,13 @@ interface DeliveryData {
   check: { name: string; slug: string };
   emailTemplates: EmailTemplateSummary[];
   whatsappTemplates: WhatsAppTemplateSummary[];
-  smtp: { configured: boolean; host: string | null; fromName: string; fromEmail: string };
+  smtp: {
+    configured: boolean;
+    host: string | null;
+    fromName: string;
+    fromEmail: string;
+    profiles?: { key: string; label: string; host: string | null; port: number; secure: boolean; user: string | null; senderDomains: string[] }[];
+  };
   whatsapp: {
     configured: boolean;
     provider: string;
@@ -176,6 +182,17 @@ export function DeliveryClient() {
               <p>
                 <span className="font-semibold text-[var(--a-ink2)]">From:</span> {data.smtp.fromName} &lt;{data.smtp.fromEmail}&gt;
               </p>
+              {data.smtp.profiles && data.smtp.profiles.length > 1 && (
+                <div className="space-y-1.5 rounded-md border border-[var(--a-border)] bg-[var(--a-card)]/60 p-2.5">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-[var(--a-ink2)]">Profiles (routed by From domain)</p>
+                  {data.smtp.profiles.map((p) => (
+                    <div key={p.key} className="text-xs text-[var(--a-text2)]">
+                      <span className="font-semibold text-[var(--a-ink2)]">{p.label}:</span> {p.user}@{p.host}:{p.port}
+                      <span className="text-[var(--a-text2)]"> → {p.senderDomains.join(', ')}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </AdminCard>

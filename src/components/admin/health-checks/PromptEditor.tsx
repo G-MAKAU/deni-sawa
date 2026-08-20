@@ -18,7 +18,7 @@ interface PromptRow {
   system_prompt_lexical: Record<string, unknown> | null;
   header_lexical: Record<string, unknown> | null;
   footer_lexical: Record<string, unknown> | null;
-  provider: 'anthropic' | 'google';
+  provider: ReportProvider;
   model: string;
   max_tokens: number;
   is_active: boolean;
@@ -29,6 +29,16 @@ interface PromptRow {
 }
 
 type ReportType = 'summary' | 'detailed';
+
+type ReportProvider = 'anthropic' | 'google' | 'openrouter';
+
+const PROVIDERS: ReportProvider[] = ['anthropic', 'google', 'openrouter'];
+
+const FALLBACK_MODELS: Record<ReportProvider, string[]> = {
+  anthropic: ['claude-sonnet-4-6', 'claude-sonnet-4-5', 'claude-opus-4-1', 'claude-haiku-4-5'],
+  google: ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-pro'],
+  openrouter: ['anthropic/claude-sonnet-4-6', 'anthropic/claude-opus-4-1', 'google/gemini-2.5-flash', 'openai/gpt-4o'],
+};
 
 /** Builds a minimal Lexical EditorState from plain text (paragraph per line). */
 function plainTextToLexicalState(text: string): Record<string, unknown> {
@@ -44,11 +54,6 @@ function plainTextToLexicalState(text: string): Record<string, unknown> {
   }));
   return { root: { children: paragraphs, direction: 'ltr', format: '', indent: 0, type: 'root', version: 1 } };
 }
-
-const FALLBACK_MODELS: Record<'anthropic' | 'google', string[]> = {
-  anthropic: ['claude-sonnet-4-6', 'claude-sonnet-4-5', 'claude-opus-4-1', 'claude-haiku-4-5'],
-  google: ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-pro'],
-};
 
 export function PromptEditor() {
   const params = useParams<{ id: string }>();
@@ -66,7 +71,7 @@ export function PromptEditor() {
   const [summaryFooter, setSummaryFooter] = React.useState<Record<string, unknown> | null>(null);
   const [detailedHeader, setDetailedHeader] = React.useState<Record<string, unknown> | null>(null);
   const [detailedFooter, setDetailedFooter] = React.useState<Record<string, unknown> | null>(null);
-  const [provider, setProvider] = React.useState<'anthropic' | 'google'>('anthropic');
+  const [provider, setProvider] = React.useState<ReportProvider>('anthropic');
   const [model, setModel] = React.useState<string>('claude-sonnet-4-6');
   const [maxTokens, setMaxTokens] = React.useState<string>('4000');
   const [saving, setSaving] = React.useState(false);
@@ -74,18 +79,19 @@ export function PromptEditor() {
   const [pickerOpen, setPickerOpen] = React.useState(false);
   const browseResolverRef = React.useRef<((url: string | null) => void) | null>(null);
 
-  const [models, setModels] = React.useState<Record<'anthropic' | 'google', string[]>>(FALLBACK_MODELS);
+  const [models, setModels] = React.useState<Record<ReportProvider, string[]>>(FALLBACK_MODELS);
 
   const activePrompt = prompts.find((p) => p.report_type === activeTab);
 
   React.useEffect(() => {
     let cancelled = false;
-    adminFetch<{ anthropic: string[]; google: string[] }>('/api/admin/models')
+    adminFetch<{ anthropic: string[]; google: string[]; openrouter?: string[] }>('/api/admin/models')
       .then((data) => {
         if (cancelled) return;
         setModels({
           anthropic: [...new Set([...FALLBACK_MODELS.anthropic, ...(data.anthropic ?? [])])],
           google: [...new Set([...FALLBACK_MODELS.google, ...(data.google ?? [])])],
+          openrouter: [...new Set([...FALLBACK_MODELS.openrouter, ...(data.openrouter ?? [])])],
         });
       })
       .catch(() => {
@@ -112,11 +118,10 @@ export function PromptEditor() {
         setSummaryFooter(summary?.footer_lexical ?? null);
         setDetailedHeader(detailed?.header_lexical ?? null);
         setDetailedFooter(detailed?.footer_lexical ?? null);
-        setProvider(activeTab === 'summary' ? (summary?.provider ?? 'anthropic') : (detailed?.provider ?? 'anthropic'));
-        setModel(activeTab === 'summary' ? summary?.model ?? 'claude-sonnet-4-6' : detailed?.model ?? 'claude-sonnet-4-6');
-        setMaxTokens(
-          activeTab === 'summary' ? (summary?.max_tokens ?? 4000).toString() : (detailed?.max_tokens ?? 4000).toString()
-        );
+        const target = activeTab === 'summary' ? summary : detailed;
+        setProvider(target?.provider ?? 'anthropic');
+        setModel(target?.model ?? 'claude-sonnet-4-6');
+        setMaxTokens((target?.max_tokens ?? 4000).toString());
       } catch (e) {
         if (!cancelled) setError(e instanceof Error ? e.message : 'Failed to load prompts.');
       } finally {
@@ -270,7 +275,7 @@ export function PromptEditor() {
               <div className="space-y-5">
                 <Field label="Provider">
                   <div className="inline-flex w-full rounded-lg border border-[var(--a-border)] bg-[var(--a-subtle)] p-1">
-                    {(['anthropic', 'google'] as const).map((value) => (
+                    {PROVIDERS.map((value) => (
                       <button
                         key={value}
                         type="button"
@@ -283,7 +288,7 @@ export function PromptEditor() {
                           provider === value ? 'bg-[#E8510A] text-white' : 'text-[var(--a-text2)] hover:text-[var(--a-ink2)]'
                         )}
                       >
-                        {value === 'anthropic' ? 'Anthropic (Claude)' : 'Google (Gemini)'}
+                        {value === 'anthropic' ? 'Anthropic (Claude)' : value === 'google' ? 'Google (Gemini)' : 'OpenRouter'}
                       </button>
                     ))}
                   </div>
@@ -296,11 +301,11 @@ export function PromptEditor() {
                     list="report-model-options"
                     value={model}
                     onChange={(e) => setModel(e.target.value)}
-                    placeholder={FALLBACK_MODELS[provider][0]}
+                    placeholder={FALLBACK_MODELS[provider]?.[0] ?? 'claude-sonnet-4-6'}
                     className="h-11 w-full rounded-lg border border-[var(--a-border)] bg-[var(--a-subtle)] px-3 text-sm focus:border-[#E8510A] focus:outline-none focus:ring-2 focus:ring-[#E8510A]/20"
                   />
                   <datalist id="report-model-options">
-                    {models[provider].map((m) => (
+                    {(models[provider] ?? FALLBACK_MODELS.anthropic).map((m) => (
                       <option key={m} value={m} />
                     ))}
                   </datalist>

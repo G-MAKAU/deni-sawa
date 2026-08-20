@@ -6,6 +6,16 @@ export const dynamic = 'force-dynamic';
 
 const FALLBACK_ANTHROPIC = ['claude-sonnet-4-6', 'claude-sonnet-4-5', 'claude-opus-4-1', 'claude-haiku-4-5'];
 const FALLBACK_GOOGLE = ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-pro'];
+const FALLBACK_OPENROUTER = [
+  'anthropic/claude-sonnet-4-6',
+  'anthropic/claude-sonnet-4-5',
+  'anthropic/claude-opus-4-1',
+  'anthropic/claude-haiku-4-5',
+  'google/gemini-2.5-pro',
+  'google/gemini-2.5-flash',
+  'openai/gpt-4o',
+  'openai/gpt-4o-mini',
+];
 
 /** Live model ids from the Anthropic API (fallback list when unavailable). */
 async function fetchAnthropicModels(): Promise<string[]> {
@@ -53,7 +63,7 @@ export async function GET(request: NextRequest) {
     await requireAdmin(request, 'read');
     const [anthropic, google] = await Promise.all([fetchAnthropicModels(), fetchGoogleModels()]);
     return NextResponse.json(
-      { anthropic, google },
+      { anthropic, google, openrouter: FALLBACK_OPENROUTER },
       { headers: { 'Cache-Control': 'public, max-age=300' } }
     );
   } catch (error) {
