@@ -181,10 +181,11 @@ export function EmailTemplateEditor() {
         setAdminEmail(meResult?.admin.email ?? '');
         setTestTo(meResult?.admin.email ?? '');
         setTestVariables(Object.fromEntries(t.available_variables.map((v) => [v, SAMPLE_VALUES[v] ?? `[${v}]`])));
-        const state = t.body_lexical ?? (await htmlToLexicalState(t.body_html ?? ''));
-        if (cancelled) return;
-        setBodyLexical(state);
-        setBodyHtml(lexicalToHtml(state));
+const state = t.body_lexical ?? (await htmlToLexicalState(t.body_html ?? ''));
+    if (cancelled) return;
+    const resolvedState = state ?? {};
+    setBodyLexical(resolvedState);
+    setBodyHtml(lexicalToHtml(resolvedState));
       } catch (e) {
         if (!cancelled) setError(e instanceof Error ? e.message : 'Failed to load template.');
       } finally {
