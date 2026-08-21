@@ -38,7 +38,7 @@ export async function POST(request: Request) {
         .maybeSingle(),
     ]);
 
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://denisawa.co.ke';
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://deni-sawa.vercel.app';
     return NextResponse.json({
       ok: true,
       payment_status: session?.payment_status,

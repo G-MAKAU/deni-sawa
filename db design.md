@@ -1192,7 +1192,7 @@ CREDENTIALS_ENCRYPTION_KEY=
 NEXT_PUBLIC_GA_MEASUREMENT_ID=
 
 # Site
-NEXT_PUBLIC_SITE_URL=https://denisawa.co.ke
+NEXT_PUBLIC_SITE_URL=https://deni-sawa.vercel.app
 ```
 
 ---

@@ -27,6 +27,8 @@ interface ReportRow {
   report_url_token: string;
   tokens_used?: number;
   generation_seconds?: number;
+  model_used?: string | null;
+  generation_error?: string | null;
 }
 
 interface ReportDetail {
@@ -39,6 +41,10 @@ interface ReportDetail {
   session_name: string;
   check_name: string;
   report_url_token?: string | null;
+  model_used?: string | null;
+  generation_error?: string | null;
+  tokens_used?: number;
+  generation_seconds?: number;
 }
 
 const PAGE_SIZE = 20;
@@ -70,6 +76,7 @@ export function ReportsViewer() {
   const [detailLoading, setDetailLoading] = React.useState(false);
   const [regeneratingId, setRegeneratingId] = React.useState<string | null>(null);
   const [copiedId, setCopiedId] = React.useState<string | null>(null);
+  const [errorViewReport, setErrorViewReport] = React.useState<ReportRow | null>(null);
 
   const copyLink = async (report: ReportRow) => {
     const url = `${window.location.origin}/business-health-checks/report/${report.report_url_token}`;
@@ -193,14 +200,49 @@ export function ReportsViewer() {
         cell: ({ getValue }) => <StatusPill tone={DELIVERY_TONE[getValue() as ReportRow['delivery_status']]}>{getValue() as string}</StatusPill>,
       },
       {
+        id: 'gen_status',
+        header: 'Gen Status',
+        cell: ({ row }) => {
+          const err = row.original.generation_error;
+          const model = row.original.model_used;
+          if (err) {
+            return (
+              <button
+                type="button"
+                onClick={() => setErrorViewReport(row.original)}
+                className="inline-flex items-center gap-1 rounded-md bg-red-50 px-2 py-0.5 text-[11px] font-semibold text-red-700 ring-1 ring-inset ring-red-600/20 transition-colors hover:bg-red-100"
+              >
+                Fallback
+              </button>
+            );
+          }
+          if (model === 'fallback') {
+            return (
+              <button
+                type="button"
+                onClick={() => setErrorViewReport(row.original)}
+                className="inline-flex items-center gap-1 rounded-md bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-700 ring-1 ring-inset ring-amber-600/20 transition-colors hover:bg-amber-100"
+              >
+                Fallback
+              </button>
+            );
+          }
+          return model ? (
+            <span className="text-[12px] text-[var(--a-muted)]">{model}</span>
+          ) : (
+            <span className="text-[12px] text-[var(--a-muted)]">—</span>
+          );
+        },
+      },
+      {
         accessorKey: 'tokens_used',
         header: 'Tokens used',
-        cell: ({ getValue }) => getValue ? String(getValue()) : '-',
+        cell: ({ row }) => row.original.tokens_used != null ? String(row.original.tokens_used) : '-',
       },
       {
         accessorKey: 'generation_seconds',
         header: 'Gen time (s)',
-        cell: ({ getValue }) => getValue ? String(Math.round(getValue())) : '-',
+        cell: ({ row }) => row.original.generation_seconds != null ? String(Math.round(row.original.generation_seconds)) : '-',
       },
       {
         id: 'edit',
@@ -281,7 +323,7 @@ export function ReportsViewer() {
   });
 
   const toggleableColumns = React.useMemo(
-    () => ['session_name', 'check_name', 'report_type', 'created_at', 'is_paid', 'delivery_status'],
+    () => ['session_name', 'check_name', 'report_type', 'created_at', 'is_paid', 'delivery_status', 'gen_status'],
     []
   );
 
@@ -339,6 +381,7 @@ export function ReportsViewer() {
                         created_at: 'Generated',
                         is_paid: 'Paid',
                         delivery_status: 'Delivery',
+                        gen_status: 'Gen Status',
                       }[colId];
                       return (
                         <label key={colId} className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm text-[var(--a-ink2)] hover:bg-[var(--a-hover)]">
@@ -469,7 +512,23 @@ export function ReportsViewer() {
               · {format(new Date(detail.created_at), 'd MMM yyyy')}
               <StatusPill tone={detail.is_paid ? 'green' : 'grey'}>{detail.is_paid ? 'Paid' : 'Unpaid'}</StatusPill>
               <StatusPill tone={DELIVERY_TONE[detail.delivery_status as ReportRow['delivery_status']] ?? 'amber'}>{detail.delivery_status}</StatusPill>
+              {detail.model_used === 'fallback' && (
+                <StatusPill tone="amber">fallback</StatusPill>
+              )}
+              {detail.tokens_used != null && (
+                <span className="text-[12px]">{detail.tokens_used} tokens</span>
+              )}
+              {detail.generation_seconds != null && (
+                <span className="text-[12px]">{Math.round(detail.generation_seconds)}s</span>
+              )}
             </div>
+            {detail.generation_error && (
+              <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-red-700">Generation Error</p>
+                <p className="mt-2 whitespace-pre-wrap text-[13px] leading-relaxed text-red-800">{detail.generation_error}</p>
+                <p className="mt-2 text-[11px] text-red-600">The fallback report was used instead. Regenerate after fixing the issue.</p>
+              </div>
+            )}
             <div className="rounded-lg border border-[var(--a-border-soft)] bg-[var(--a-card)] p-4">
               <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--a-muted)]">Report link</p>
               <div className="mt-2 flex items-center gap-2">
@@ -510,6 +569,74 @@ export function ReportsViewer() {
             </>
               );
             })()}
+          </div>
+        )}
+      </Modal>
+
+      {/* Generation error modal */}
+      <Modal
+        open={errorViewReport !== null}
+        onClose={() => setErrorViewReport(null)}
+        title="Generation Error"
+        footer={
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setErrorViewReport(null)}
+              className="h-10 rounded-lg border border-[var(--a-border)] bg-[var(--a-card)] px-4 text-[13px] font-semibold text-[var(--a-text)] hover:bg-[var(--a-hover)]"
+            >
+              Close
+            </button>
+            {errorViewReport && (
+              <button
+                type="button"
+                onClick={() => {
+                  const rpt = errorViewReport;
+                  setErrorViewReport(null);
+                  void handleRegenerate(rpt);
+                }}
+                className="h-10 rounded-lg bg-[#E8510A] px-4 text-[13px] font-semibold text-white transition-colors hover:bg-[#d34a08]"
+              >
+                Regenerate Report
+              </button>
+            )}
+          </div>
+        }
+      >
+        {errorViewReport && (
+          <div className="space-y-4">
+            <div className="flex flex-wrap items-center gap-2 text-sm text-[var(--a-muted)]">
+              <span className="font-semibold text-[var(--a-ink2)]">{errorViewReport.session_name}</span>
+              · {errorViewReport.check_name}
+              · {format(new Date(errorViewReport.created_at), 'd MMM yyyy')}
+              <StatusPill tone={errorViewReport.is_paid ? 'green' : 'grey'}>{errorViewReport.is_paid ? 'Paid' : 'Unpaid'}</StatusPill>
+              <StatusPill tone={DELIVERY_TONE[errorViewReport.delivery_status]}>{errorViewReport.delivery_status}</StatusPill>
+              {errorViewReport.model_used === 'fallback' && (
+                <StatusPill tone="amber">fallback</StatusPill>
+              )}
+            </div>
+            {errorViewReport.generation_error ? (
+              <div className="rounded-lg border border-red-200 bg-red-50 p-5">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-red-700">Error Message</p>
+                <pre className="mt-3 whitespace-pre-wrap rounded-md bg-white p-4 text-[13px] leading-relaxed text-red-800 ring-1 ring-red-200">
+                  {errorViewReport.generation_error}
+                </pre>
+              </div>
+            ) : (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-5">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-amber-700">Fallback Used</p>
+                <p className="mt-2 text-[13px] text-amber-800">
+                  No error was recorded, but the model used was <span className="font-semibold">{errorViewReport.model_used ?? 'unknown'}</span>.
+                  The deterministic fallback template was used instead of AI generation.
+                </p>
+              </div>
+            )}
+            {errorViewReport.tokens_used != null && (
+              <p className="text-[12px] text-[var(--a-muted)]">Tokens used: {errorViewReport.tokens_used}</p>
+            )}
+            {errorViewReport.generation_seconds != null && (
+              <p className="text-[12px] text-[var(--a-muted)]">Generation time: {Math.round(errorViewReport.generation_seconds)}s</p>
+            )}
           </div>
         )}
       </Modal>

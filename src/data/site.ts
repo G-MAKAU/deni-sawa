@@ -6,7 +6,7 @@
 export const site = {
   name: 'Deni Sawa Partners',
   tagline: 'From Special Situations to Best-in-Class',
-  url: process.env.NEXT_PUBLIC_SITE_URL ?? 'https://denisawa.co.ke',
+  url: process.env.NEXT_PUBLIC_SITE_URL ?? 'https://deni-sawa.vercel.app',
   email: 'advisory@denisawa.co.ke',
   phone: '+254 702 448 601',
   address: 'Nairobi, Kenya',

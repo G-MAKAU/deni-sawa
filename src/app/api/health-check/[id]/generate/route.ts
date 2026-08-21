@@ -57,7 +57,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   try {
     const { report, regenerated } = await runReportGeneration(supabase, session, reportType, { skipDelivery });
 
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://denisawa.co.ke';
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://deni-sawa.vercel.app';
     return NextResponse.json({
       report_id: report.id,
       report_url_token: report.report_url_token,

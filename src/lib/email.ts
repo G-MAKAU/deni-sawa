@@ -39,7 +39,7 @@ export interface EmailSendResult {
 }
 
 function resolveSiteUrl() {
-  return process.env.NEXT_PUBLIC_SITE_URL ?? 'https://denisawa.co.ke';
+  return process.env.NEXT_PUBLIC_SITE_URL ?? 'https://deni-sawa.vercel.app';
 }
 
 /** Replace {{variable_name}} tokens with values from `variables`. */

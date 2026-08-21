@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
 
     let query = supabase
       .from('health_check_reports')
-      .select('*, session:health_check_sessions(full_name, health_check_id, business_name), checks:health_check_sessions!inner(health_checks(name))', {
+      .select('*, session:health_check_sessions(full_name, health_check_id, business_name, health_checks(name))', {
         count: 'exact',
       })
       .order('created_at', { ascending: false });
@@ -57,9 +57,9 @@ export async function GET(request: NextRequest) {
 
     const reports = (data ?? []).map((row: Record<string, unknown>) => {
       const session = Array.isArray(row.session) ? row.session[0] : row.session;
-      const checks = Array.isArray(row.checks) ? row.checks : [];
-      const checkRow = checks[0];
-      const checkName = (checkRow as { health_checks?: { name?: string } })?.health_checks?.name;
+      const healthChecks = (session as { health_checks?: { name?: string } | { name?: string }[] })?.health_checks;
+      const checkRow = Array.isArray(healthChecks) ? healthChecks[0] : healthChecks;
+      const checkName = (checkRow as { name?: string } | undefined)?.name;
       return {
         ...row,
         session_name: (session as { full_name?: string } | undefined)?.full_name ?? '—',

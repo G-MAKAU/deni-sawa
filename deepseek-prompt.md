@@ -171,7 +171,7 @@ SMTP_PASSWORD=
 SMTP_FROM_NAME=Deni Sawa Partners
 SMTP_FROM_EMAIL=noreply@denisawa.co.ke
 NEXT_PUBLIC_GA_MEASUREMENT_ID=
-NEXT_PUBLIC_SITE_URL=https://denisawa.co.ke
+NEXT_PUBLIC_SITE_URL=https://deni-sawa.vercel.app
 
 SEO — EVERY PAGE
 

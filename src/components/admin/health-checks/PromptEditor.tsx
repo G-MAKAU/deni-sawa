@@ -94,7 +94,7 @@ export function PromptEditor() {
         setModels({
           anthropic: data.anthropic ?? [],
           google: data.google ?? [],
-          openrouter: data.openrouter ?? FALLBACK_OPENROUTER,
+          openrouter: data.openrouter ?? FALLBACK_MODELS.openrouter,
         });
       })
       .catch(() => {
@@ -102,7 +102,7 @@ export function PromptEditor() {
         setModels({
           anthropic: FALLBACK_MODELS.anthropic,
           google: FALLBACK_MODELS.google,
-          openrouter: FALLBACK_OPENROUTER,
+          openrouter: FALLBACK_MODELS.openrouter,
         });
       });
     return () => {

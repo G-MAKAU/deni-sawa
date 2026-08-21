@@ -297,7 +297,7 @@ Business name:     Deni Sawa Partners
 Country:           Kenya
 Primary contact:   advisory@denisawa.co.ke
 Phone:             +254 702 448 601
-Website:           https://denisawa.co.ke
+Website:           https://deni-sawa.vercel.app
 Effective date:    [current date on generation]
 Governing Law
 Primary: Kenya Data Protection Act, 2019 (DPA 2019) and the Kenya Data Protection (General) Regulations, 2021

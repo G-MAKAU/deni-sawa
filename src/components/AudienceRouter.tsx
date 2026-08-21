@@ -191,30 +191,30 @@ export function AudienceRouter({ audiences }: { audiences: AudienceInput[] }) {
                 </div>
               </Link>
 
-{active === i && (
-                <motion-div
+              {active === i && (
+                <motion.div
                   key={active}
                   initial={{ opacity: 0, y: 16 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-                  className="rounded-xl border border-brand/20 bg-gradient-to-br from-brand/[0.06] to-growth/[0.04] pt-6 pb-6 md:hidden">
+                  className="rounded-xl border border-brand/20 bg-gradient-to-br from-brand/[0.06] to-growth/[0.04] p-1 md:hidden">
                   {renderPathway(audience)}
-                </motion-div>
+                </motion.div>
               )}
             </div>
           );
         })}
       </div>
 
-{selected && (
-        <motion-div
+      {selected && (
+        <motion.div
           key={active}
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-          className="rounded-xl border border-brand/20 bg-gradient-to-br from-brand/[0.06] to-growth/[0.04] pt-6 pb-6 md:block">
+          className="hidden rounded-xl border border-brand/20 bg-gradient-to-br from-brand/[0.06] to-growth/[0.04] p-1 md:block">
           {renderPathway(selected)}
-        </motion-div>
+        </motion.div>
       )}
     </div>
   );

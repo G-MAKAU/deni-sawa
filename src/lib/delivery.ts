@@ -8,7 +8,7 @@ interface DeliveryResult {
 }
 
 function siteUrl() {
-  return process.env.NEXT_PUBLIC_SITE_URL ?? 'https://denisawa.co.ke';
+  return process.env.NEXT_PUBLIC_SITE_URL ?? 'https://deni-sawa.vercel.app';
 }
 
 async function getCheckName(supabase: SupabaseClient, checkId: string): Promise<string> {

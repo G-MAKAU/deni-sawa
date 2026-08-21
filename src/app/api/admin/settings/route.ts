@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       settings: {
-        siteUrl: process.env.NEXT_PUBLIC_SITE_URL ?? 'https://denisawa.co.ke',
+        siteUrl: process.env.NEXT_PUBLIC_SITE_URL ?? 'https://deni-sawa.vercel.app',
         smtp: {
           configured: profiles.length > 0,
           host: profiles[0]?.host ?? null,
