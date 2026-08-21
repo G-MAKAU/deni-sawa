@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { ArrowUpRight, Mail, Phone, MapPin, ArrowRight } from 'lucide-react';
-import { site, services } from '@/data/site';
+import { site } from '@/data/site';
 import { socialLinks } from '@/components/SocialLinks';
 import { cn } from '@/lib/utils';
 import { Logo } from '@/components/Logo';
@@ -10,8 +10,11 @@ const columns = [
   {
     title: 'Services',
     links: [
-      { label: 'All Business Support', href: '/business-support' },
-      ...services.map((s) => ({ label: s.title.split(' / ')[0], href: `/business-support/${s.slug}` })),
+      { label: 'Professionals & Individuals', href: '/services/professionals' },
+      { label: 'Entrepreneurs & Founders', href: '/services/entrepreneurs' },
+      { label: 'Investors', href: '/services/investors' },
+      { label: 'Business Health Checks', href: '/health-checks' },
+      { label: 'Learning & Programs', href: '/services/learning' },
     ],
   },
   {
