@@ -50,6 +50,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
         model_used: report.model_used,
         generation_error: report.generation_error,
         created_at: report.created_at,
+        expires_at: report.expires_at ?? null,
         session_name: (session as { full_name?: string } | undefined)?.full_name ?? 'Guest',
         check_name: checkName,
         // Payment / upgrade info for the summary → paid-upgrade flow.

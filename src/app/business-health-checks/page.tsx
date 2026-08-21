@@ -25,13 +25,19 @@ const howItWorks = [
 ];
 
 const comparison = [
-  { label: 'Diagnostic report', basic: true, full: true },
+  { label: 'Diagnostic score per section', basic: true, full: true },
   { label: 'Executive summary', basic: true, full: true },
-  { label: 'Top 3 priority callouts', basic: true, full: true },
+  { label: 'Top 3 priority areas (named only)', basic: true, full: true },
   { label: 'Category-by-category findings', basic: false, full: true },
+  { label: 'What each finding means for your business', basic: false, full: true },
   { label: 'Prioritised recommendation list', basic: false, full: true },
-  { label: 'PDF & Word export', basic: true, full: true },
-  { label: 'Emailed to you with a private link', basic: true, full: true },
+  { label: 'Action plan with next steps', basic: false, full: true },
+  { label: 'Advisor commentary section', basic: false, full: true },
+  { label: 'PDF export', basic: false, full: true },
+  { label: 'Word export', basic: false, full: true },
+  { label: 'Private report link (view online)', basic: true, full: true },
+  { label: 'Emailed / WhatsApp delivery', basic: true, full: true },
+  { label: 'Report valid for', basic: '30 days', full: '12 months' },
 ];
 
 const faqs = [
@@ -214,16 +220,27 @@ export default async function HealthChecksPage() {
                 <div key={row.label} className="grid grid-cols-[1fr_auto_auto] items-center gap-4 border-b border-card-border/60 px-6 py-3.5 text-sm last:border-0">
                   <span className="text-foreground">{row.label}</span>
                   <span className="w-24 text-center">
-                    {row.basic ? <Check className="mx-auto h-4 w-4 text-growth" /> : <span className="text-muted-foreground/40">—</span>}
+                    {typeof row.basic === 'string' ? (
+                      <span className="text-xs text-muted-foreground">{row.basic}</span>
+                    ) : row.basic ? (
+                      <Check className="mx-auto h-4 w-4 text-growth" />
+                    ) : (
+                      <span className="text-muted-foreground/40">—</span>
+                    )}
                   </span>
                   <span className="w-24 text-center">
-                    {row.full ? <Check className="mx-auto h-4 w-4 text-brand" /> : <span className="text-muted-foreground/40">—</span>}
+                    {typeof row.full === 'string' ? (
+                      <span className="text-xs font-medium text-brand">{row.full}</span>
+                    ) : row.full ? (
+                      <Check className="mx-auto h-4 w-4 text-brand" />
+                    ) : (
+                      <span className="text-muted-foreground/40">—</span>
+                    )}
                   </span>
                 </div>
               ))}
               <p className="px-6 py-4 text-xs leading-relaxed text-muted-foreground">
-                The free summary report is delivered by email or WhatsApp with a private link. The full diagnostic —
-                with category-by-category findings and the prioritised recommendation list — is a one-off upgrade.
+                The free summary report gives you scores, an executive summary, and your top 3 priorities — delivered by email or WhatsApp with a private link, valid for 30 days. The full diagnostic adds category-by-category findings, recommendations, an action plan, advisor commentary, and PDF/Word export — valid for 12 months.
               </p>
             </div>
           </Reveal>

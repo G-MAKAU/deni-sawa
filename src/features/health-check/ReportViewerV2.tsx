@@ -19,6 +19,7 @@ interface ReportData {
   model_used: string | null;
   generation_error: string | null;
   created_at: string;
+  expires_at: string | null;
   session_name: string;
   check_name: string;
   session_whatsapp: string | null;
@@ -214,27 +215,42 @@ export function ReportViewerV2({ token }: { token: string }) {
           <p className="mt-1 text-sm text-muted-foreground">
             Prepared for {report.session_name} · {format(new Date(report.created_at), 'd MMMM yyyy')}
           </p>
+          {report.expires_at && (
+            <p className="mt-1 text-xs text-muted-foreground">
+              Valid until {format(new Date(report.expires_at), 'd MMMM yyyy')}
+              {report.report_type === 'summary' && ' · Upgrade to keep your report for 12 months'}
+            </p>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <ShareMenu title={`${report.check_name} — Diagnostic Report`} />
-          <button
-            type="button"
-            onClick={() => handleExport('pdf')}
-            disabled={downloading !== null}
-            className="inline-flex items-center gap-1.5 rounded-btn border border-card-border bg-background px-3.5 py-2 text-[13px] font-semibold text-foreground transition-colors hover:border-brand/40 hover:text-brand disabled:opacity-50"
-          >
-            {downloading === 'pdf' ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
-            PDF
-          </button>
-          <button
-            type="button"
-            onClick={() => handleExport('word')}
-            disabled={downloading !== null}
-            className="inline-flex items-center gap-1.5 rounded-btn border border-card-border bg-background px-3.5 py-2 text-[13px] font-semibold text-foreground transition-colors hover:border-brand/40 hover:text-brand disabled:opacity-50"
-          >
-            {downloading === 'word' ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
-            Word
-          </button>
+          {report.report_type === 'detailed' ? (
+            <>
+              <button
+                type="button"
+                onClick={() => handleExport('pdf')}
+                disabled={downloading !== null}
+                className="inline-flex items-center gap-1.5 rounded-btn border border-card-border bg-background px-3.5 py-2 text-[13px] font-semibold text-foreground transition-colors hover:border-brand/40 hover:text-brand disabled:opacity-50"
+              >
+                {downloading === 'pdf' ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
+                PDF
+              </button>
+              <button
+                type="button"
+                onClick={() => handleExport('word')}
+                disabled={downloading !== null}
+                className="inline-flex items-center gap-1.5 rounded-btn border border-card-border bg-background px-3.5 py-2 text-[13px] font-semibold text-foreground transition-colors hover:border-brand/40 hover:text-brand disabled:opacity-50"
+              >
+                {downloading === 'word' ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
+                Word
+              </button>
+            </>
+          ) : (
+            <span className="inline-flex items-center gap-1.5 rounded-btn border border-card-border bg-background px-3.5 py-2 text-[13px] font-medium text-muted-foreground">
+              <Lock className="h-3.5 w-3.5" />
+              PDF &amp; Word available in Full Report
+            </span>
+          )}
         </div>
       </div>
 
@@ -275,7 +291,7 @@ export function ReportViewerV2({ token }: { token: string }) {
             <div>
               <p className="font-semibold text-foreground">Unlock the full diagnostic</p>
               <p className="mt-0.5 text-sm text-muted-foreground">
-                The detailed report adds prioritised recommendations, deeper analysis and a personalised roadmap.
+                The detailed report adds category-by-category findings, what each finding means for your business, a prioritised recommendation list, an action plan, advisor commentary, and PDF/Word export — valid for 12 months.
               </p>
             </div>
           </div>
