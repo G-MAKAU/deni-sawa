@@ -9,6 +9,7 @@ import { MediaBand } from '@/components/MediaBand';
 import { Button } from '@/components/ui/button';
 import { Reveal } from '@/components/Reveal';
 import { BrandIcon } from '@/components/BrandIcon';
+import { BreadcrumbJsonLd } from '@/components/BreadcrumbJsonLd';
 
 export const metadata: Metadata = {
   title: 'Fractional CFO & CEO Business Support | Deni Sawa Partners',
@@ -20,6 +21,7 @@ export const metadata: Metadata = {
 export default function BusinessSupportPage() {
   return (
     <>
+      <BreadcrumbJsonLd items={[{ label: 'Home', href: '/' }, { label: 'Business Support' }]} />
       <PageHero
         eyebrow="Business Support"
         title="Senior-level expertise. Part-time commitment. Full-time impact."

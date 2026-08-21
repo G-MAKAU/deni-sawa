@@ -10,6 +10,7 @@ import { BlogInsightsSection } from '@/components/blog/BlogInsightsSection';
 import { getBlogPosts } from '@/lib/supabase/queries';
 import { Button } from '@/components/ui/button';
 import { Reveal } from '@/components/Reveal';
+import { BreadcrumbJsonLd } from '@/components/BreadcrumbJsonLd';
 
 export const metadata: Metadata = {
   title: 'About Us | Deni Sawa Partners',
@@ -47,6 +48,7 @@ export default async function AboutPage() {
 
   return (
     <>
+      <BreadcrumbJsonLd items={[{ label: 'Home', href: '/' }, { label: 'About' }]} />
       <PageHero
         eyebrow="About Us"
         title="Built in the special situations. Designed for the road ahead."

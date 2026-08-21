@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Reveal } from '@/components/Reveal';
 import { cn } from '@/lib/utils';
 import { getLmsCourses, type LmsCourse } from '@/lib/supabase/queries';
+import { BreadcrumbJsonLd } from '@/components/BreadcrumbJsonLd';
 
 const STATIC_PATHWAY_SLUGS = new Set(['business-recovery', 'governance', 'financial-resilience']);
 
@@ -34,6 +35,7 @@ export default async function LearningPage() {
 
   return (
     <>
+      <BreadcrumbJsonLd items={[{ label: 'Home', href: '/' }, { label: 'Learning' }]} />
       <PageHero
         eyebrow="Learning Centre"
         title="Learn the numbers. Master the narrative. Lead with confidence."

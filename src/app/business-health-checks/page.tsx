@@ -9,6 +9,7 @@ import { SectionHeading } from '@/components/SectionHeading';
 import { CTASection } from '@/components/CTASection';
 import { Button } from '@/components/ui/button';
 import { Reveal } from '@/components/Reveal';
+import { BreadcrumbJsonLd } from '@/components/BreadcrumbJsonLd';
 
 export const metadata: Metadata = {
   title: 'Business & Financial Health Check | Deni Sawa',
@@ -33,11 +34,35 @@ const comparison = [
   { label: 'Emailed to you with a private link', basic: true, full: true },
 ];
 
+const faqs = [
+  { q: 'What is a Business Health Check?', a: 'A Business Health Check is a structured diagnostic assessment that evaluates your financial health across key areas. It generates a detailed report with findings and prioritised recommendations you can act on immediately.' },
+  { q: 'How long does the assessment take?', a: 'Most assessments take around 15-20 minutes. The questions are structured section by section, and you can save your progress and return later.' },
+  { q: 'Is my data confidential?', a: 'Yes. Your responses and report are completely confidential. We never share your data with third parties, and reports are private and unique to you.' },
+  { q: 'What happens after I complete the assessment?', a: 'You receive a diagnostic report immediately — a free summary plus the option to unlock the full detailed report. The report includes findings, priority callouts, and a roadmap for next steps.' },
+  { q: 'Can I use the report with an advisor?', a: 'Absolutely. The report is designed to be shared with our advisors or your own financial team. It provides a structured foundation for strategic conversations.' },
+];
+
 export default async function HealthChecksPage() {
   const checks = await getActiveHealthChecks();
 
+  const faqJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map((faq) => ({
+      '@type': 'Question',
+      name: faq.q,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: faq.a,
+      },
+    })),
+  };
+
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
+      <BreadcrumbJsonLd items={[{ label: 'Home', href: '/' }, { label: 'Health Checks' }]} />
+
       <section id="overview" className="scroll-mt-20">
         <PageHero
           eyebrow="Health Checks"
@@ -227,6 +252,32 @@ export default async function HealthChecksPage() {
               <Link href="/privacy">Read our Privacy Policy</Link>
             </Button>
           </Reveal>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section className="section-pad bg-background">
+        <div className="container-lux">
+          <SectionHeading
+            eyebrow="FAQ"
+            title="Frequently Asked Questions"
+            subtitle="Everything you need to know about the Business Health Check."
+          />
+          <div className="mx-auto max-w-3xl space-y-4">
+            {faqs.map((faq, i) => (
+              <Reveal key={faq.q} delay={i * 60}>
+                <details className="group rounded-lg border border-card-border bg-card p-6 transition-colors hover:border-brand/30">
+                  <summary className="flex cursor-pointer items-center justify-between gap-4 text-base font-semibold text-foreground">
+                    {faq.q}
+                    <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-brand/10 text-brand transition-transform group-open:rotate-45">
+                      +
+                    </span>
+                  </summary>
+                  <p className="mt-4 text-[15px] leading-relaxed text-muted-foreground">{faq.a}</p>
+                </details>
+              </Reveal>
+            ))}
+          </div>
         </div>
       </section>
 

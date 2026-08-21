@@ -14,6 +14,7 @@ import { SectionHeading } from '@/components/SectionHeading';
 import { CTASection } from '@/components/CTASection';
 import { Reveal } from '@/components/Reveal';
 import { cn } from '@/lib/utils';
+import { BreadcrumbJsonLd } from '@/components/BreadcrumbJsonLd';
 
 export const metadata: Metadata = {
   title: 'Services & Programmes — Financial Advisory | Deni Sawa Partners',
@@ -239,6 +240,7 @@ export default function ServicesHubPage() {
   return (
     <>
       <ServiceJsonLd />
+      <BreadcrumbJsonLd items={[{ label: 'Home', href: '/' }, { label: 'Services' }]} />
 
       <section id="overview" className="scroll-mt-20">
         <PageHero

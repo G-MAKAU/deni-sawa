@@ -8,6 +8,7 @@ import { CTASection } from '@/components/CTASection';
 import { MediaBand } from '@/components/MediaBand';
 import { Button } from '@/components/ui/button';
 import { Reveal } from '@/components/Reveal';
+import { BreadcrumbJsonLd } from '@/components/BreadcrumbJsonLd';
 
 export const metadata: Metadata = {
   title: 'Investors & Portfolio Oversight | Deni Sawa',
@@ -69,6 +70,7 @@ const investorPages = {
 export default function InvestorsPage() {
   return (
     <>
+      <BreadcrumbJsonLd items={[{ label: 'Home', href: '/' }, { label: 'Investors' }]} />
       <PageHero
         eyebrow="For Investors"
         title="Rigour, visibility and a voice at the table."

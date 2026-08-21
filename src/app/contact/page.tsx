@@ -8,6 +8,7 @@ import { PageHero } from '@/components/PageHero';
 import { ContactFormNew, ContactInfoNew } from '@/components/ContactFormNew';
 import { CTASection } from '@/components/CTASection';
 import { Button } from '@/components/ui/button';
+import { BreadcrumbJsonLd } from '@/components/BreadcrumbJsonLd';
 
 export const metadata: Metadata = {
   title: 'Contact Us | Deni Sawa Partners',
@@ -26,6 +27,7 @@ export default async function ContactPage({
 
   return (
     <>
+      <BreadcrumbJsonLd items={[{ label: 'Home', href: '/' }, { label: 'Contact' }]} />
       <PageHero
         eyebrow="Contact"
         title="Let us find a clear way forward."
