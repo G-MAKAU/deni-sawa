@@ -74,7 +74,7 @@ interface LexicalEditorProps {
 /** Full branded Lexical editor (playground-style) with toolbar, floating toolbar and rich plugins. */
 export function LexicalEditor({ state, onChange, placeholder = 'Start writing…', className, maxHeight = '760px', fillHeight = false, floatingToolbar = false, variables, onUploadImage, onBrowseImage }: LexicalEditorProps) {
   return (
-    <div className={cn(fillHeight || floatingToolbar ? 'flex h-full min-h-0 flex-col' : '', floatingToolbar ? 'min-h-0' : 'rounded-lg border border-card-border bg-card', className)}>
+    <div className={cn(fillHeight || floatingToolbar ? 'flex h-full min-h-0 flex-col' : 'p-1 rounded-sm border border-card-border bg-card', className)}>
       <LexicalComposer initialConfig={buildEditorConfig({ state, editable: true })}>
         {/* The toolbar has no overflow-hidden so its wrapped controls and
             dropdown menus are always visible, never clipped. */}

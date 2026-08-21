@@ -25,6 +25,8 @@ interface ReportRow {
   session_name: string;
   check_name: string;
   report_url_token: string;
+  tokens_used?: number;
+  generation_seconds?: number;
 }
 
 interface ReportDetail {
@@ -189,6 +191,16 @@ export function ReportsViewer() {
         accessorKey: 'delivery_status',
         header: 'Delivery',
         cell: ({ getValue }) => <StatusPill tone={DELIVERY_TONE[getValue() as ReportRow['delivery_status']]}>{getValue() as string}</StatusPill>,
+      },
+      {
+        accessorKey: 'tokens_used',
+        header: 'Tokens used',
+        cell: ({ getValue }) => getValue ? String(getValue()) : '-',
+      },
+      {
+        accessorKey: 'generation_seconds',
+        header: 'Gen time (s)',
+        cell: ({ getValue }) => getValue ? String(Math.round(getValue())) : '-',
       },
       {
         id: 'edit',

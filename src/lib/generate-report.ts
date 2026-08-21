@@ -15,6 +15,8 @@ interface SessionLike {
 export interface GenerateResult {
   report: Record<string, unknown> & { id: string; report_url_token: string };
   regenerated: boolean;
+  tokensUsed?: number;
+  generationSeconds?: number;
 }
 
 /** Loads the full question tree with answers for a session, for the prompt. */
@@ -156,8 +158,8 @@ export async function runReportGeneration(
 
   let state: Record<string, unknown>;
   let modelUsed = prompt?.model ?? 'fallback';
-  let tokensUsed: number | null = null;
-  let generationSeconds: number | null = null;
+  let tokensUsed: number | undefined = undefined;
+  let generationSeconds: number | undefined = undefined;
 
   if (generated) {
     state = generated.state;
@@ -235,5 +237,5 @@ export async function runReportGeneration(
     if (delivery === 'whatsapp' || delivery === 'both') await deliverReportByWhatsApp(supabase, report.id);
   }
 
-  return { report: report as GenerateResult['report'], regenerated: true };
+  return { report: report as GenerateResult['report'], regenerated: true, tokensUsed, generationSeconds };
 }
