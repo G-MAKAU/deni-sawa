@@ -4,10 +4,11 @@ import * as React from 'react';
 import Link from 'next/link';
 import { useParams, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
-import { ChevronDown, ChevronUp, Layers, Loader2, Pencil, Plus, Save, Trash2, X } from 'lucide-react';
+import { ChevronDown, ChevronUp, Layers, Loader2, Pencil, Plus, Save, Trash2, Upload, X } from 'lucide-react';
 import { adminFetch, adminPost, adminPut, adminDelete } from '@/lib/admin-client';
 import { useConfirm } from '@/components/admin/confirm';
 import { AdminCard, AsyncButton, EmptyState, ErrorBanner, Loading, Modal, PageHeader, StatusPill, Toggle } from '@/components/admin/ui';
+import { ImportQuestionsDialog } from '@/components/admin/health-checks/ImportQuestionsDialog';
 import { cn } from '@/lib/utils';
 
 interface Option {
@@ -73,6 +74,9 @@ export function QuestionsManager() {
   const [helperText, setHelperText] = React.useState('');
   const [options, setOptions] = React.useState<string[]>([]);
   const [savingQuestion, setSavingQuestion] = React.useState(false);
+
+  // Import dialog state
+  const [importOpen, setImportOpen] = React.useState(false);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -226,13 +230,22 @@ export function QuestionsManager() {
         crumbs={[{ label: 'Health Checks', href: '/admin/health-checks' }, { label: 'Questions' }]}
         actions={
           selectedSubsection ? (
-            <button
-              type="button"
-              onClick={openNew}
-              className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-[#E8510A] px-3.5 text-[13px] font-bold text-white hover:bg-[#c94508]"
-            >
-              <Plus className="h-4 w-4" /> Add question
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setImportOpen(true)}
+                className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-[var(--a-border)] bg-[var(--a-card)] px-3.5 text-[13px] font-semibold text-[var(--a-text)] hover:bg-[var(--a-hover)]"
+              >
+                <Upload className="h-4 w-4" /> Import
+              </button>
+              <button
+                type="button"
+                onClick={openNew}
+                className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-[#E8510A] px-3.5 text-[13px] font-bold text-white hover:bg-[#c94508]"
+              >
+                <Plus className="h-4 w-4" /> Add question
+              </button>
+            </div>
           ) : null
         }
       />
@@ -496,6 +509,29 @@ export function QuestionsManager() {
           </div>
         </div>
       </Modal>
+
+      <ImportQuestionsDialog
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        checkId={checkId}
+        onImported={() => {
+          // Refresh the sections tree and current questions.
+          void (async () => {
+            try {
+              const { sections: rows } = await adminFetch<{ sections: Section[] }>(`/api/admin/health-checks/${checkId}/sections`);
+              setSections(rows);
+              if (selectedSubsection) {
+                const { questions: rows2 } = await adminFetch<{ questions: Question[] }>(
+                  `/api/admin/health-checks/${checkId}/questions?subsection_id=${selectedSubsection}`
+                );
+                setQuestions(rows2);
+              }
+            } catch {
+              // Silent — the tree will refresh on next load.
+            }
+          })();
+        }}
+      />
     </>
   );
 }
