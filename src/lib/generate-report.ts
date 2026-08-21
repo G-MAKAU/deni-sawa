@@ -1,6 +1,8 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { generateReportForProvider, buildFallbackReport, type ReportProvider } from '@/lib/report-generator';
 import { deliverReportByEmail, deliverReportByWhatsApp } from '@/lib/delivery';
+import { sendEmail, buildBrandedEmailHtml, resolveSiteUrl } from '@/lib/email';
+import { site } from '@/data/site';
 
 export type ReportType = 'summary' | 'detailed';
 
@@ -175,6 +177,36 @@ export async function runReportGeneration(
       recipientName: session.full_name,
       sections: answerTree,
     });
+
+    // Notify admin that generation failed and fallback was used.
+    const adminEmail = process.env.ADMIN_NOTIFY_EMAIL ?? site.email;
+    if (adminEmail) {
+      const siteUrl = resolveSiteUrl();
+      const adminBody = `
+        <h1>Report generation failed — fallback used</h1>
+        <p>AI report generation failed for <strong>${session.full_name}</strong>'s <strong>${checkName}</strong> (${reportType}) report. The deterministic fallback template was used instead.</p>
+        <h2>Error details</h2>
+        <pre style="background:#F9F7F5;padding:16px;border-radius:6px;font-size:13px;white-space:pre-wrap;word-break:break-word;">${generationError}</pre>
+        <h2>Session info</h2>
+        <ul>
+          <li><strong>Recipient:</strong> ${session.full_name}</li>
+          <li><strong>Health check:</strong> ${checkName}</li>
+          <li><strong>Report type:</strong> ${reportType}</li>
+          <li><strong>Provider:</strong> ${provider}</li>
+          <li><strong>Model:</strong> ${prompt?.model ?? 'N/A'}</li>
+        </ul>
+        <p><a href="${siteUrl}/admin/health-checks/reports">View in admin →</a></p>
+      `;
+      try {
+        await sendEmail({
+          to: adminEmail,
+          subject: `[Alert] Report generation failed — ${checkName} (${reportType})`,
+          html: buildBrandedEmailHtml(adminBody),
+        });
+      } catch (emailErr) {
+        console.error('Admin fallback notification email failed:', emailErr);
+      }
+    }
   }
 
   const promptSnapshot = prompt?.system_prompt ?? 'fallback';
