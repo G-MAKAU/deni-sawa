@@ -79,7 +79,10 @@ export function PromptEditor() {
   const [pickerOpen, setPickerOpen] = React.useState(false);
   const browseResolverRef = React.useRef<((url: string | null) => void) | null>(null);
 
-  const [models, setModels] = React.useState<Record<ReportProvider, string[]>>(FALLBACK_MODELS);
+  const [models, setModels] = React.useState<Record<ReportProvider, string[]>>(() => {
+  // Initialize with empty lists; API will populate them on load.
+  return { anthropic: [], google: [], openrouter: [] } as Record<ReportProvider, string[]>;
+});
 
   const activePrompt = prompts.find((p) => p.report_type === activeTab);
 
@@ -89,13 +92,18 @@ export function PromptEditor() {
       .then((data) => {
         if (cancelled) return;
         setModels({
-          anthropic: [...new Set([...FALLBACK_MODELS.anthropic, ...(data.anthropic ?? [])])],
-          google: [...new Set([...FALLBACK_MODELS.google, ...(data.google ?? [])])],
-          openrouter: [...new Set([...FALLBACK_MODELS.openrouter, ...(data.openrouter ?? [])])],
+          anthropic: data.anthropic ?? [],
+          google: data.google ?? [],
+          openrouter: data.openrouter ?? FALLBACK_OPENROUTER,
         });
       })
       .catch(() => {
-        // Non-fatal — the fallback lists already cover the common models.
+        // Fall back to predefined lists if API fails.
+        setModels({
+          anthropic: FALLBACK_MODELS.anthropic,
+          google: FALLBACK_MODELS.google,
+          openrouter: FALLBACK_OPENROUTER,
+        });
       });
     return () => {
       cancelled = true;

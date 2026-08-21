@@ -531,7 +531,7 @@ Implement JSON-LD schema on relevant pages:
 
 Example Organization schema:
 
-{"@context":"<https://schema.org","@type":"Organization","name":"Deni> Sawa Partners","url":"<https://denisawa.co.ke","logo":"https://deni-sawa.vercel.app/logo.png","contactPoint":{"@type":"ContactPoint","contactType":"customer> service","email":"<info@denisawa.co.ke>"}}
+{"@context":"<https://schema.org","@type":"Organization","name":"Deni> Sawa Partners","url":"<https://deni-sawa.vercel.app","logo":"https://deni-sawa.vercel.app/logo.png","contactPoint":{"@type":"ContactPoint","contactType":"customer> service","email":"<info@denisawa.co.ke>"}}
 
 ## 7.5 robots.txt
 

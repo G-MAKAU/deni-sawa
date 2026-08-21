@@ -164,7 +164,7 @@ export async function runReportGeneration(
   if (generated) {
     state = generated.state;
     modelUsed = generated.model;
-    tokensUsed = generated.tokensUsed ?? null;
+    tokensUsed = generated.tokensUsed;
     generationSeconds = generated.generationSeconds;
   } else {
     // Graceful fallback so the flow never hard-fails. Label it clearly so a
