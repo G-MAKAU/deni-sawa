@@ -47,7 +47,7 @@ interface ReportDetail {
   generation_seconds?: number;
 }
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
 
 const DELIVERY_TONE: Record<ReportRow['delivery_status'], 'amber' | 'green' | 'red' | 'grey'> = {
   pending: 'amber',
@@ -60,6 +60,7 @@ export function ReportsViewer() {
   const confirm = useConfirm();
   const [reports, setReports] = React.useState<ReportRow[]>([]);
   const [page, setPage] = React.useState(1);
+  const [pageSize, setPageSize] = React.useState(20);
   const [total, setTotal] = React.useState(0);
   const [reportType, setReportType] = React.useState('all');
   const [delivery, setDelivery] = React.useState('all');
@@ -90,10 +91,10 @@ export function ReportsViewer() {
     }
   };
 
-  const load = React.useCallback(async (targetPage: number, type: string, del: string, q: string) => {
+  const load = React.useCallback(async (targetPage: number, type: string, del: string, q: string, size: number) => {
     setLoading(true);
     try {
-      const params = new URLSearchParams({ page: String(targetPage), pageSize: String(PAGE_SIZE) });
+      const params = new URLSearchParams({ page: String(targetPage), pageSize: String(size) });
       if (type !== 'all') params.set('report_type', type);
       if (del !== 'all') params.set('delivery', del);
       if (q) params.set('search', q);
@@ -107,7 +108,7 @@ export function ReportsViewer() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [page, reportType, delivery, searchQuery, pageSize]);
 
   React.useEffect(() => {
     const t = window.setTimeout(() => {
@@ -118,8 +119,8 @@ export function ReportsViewer() {
   }, [search]);
 
   React.useEffect(() => {
-    void load(page, reportType, delivery, searchQuery);
-  }, [load, page, reportType, delivery, searchQuery]);
+    void load(page, reportType, delivery, searchQuery, pageSize);
+  }, [load, page, reportType, delivery, searchQuery, pageSize]);
 
   React.useEffect(() => {
     adminFetch<{ admin: { role: string } }>('/api/admin/me')
@@ -163,7 +164,7 @@ export function ReportsViewer() {
       });
       if (!ok) return;
       toast.success('Report regenerated and delivery re-triggered');
-      void load(page, reportType, delivery, searchQuery);
+      void load(page, reportType, delivery, searchQuery, pageSize);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Failed to regenerate report.');
     } finally {
@@ -327,7 +328,7 @@ export function ReportsViewer() {
     []
   );
 
-  const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const pages = Math.max(1, Math.ceil(total / pageSize));
 
   if (error) return <ErrorBanner message={error} />;
 
@@ -459,9 +460,27 @@ export function ReportsViewer() {
         )}
 
         <div className="flex items-center justify-between border-t border-[var(--a-border-soft)] px-5 py-3">
-          <p className="text-xs text-[var(--a-muted)]">
-            {total.toLocaleString()} report{total === 1 ? '' : 's'} · page {page} of {pages}
-          </p>
+          <div className="flex items-center gap-3">
+            <p className="text-xs text-[var(--a-muted)]">
+              {total.toLocaleString()} report{total === 1 ? '' : 's'} · page {page} of {pages}
+            </p>
+            <div className="flex items-center gap-1.5">
+              <label htmlFor="page-size" className="text-xs text-[var(--a-muted)]">Show</label>
+              <select
+                id="page-size"
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value));
+                  setPage(1);
+                }}
+                className="h-7 rounded-md border border-[var(--a-border)] bg-[var(--a-card)] px-1.5 text-xs font-semibold text-[var(--a-ink2)] focus:border-[#E8510A] focus:outline-none"
+              >
+                {PAGE_SIZE_OPTIONS.map((n) => (
+                  <option key={n} value={n}>{n}</option>
+                ))}
+              </select>
+            </div>
+          </div>
           <div className="flex items-center gap-1">
             <button
               type="button"
