@@ -1,0 +1,174 @@
+▲ Next.js 16.3.0 (Turbopack)
+- Environments: .env
+✓ Running next.config.mjs took 79ms
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 18.0s
+  Running TypeScript ...
+  Finished TypeScript in 21.0s ...
+  Collecting page data using 7 workers ...
+(node:12348) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:25692) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  Generating static pages using 7 workers (0/74) ...
+  Generating static pages using 7 workers (18/74) 
+  Generating static pages using 7 workers (36/74) 
+  Generating static pages using 7 workers (55/74) 
+✓ Generating static pages using 7 workers (74/74) in 4.7s
+  Finalizing page optimization ...
+
+Route (app)                                                                        Revalidate  Expire
+┌ ○ /                                                                                      5m      1y
+├ ○ /_not-found
+├ ○ /about                                                                                 5m      1y
+├ ○ /about/blog                                                                            5m      1y
+├   /about/blog/[slug]
+│ ├ ● /about/blog/understanding-what-is-driving-your-debt                                  5m      1y
+│ ├ ● /about/blog/money-mindset-a-biblical-approach                                        5m      1y
+│ ├ ● /about/blog/how-to-build-a-debt-free-future                                          5m      1y
+│ └ ● /about/blog/financial-wellness-in-the-workplace                                      5m      1y
+├ ○ /about/experience
+├ ○ /about/leadership
+├ ○ /about/philosophy
+├ ○ /about/specialsit-network
+├ ○ /academy
+├ ○ /admin/academy
+├ ○ /admin/blog
+├ ○ /admin/blog/comments
+├ ○ /admin/dashboard
+├ ○ /admin/docs
+├ ○ /admin/email
+├ ○ /admin/email-log
+├ ƒ /admin/email/[key]
+├ ○ /admin/health-checks
+├ ƒ /admin/health-checks/[id]
+├ ƒ /admin/health-checks/[id]/delivery
+├ ƒ /admin/health-checks/[id]/prompts
+├ ƒ /admin/health-checks/[id]/questions
+├ ƒ /admin/health-checks/[id]/rate-limits
+├ ƒ /admin/health-checks/[id]/sections
+├ ○ /admin/health-checks/reports
+├ ƒ /admin/health-checks/reports/[reportId]/edit
+├ ○ /admin/health-checks/sessions
+├ ○ /admin/login
+├ ○ /admin/reset-password
+├ ○ /admin/settings
+├ ○ /admin/storage
+├ ○ /admin/team
+├ ○ /admin/whatsapp
+├ ○ /admin/whatsapp-log
+├ ƒ /admin/whatsapp/[key]
+├ ○ /admin/whatsapp/config
+├ ƒ /api/admin/academy/courses
+├ ƒ /api/admin/academy/courses/[id]
+├ ƒ /api/admin/auth/forgot-password
+├ ƒ /api/admin/auth/reset-password
+├ ƒ /api/admin/blog/authors
+├ ƒ /api/admin/blog/categories
+├ ƒ /api/admin/blog/comments
+├ ƒ /api/admin/blog/posts
+├ ƒ /api/admin/blog/posts/[id]
+├ ƒ /api/admin/dashboard
+├ ƒ /api/admin/email-log
+├ ƒ /api/admin/email-log/[id]
+├ ƒ /api/admin/email-templates
+├ ƒ /api/admin/email-templates/[key]
+├ ƒ /api/admin/email-templates/test
+├ ƒ /api/admin/email/test
+├ ƒ /api/admin/health-checks
+├ ƒ /api/admin/health-checks/[id]
+├ ƒ /api/admin/health-checks/[id]/delivery
+├ ƒ /api/admin/health-checks/[id]/export
+├ ƒ /api/admin/health-checks/[id]/prompts
+├ ƒ /api/admin/health-checks/[id]/questions
+├ ƒ /api/admin/health-checks/[id]/questions/[questionId]
+├ ƒ /api/admin/health-checks/[id]/rate-limits
+├ ƒ /api/admin/health-checks/[id]/sections
+├ ƒ /api/admin/health-checks/[id]/sections/[sectionId]
+├ ƒ /api/admin/health-checks/[id]/sections/[sectionId]/subsections
+├ ƒ /api/admin/health-checks/[id]/sections/[sectionId]/subsections/[subsectionId]
+├ ƒ /api/admin/health-checks/reports
+├ ƒ /api/admin/health-checks/reports/[reportId]
+├ ƒ /api/admin/health-checks/reports/[reportId]/regenerate
+├ ƒ /api/admin/health-checks/sessions
+├ ƒ /api/admin/health-checks/sessions/[sessionId]
+├ ƒ /api/admin/health-checks/sessions/[sessionId]/generate
+├ ƒ /api/admin/me
+├ ƒ /api/admin/media/browse
+├ ƒ /api/admin/models
+├ ƒ /api/admin/settings
+├ ƒ /api/admin/storage
+├ ƒ /api/admin/storage/rename
+├ ƒ /api/admin/team
+├ ƒ /api/admin/team/[id]
+├ ƒ /api/admin/upload-image
+├ ƒ /api/admin/whatsapp-config
+├ ƒ /api/admin/whatsapp-config/test
+├ ƒ /api/admin/whatsapp-log
+├ ƒ /api/admin/whatsapp-log/[id]
+├ ƒ /api/admin/whatsapp-templates
+├ ƒ /api/admin/whatsapp-templates/[key]
+├ ƒ /api/admin/whatsapp-templates/test
+├ ƒ /api/blog/comments
+├ ƒ /api/book
+├ ƒ /api/chat
+├ ƒ /api/health-check/[id]/answers
+├ ƒ /api/health-check/[id]/generate
+├ ƒ /api/health-check/[id]/questions
+├ ƒ /api/health-check/keep-alive
+├ ƒ /api/health-check/report/[token]
+├ ƒ /api/health-check/start
+├ ƒ /api/internal/deliver-report/email
+├ ƒ /api/internal/deliver-report/whatsapp
+├ ƒ /api/payments/mpesa/callback
+├ ƒ /api/payments/mpesa/confirm
+├ ƒ /api/payments/mpesa/status
+├ ƒ /api/payments/mpesa/stkpush
+├ ƒ /api/payments/upgrade
+├ ƒ /api/reports/export/pdf/[token]
+├ ƒ /api/reports/export/word/[token]
+├ ƒ /api/whatsapp/webhook
+├ ○ /business-health-checks
+├ ƒ /business-health-checks/[slug]
+├ ƒ /business-health-checks/assessment/[slug]
+├ ƒ /business-health-checks/report/[token]
+├ ○ /business-support
+├   /business-support/[slug]
+│ ├ ● /business-support/fractional-cfo
+│ ├ ● /business-support/fractional-ceo
+│ ├ ● /business-support/governance-controls
+│ └ ● [+2 more paths]
+├ ƒ /contact
+├ ○ /deni-sawa-method
+├ ○ /investors
+├   /investors/[slug]
+│ ├ ● /investors/investor-readiness
+│ ├ ● /investors/portfolio-oversight
+│ ├ ● /investors/governance
+│ └ ● /investors/investor-representation
+├ ○ /learning                                                                             10m      1y
+├   /learning/[slug]
+│ ├ ● /learning/business-recovery                                                         10m      1y
+│ ├ ● /learning/governance                                                                10m      1y
+│ └ ● /learning/financial-resilience                                                      10m      1y
+├ ○ /learning/executive-finance
+├ ○ /offline
+├ ○ /opengraph-image
+├ ○ /privacy
+├ ○ /robots.txt
+├ ○ /services
+├ ○ /services/entrepreneurs
+├ ○ /services/investors
+├ ○ /services/learning
+├ ○ /services/professionals
+├ ○ /sitemap.xml                                                                           5m      1y
+└ ○ /terms
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+●  (SSG)      prerendered as static HTML (uses generateStaticParams)
+ƒ  (Dynamic)  server-rendered on demand
+
