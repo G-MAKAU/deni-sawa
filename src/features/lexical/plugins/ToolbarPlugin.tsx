@@ -208,24 +208,38 @@ function getSelectionBlock(selection: ReturnType<typeof $getSelection>): BlockFo
 
 /** Reads the effective horizontal alignment of a block element. Lexical stores
  *  the alignment on the element's format (set via FORMAT_ELEMENT_COMMAND); cell
- *  blocks set it as a text-align style instead, so both are considered. */
-function readBlockAlign(block: ElementNode): AlignFormat | null {
+ *  blocks set it as a text-align style instead, so both are considered.
+ *  Falls back to reading the DOM computed style when the Lexical node's
+ *  getFormatType() returns the empty string (which Lexical uses for left /
+ *  default), making alignment detection robust across all Lexical versions. */
+function readBlockAlign(block: ElementNode, domElement: HTMLElement | null): AlignFormat | null {
   const fromFormat = block.getFormatType();
   const fromStyle = parseCssProperty(block.getStyle(), 'text-align') ?? '';
   const value = fromFormat || fromStyle;
-  return (ALIGNS as readonly string[]).includes(value) ? (value as AlignFormat) : null;
+  if ((ALIGNS as readonly string[]).includes(value)) return value as AlignFormat;
+
+  // Fallback: read from the live DOM element's computed style. This catches
+  // alignments set via FORMAT_ELEMENT_COMMAND that the node API may not
+  // reflect (e.g. Lexical version quirks), as well as styles applied via
+  // ElementStylePlugin or direct DOM manipulation.
+  if (domElement) {
+    const computed = window.getComputedStyle(domElement).textAlign;
+    if ((ALIGNS as readonly string[]).includes(computed)) return computed as AlignFormat;
+  }
+
+  return null;
 }
 
 /** Resolves the alignment of the current selection: the first selected cell's
  *  block when in a table, otherwise the anchor's block element. Defaults to
  *  left (Lexical's unformatted state). */
-function getSelectionAlignment(selection: ReturnType<typeof $getSelection>): AlignFormat {
+function getSelectionAlignment(selection: ReturnType<typeof $getSelection>, getDomElement: (key: string) => HTMLElement | null): AlignFormat {
   try {
     const cells = getSelectedCells(selection);
     if (cells.length > 0) {
       for (const child of cells[0].getChildren()) {
         if ($isParagraphNode(child) || $isHeadingNode(child)) {
-          const align = readBlockAlign(child);
+          const align = readBlockAlign(child, getDomElement(child.getKey()));
           if (align) return align;
         }
       }
@@ -238,7 +252,7 @@ function getSelectionAlignment(selection: ReturnType<typeof $getSelection>): Ali
           ? anchor
           : $findMatchingParent(anchor, (node) => $isElementNode(node) && !node.isInline());
       if (block && $isElementNode(block)) {
-        const align = readBlockAlign(block);
+        const align = readBlockAlign(block, getDomElement(block.getKey()));
         if (align) return align;
       }
     }
@@ -633,7 +647,7 @@ export function ToolbarPlugin({
             subscript: hasFormat('subscript'),
             superscript: hasFormat('superscript'),
             block: getSelectionBlock(selection),
-            align: getSelectionAlignment(selection),
+            align: getSelectionAlignment(selection, (key) => editor.getElementByKey(key)),
             textColor: getTextColor(selection),
             blockBg: getBlockBackground(selection),
             cellCount: getSelectedCells(selection).length,
