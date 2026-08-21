@@ -5,10 +5,8 @@ import {
   Briefcase,
   Landmark,
   LineChart,
-  TrendingUp,
   GraduationCap,
   HeartPulse,
-  Check,
 } from 'lucide-react';
 import { site } from '@/data/site';
 import { PageHero } from '@/components/PageHero';
@@ -18,15 +16,38 @@ import { Reveal } from '@/components/Reveal';
 import { cn } from '@/lib/utils';
 
 export const metadata: Metadata = {
-  title: 'Services & Programmes | Deni Sawa',
+  title: 'Services & Programmes — Financial Advisory | Deni Sawa Partners',
   description:
-    'Five pathways to financial health: professionals and individuals, entrepreneurs and founders, investors, health checks, and learning.',
+    'Explore five structured pathways to financial health: Professionals & Individuals, Entrepreneurs & Founders, Investors, Business Health Checks, and Learning & Programs. Senior-level advisory from Deni Sawa Partners.',
+  keywords: [
+    'financial advisory Kenya',
+    'fractional CFO Nairobi',
+    'business health check',
+    'entrepreneur financial support',
+    'investor governance',
+    'financial coaching Kenya',
+    'business support services',
+  ],
   alternates: { canonical: `${site.url}/services` },
   openGraph: {
-    title: 'Services & Programmes | Deni Sawa',
+    title: 'Services & Programmes — Financial Advisory | Deni Sawa Partners',
     description:
-      'Five pathways to financial health: professionals and individuals, entrepreneurs and founders, investors, health checks, and learning.',
+      'Five structured pathways to financial health: professionals, entrepreneurs, investors, health checks, and learning.',
+    url: `${site.url}/services`,
+    siteName: site.name,
+    images: [{ url: '/images/services-hero.jpg', width: 1200, height: 630, alt: 'Deni Sawa Partners services' }],
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Services & Programmes — Deni Sawa Partners',
+    description: 'Five structured pathways to financial health.',
     images: ['/images/services-hero.jpg'],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true, 'max-snippet': -1, 'max-image-preview': 'large' },
   },
 };
 
@@ -182,9 +203,43 @@ function ServiceSteps({ steps, accent }: { steps: ServiceStep[]; accent: 'brand'
   );
 }
 
+function ServiceJsonLd() {
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: 'Deni Sawa Partners — Services & Programmes',
+    description: 'Five structured pathways to financial health for professionals, entrepreneurs, and investors.',
+    url: `${site.url}/services`,
+    itemListElement: serviceCategories.map((cat, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      item: {
+        '@type': 'Service',
+        name: cat.name,
+        description: cat.description,
+        url: `${site.url}${cat.href}`,
+        provider: {
+          '@type': 'Organization',
+          name: site.name,
+          url: site.url,
+        },
+      },
+    })),
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+    />
+  );
+}
+
 export default function ServicesHubPage() {
   return (
     <>
+      <ServiceJsonLd />
+
       <section id="overview" className="scroll-mt-20">
         <PageHero
           eyebrow="Services"
@@ -207,106 +262,55 @@ export default function ServicesHubPage() {
           <div className="space-y-6">
             {serviceCategories.map((category, idx) => {
               const Icon = category.icon;
-              const isFeatured = idx === 1;
               return (
                 <Reveal key={category.href} delay={idx * 60}>
-                  {isFeatured ? (
-                    /* Featured card — Entrepreneurs & Founders */
-                    <Link
-                      href={category.href}
-                      className="card-elevated group relative flex flex-col overflow-hidden p-0 transition-all duration-300 hover:-translate-y-1 hover:shadow-soft-lg lg:flex-row"
-                    >
-                      <div className="flex flex-1 flex-col p-8 lg:p-10">
-                        <div className="mb-5 flex items-center gap-3">
-                          <span className="inline-flex h-12 w-12 items-center justify-center rounded-lg bg-brand/10 text-brand transition-colors group-hover:bg-brand group-hover:text-white">
-                            <Icon className="h-6 w-6" strokeWidth={1.8} />
-                          </span>
-                          <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
-                            {category.number}
-                          </span>
-                        </div>
-                        <h3 className="text-h2 font-semibold text-foreground">{category.name}</h3>
-                        <p className="mt-2 text-sm font-semibold italic text-green">{category.tagline}</p>
-                        <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-muted-foreground">
-                          {category.description}
-                        </p>
-                        <div className="mt-6 flex flex-wrap items-center gap-3">
-                          {category.steps.map((step) => (
-                            <span
-                              key={step.label}
-                              className="rounded-full border border-card-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground"
-                            >
-                              {step.label}
-                            </span>
-                          ))}
-                        </div>
-                        <span className="mt-7 inline-flex items-center gap-1.5 text-sm font-semibold text-brand transition-colors group-hover:text-brand-600">
-                          Explore {category.name}
-                          <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  <Link
+                    href={category.href}
+                    className="card-elevated group relative flex flex-col overflow-hidden p-0 transition-all duration-300 hover:-translate-y-1 hover:shadow-soft-lg lg:flex-row"
+                  >
+                    {/* Left: info */}
+                    <div className="flex flex-1 flex-col p-8 lg:p-10">
+                      <div className="mb-5 flex items-center gap-3">
+                        <span className="inline-flex h-12 w-12 items-center justify-center rounded-lg bg-brand/10 text-brand transition-colors group-hover:bg-brand group-hover:text-white">
+                          <Icon className="h-6 w-6" strokeWidth={1.8} />
+                        </span>
+                        <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
+                          {category.number}
                         </span>
                       </div>
-                      <div className="flex items-center bg-gradient-to-br from-brand/10 to-growth/10 p-8 lg:w-80 lg:p-10">
-                        <div className="rounded-xl border border-card-border bg-card p-6 shadow-lg">
-                          <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
-                            Growth Path
-                          </p>
-                          <div className="mt-4">
-                            <ServiceSteps steps={category.steps} accent="brand" />
-                          </div>
-                        </div>
-                      </div>
-                    </Link>
-                  ) : (
-                    /* Standard service card */
-                    <Link
-                      href={category.href}
-                      className="card-elevated group flex flex-col overflow-hidden p-0 transition-all duration-300 hover:-translate-y-1 hover:shadow-soft-lg lg:flex-row"
-                    >
-                      {/* Left: info */}
-                      <div className="flex flex-1 flex-col p-8">
-                        <div className="mb-4 flex items-center gap-3">
-                          <span className="inline-flex h-11 w-11 items-center justify-center rounded-lg bg-brand/10 text-brand transition-colors group-hover:bg-brand group-hover:text-white">
-                            <Icon className="h-5 w-5" strokeWidth={1.8} />
+                      <h3 className="text-h2 font-semibold text-foreground">{category.name}</h3>
+                      <p className="mt-2 text-sm font-semibold italic text-green">{category.tagline}</p>
+                      <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-muted-foreground">
+                        {category.description}
+                      </p>
+                      <div className="mt-6 flex flex-wrap items-center gap-3">
+                        {category.steps.map((step) => (
+                          <span
+                            key={step.label}
+                            className="rounded-full border border-card-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground"
+                          >
+                            {step.label}
                           </span>
-                          <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
-                            {category.number}
-                          </span>
-                        </div>
-                        <h3 className="text-h3 font-semibold text-foreground transition-colors group-hover:text-brand">
-                          {category.name}
-                        </h3>
-                        <p className="mt-1.5 text-sm font-semibold italic text-green">{category.tagline}</p>
-                        <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground">
-                          {category.description}
-                        </p>
-                        <div className="mt-5 flex flex-wrap gap-2">
-                          {category.capabilities.slice(0, 3).map((cap) => (
-                            <span
-                              key={cap}
-                              className="inline-flex items-center gap-1.5 rounded-md bg-background px-2.5 py-1 text-xs font-medium text-muted-foreground ring-1 ring-inset ring-card-border"
-                            >
-                              <Check className="h-3 w-3 text-growth" />
-                              {cap}
-                            </span>
-                          ))}
-                        </div>
-                        <span className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-brand transition-colors group-hover:text-brand-600">
-                          Explore {category.name}
-                          <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-                        </span>
+                        ))}
                       </div>
+                      <span className="mt-7 inline-flex items-center gap-1.5 text-sm font-semibold text-brand transition-colors group-hover:text-brand-600">
+                        Explore {category.name}
+                        <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                      </span>
+                    </div>
 
-                      {/* Right: steps */}
-                      <div className="flex items-center border-t border-card-border bg-gradient-to-br from-background to-muted/30 p-8 lg:w-72 lg:border-t-0 lg:border-l">
-                        <div className="w-full">
-                          <p className="mb-4 font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
-                            Pathway Steps
-                          </p>
+                    {/* Right: steps panel */}
+                    <div className="flex items-center bg-gradient-to-br from-brand/10 to-growth/10 p-8 lg:w-80 lg:p-10">
+                      <div className="rounded-xl border border-card-border bg-card p-6 shadow-lg">
+                        <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+                          Pathway Steps
+                        </p>
+                        <div className="mt-4">
                           <ServiceSteps steps={category.steps} accent="brand" />
                         </div>
                       </div>
-                    </Link>
-                  )}
+                    </div>
+                  </Link>
                 </Reveal>
               );
             })}
