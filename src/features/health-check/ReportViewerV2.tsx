@@ -35,6 +35,7 @@ type UpgradeState = 'idle' | 'phone' | 'initiating' | 'stk' | 'polling' | 'paid'
 export function ReportViewerV2({ token }: { token: string }) {
   const [report, setReport] = React.useState<ReportData | null>(null);
   const [error, setError] = React.useState<string | null>(null);
+  const [expired, setExpired] = React.useState<{ message: string; expires_at: string } | null>(null);
   const [downloading, setDownloading] = React.useState<'pdf' | 'word' | null>(null);
   const [upgradePlan, setUpgradePlan] = React.useState<'detailed' | 'detailed_call' | null>(null);
   const [upgradePhone, setUpgradePhone] = React.useState('');
@@ -50,7 +51,13 @@ export function ReportViewerV2({ token }: { token: string }) {
       try {
         const res = await fetch(`/api/health-check/report/${token}`, { cache: 'no-store' });
         const body = await res.json();
-        if (!res.ok) throw new Error(body.error ?? 'Report not found.');
+        if (!res.ok) {
+          if (body.error === 'expired' && !cancelled) {
+            setExpired({ message: body.message ?? 'This report has expired.', expires_at: body.expires_at });
+            return;
+          }
+          throw new Error(body.error ?? 'Report not found.');
+        }
         if (!cancelled) setReport(body.report as ReportData);
       } catch (e) {
         if (!cancelled) setError(e instanceof Error ? e.message : 'Report not found.');
@@ -182,6 +189,26 @@ export function ReportViewerV2({ token }: { token: string }) {
       <div className="mx-auto max-w-2xl rounded-lg border border-red-500/20 bg-red-500/5 px-6 py-16 text-center">
         <p className="font-display text-xl font-semibold text-foreground">Report not found</p>
         <p className="mt-2 text-sm text-muted-foreground">{error}</p>
+      </div>
+    );
+  }
+
+  if (expired) {
+    return (
+      <div className="mx-auto max-w-2xl rounded-lg border border-amber-500/25 bg-amber-500/5 px-6 py-16 text-center">
+        <Lock className="mx-auto mb-4 h-10 w-10 text-amber-600" />
+        <p className="font-display text-xl font-semibold text-foreground">Report expired</p>
+        <p className="mt-2 text-sm text-muted-foreground">{expired.message}</p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Expired on {format(new Date(expired.expires_at), 'd MMMM yyyy')}
+        </p>
+        <a
+          href="#upgrade"
+          className="mt-6 inline-flex items-center gap-2 rounded-btn bg-brand px-6 py-3 text-sm font-bold text-white transition-colors hover:bg-brand-600"
+        >
+          <Sparkles className="h-4 w-4" />
+          Upgrade to Full Report
+        </a>
       </div>
     );
   }

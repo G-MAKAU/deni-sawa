@@ -21,6 +21,19 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
     if (error) throw error;
     if (!report) return NextResponse.json({ error: 'Report not found.' }, { status: 404 });
 
+    // Block access to expired reports (summary = 30 days).
+    if (report.expires_at && new Date(report.expires_at) < new Date()) {
+      return NextResponse.json(
+        {
+          error: 'expired',
+          message: 'This summary report has expired. Upgrade to the Full Report to keep your results for 12 months.',
+          expires_at: report.expires_at,
+          report_type: report.report_type,
+        },
+        { status: 410 },
+      );
+    }
+
     // Track access.
     await supabase.from('health_check_reports').update({ accessed_at: new Date().toISOString() }).eq('id', report.id);
 
