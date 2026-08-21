@@ -3,6 +3,7 @@ import type { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { requireAdmin, adminWriteClient, jsonAdminWriteError, AdminApiError } from '@/lib/admin-auth';
 import { getServiceClient } from '@/lib/supabase/service';
+import { sendEmail, buildBrandedEmailHtml, resolveSiteUrl } from '@/lib/email';
 
 export const dynamic = 'force-dynamic';
 
@@ -86,6 +87,38 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'A team member with this email already exists.' }, { status: 409 });
       }
       throw error;
+    }
+
+    // Send a welcome email to the new team member (best-effort, never blocks creation).
+    const siteUrl = resolveSiteUrl();
+    const roleLabel = parsed.data.role.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+    const welcomeHtml = `
+      <h1>Welcome to Deni Sawa Partners, ${parsed.data.full_name}!</h1>
+      <p>You've been added to the team as <strong>${roleLabel}</strong>. Here's everything you need to get started:</p>
+      <h2>Your login details</h2>
+      <ul>
+        <li><strong>Email:</strong> ${parsed.data.email}</li>
+        <li><strong>Password:</strong> The password set by the admin who created your account</li>
+      </ul>
+      <p><a href="${siteUrl}/admin/login" class="ds-button">Log in to the admin panel</a></p>
+      <h2>What you can do</h2>
+      <ul>
+        <li>View and manage health check reports</li>
+        <li>Communicate with clients</li>
+        <li>Access team tools and settings</li>
+      </ul>
+      <p>If you have any questions, reach out to the team lead or reply to this email.</p>
+      <p>Welcome aboard!</p>
+    `;
+    try {
+      await sendEmail({
+        to: parsed.data.email,
+        toName: parsed.data.full_name,
+        subject: `Welcome to Deni Sawa Partners — ${roleLabel}`,
+        html: buildBrandedEmailHtml(welcomeHtml),
+      });
+    } catch (emailErr) {
+      console.error('Team welcome email failed:', emailErr);
     }
 
     return NextResponse.json({ member: data, authUserId: authData?.user?.id }, { status: 201 });
