@@ -7,21 +7,7 @@ export const contentType = 'image/png';
 const ORANGE = '#E8510A';
 const GROWTH = '#5A9E28';
 
-export default async function OpengraphImage() {
-  // Fetch the OG background image
-  let bgDataUrl = '';
-  try {
-    const bgRes = await fetch(new URL('/images/og-background.webp', import.meta.url).href, {
-      next: { revalidate: 86400 },
-    });
-    if (bgRes.ok) {
-      const buf = await bgRes.arrayBuffer();
-      bgDataUrl = `data:image/webp;base64,${Buffer.from(buf).toString('base64')}`;
-    }
-  } catch {
-    // Fallback — no background image
-  }
-
+export default function OpengraphImage() {
   return new ImageResponse(
     (
       <div
@@ -37,24 +23,8 @@ export default async function OpengraphImage() {
           fontFamily: 'sans-serif',
         }}
       >
-        {/* Background image with overlay */}
-        {bgDataUrl && (
-          <img
-            src={bgDataUrl}
-            alt=""
-            style={{
-              position: 'absolute',
-              inset: 0,
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              opacity: 0.15,
-            }}
-          />
-        )}
-
         {/* Top accent bar */}
-        <div style={{ display: 'flex', width: '100%', height: 10, background: ORANGE, position: 'relative', zIndex: 1 }} />
+        <div style={{ display: 'flex', width: '100%', height: 10, background: ORANGE }} />
 
         {/* Ambient gradients */}
         <div
@@ -88,8 +58,6 @@ export default async function OpengraphImage() {
             flexDirection: 'column',
             justifyContent: 'center',
             padding: '64px 72px',
-            position: 'relative',
-            zIndex: 1,
           }}
         >
           {/* Brand */}
@@ -156,7 +124,7 @@ export default async function OpengraphImage() {
         </div>
 
         {/* Bottom accent */}
-        <div style={{ display: 'flex', width: '100%', height: 8, background: GROWTH, position: 'relative', zIndex: 1 }} />
+        <div style={{ display: 'flex', width: '100%', height: 8, background: GROWTH }} />
       </div>
     ),
     { ...size }
