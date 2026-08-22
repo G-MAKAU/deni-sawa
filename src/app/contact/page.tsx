@@ -33,7 +33,7 @@ export default async function ContactPage({
         title="Let us find a clear way forward."
         subtitle="A free, confidential conversation about your situation — no judgement, no obligation."
         crumbs={[{ label: 'Contact' }]}
-        image={{ src: '/images/contact-hero.jpg', alt: 'Contact Deni Sawa Partners' }}
+        image={{ src: '/images/hero-contact.webp', alt: 'Two professionals in a focused advisory conversation' }}
       >
         <Button asChild size="lg">
           <a href={`https://wa.me/${business.phone.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer">

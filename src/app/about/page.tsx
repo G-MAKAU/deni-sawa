@@ -54,7 +54,7 @@ export default async function AboutPage() {
         title="Built in the special situations. Designed for the road ahead."
         subtitle="Deni Sawa Partners is a senior-level advisory and fractional business support firm. We help professionals, entrepreneurs and investors move from Special Situations to Best-in-Class."
         crumbs={[{ label: 'About' }]}
-        image={{ src: '/images/about-team.jpg', alt: 'Deni Sawa Partners team' }}
+        image={{ src: '/images/hero-about.webp', alt: 'Deni Sawa Partners advisory team in a professional setting' }}
       >
         <Button asChild size="lg">
           <Link href="/contact">Talk to the Team</Link>
@@ -99,7 +99,7 @@ export default async function AboutPage() {
               <div className="absolute -right-5 -top-5 h-28 w-28 rounded-full border border-growth/25" />
               <div className="relative aspect-[4/3] overflow-hidden rounded-lg border border-card-border shadow-card">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/images/strategy.jpg" alt="Deni Sawa Partners" className="h-full w-full object-cover" />
+                <img src="/images/about-philosophy.webp" alt="Deni Sawa Partners" className="h-full w-full object-cover" />
               </div>
             </div>
           </Reveal>
@@ -128,7 +128,7 @@ export default async function AboutPage() {
         </div>
       </section>
 
-      <MediaBand src="/images/hero-3.jpg" alt="Deni Sawa Partners in session" caption="Candour · Discipline · Durability" height="md" />
+      <MediaBand src="/images/hero-about.webp" alt="Deni Sawa Partners in session" caption="Candour · Discipline · Durability" height="md" />
 
       {/* Sub-pages */}
       <section className="section-pad bg-background">

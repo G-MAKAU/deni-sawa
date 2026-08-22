@@ -25,7 +25,7 @@ export default function MethodPage() {
         title="From Special Situations to Best-in-Class."
         subtitle="A disciplined, five-part method — Diagnose, Evaluate, Negotiate, Implement, Sustain — that anchors everything we do, from a free Health Check to full advisory engagements."
         crumbs={[{ label: 'The Method' }]}
-        image={{ src: '/images/method.jpg', alt: 'The Deni Sawa Method' }}
+        image={{ src: '/images/hero-method.webp', alt: 'Structured planning and methodology in action' }}
       >
         <Button asChild size="lg">
           <Link href="/business-health-checks#choose-your-assessment">Start With a Diagnosis</Link>

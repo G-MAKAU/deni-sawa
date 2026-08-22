@@ -1,71 +1,161 @@
-import { mkdirSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import https from 'node:https';
+import sharp from 'sharp'
+import fs from 'fs'
+import path from 'path'
+import { fileURLToPath } from 'url'
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const OUT = join(__dirname, '..', 'public', 'images');
-mkdirSync(OUT, { recursive: true });
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const OUTPUT_DIR = path.join(__dirname, '../public/images')
 
-const IMAGES = {
-  'learning-hero.jpg': 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1600&q=80&auto=format&fit=crop',
-  'exec-finance.jpg': 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=1600&q=80&auto=format&fit=crop',
-  'governance.jpg': 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=1600&q=80&auto=format&fit=crop',
-  'resilience.jpg': 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1600&q=80&auto=format&fit=crop',
-  'recovery.jpg': 'https://images.unsplash.com/photo-1553729459-efe14ef6055d?w=1600&q=80&auto=format&fit=crop',
-  'network.jpg': 'https://images.unsplash.com/photo-1521791136064-7986c2920216?w=1600&q=80&auto=format&fit=crop',
-  'network-forum.jpg': 'https://images.unsplash.com/photo-1543269865-cbf427effbad?w=1600&q=80&auto=format&fit=crop',
-  'about-team.jpg': 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1600&q=80&auto=format&fit=crop',
-  'leadership.jpg': 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=1600&q=80&auto=format&fit=crop',
-  'philosophy.jpg': 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=1600&q=80&auto=format&fit=crop',
-  'experience.jpg': 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1600&q=80&auto=format&fit=crop',
-  'health-check.jpg': 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1600&q=80&auto=format&fit=crop',
-  'business-check.jpg': 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=1600&q=80&auto=format&fit=crop',
-  'professional-check.jpg': 'https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?w=1600&q=80&auto=format&fit=crop',
-  'investors.jpg': 'https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=1600&q=80&auto=format&fit=crop',
-  'investor-readiness.jpg': 'https://images.unsplash.com/photo-1467232004584-a241de8bcf5d?w=1600&q=80&auto=format&fit=crop',
-  'portfolio-oversight.jpg': 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=1600&q=80&auto=format&fit=crop',
-  'investor-rep.jpg': 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=1600&q=80&auto=format&fit=crop',
-  'method.jpg': 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=1600&q=80&auto=format&fit=crop',
-  'implement.jpg': 'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=1600&q=80&auto=format&fit=crop',
-  'growth.jpg': 'https://images.unsplash.com/photo-1543286386-713bdd548da4?w=1600&q=80&auto=format&fit=crop',
-  'strategy.jpg': 'https://images.unsplash.com/photo-1531973576160-7125cd663d86?w=1600&q=80&auto=format&fit=crop',
-  'audit.jpg': 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=1600&q=80&auto=format&fit=crop',
-};
+if (!fs.existsSync(OUTPUT_DIR)) fs.mkdirSync(OUTPUT_DIR, { recursive: true })
 
-function download(url, dest) {
-  return new Promise((resolve) => {
-    https
-      .get(url, (res) => {
-        const status = res.statusCode ?? 0;
-        const ct = res.headers['content-type'] ?? '';
-        if (status !== 200 || !ct.startsWith('image/')) {
-          res.resume();
-          resolve({ file: dest, ok: false, status, ct });
-          return;
-        }
-        const chunks = [];
-        res.on('data', (c) => chunks.push(c));
-        res.on('end', () => {
-          writeFileSync(dest, Buffer.concat(chunks));
-          resolve({ file: dest, ok: true, status, ct, bytes: Buffer.concat(chunks).length });
-        });
-      })
-      .on('error', (e) => resolve({ file: dest, ok: false, error: e.message }));
-  });
-}
+const images = [
+  // ── HOMEPAGE ──────────────────────────────────────────────────────
+  {
+    url: 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=3840&q=95',
+    filename: 'hero-homepage.webp',
+    width: 3840,
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=1200&q=90',
+    filename: 'audience-professionals.webp',
+    width: 1200,
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1200&q=90',
+    filename: 'audience-entrepreneurs.webp',
+    width: 1200,
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=1200&q=90',
+    filename: 'audience-investors.webp',
+    width: 1200,
+  },
 
-const results = await Promise.all(
-  Object.entries(IMAGES).map(([file, url]) => download(url, join(OUT, file)))
-);
+  // ── SERVICES PAGES ────────────────────────────────────────────────
+  {
+    url: 'https://images.unsplash.com/photo-1611348524140-53c9a25263d6?w=3840&q=95',
+    filename: 'hero-services.webp',
+    width: 3840,
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1594744803329-e58b31de8bf5?w=3840&q=95',
+    filename: 'hero-professionals.webp',
+    width: 3840,
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1556761175-4b46a572b786?w=3840&q=95',
+    filename: 'hero-entrepreneurs.webp',
+    width: 3840,
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=3840&q=95',
+    filename: 'hero-investors.webp',
+    width: 3840,
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=3840&q=95',
+    filename: 'hero-learning.webp',
+    width: 3840,
+  },
 
-let okCount = 0;
-for (const r of results) {
-  if (r.ok) {
-    okCount++;
-    console.log(`OK   ${r.file} (${r.bytes} bytes)`);
-  } else {
-    console.log(`FAIL ${r.file} ${r.status ?? ''} ${r.ct ?? r.error ?? ''}`);
+  // ── HEALTH CHECKS PAGE ────────────────────────────────────────────
+  {
+    url: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=2400&q=90',
+    filename: 'hero-health-checks.webp',
+    width: 2400,
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=1200&q=90',
+    filename: 'check-business.webp',
+    width: 1200,
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?w=1200&q=90',
+    filename: 'check-professional.webp',
+    width: 1200,
+  },
+
+  // ── ABOUT PAGE ────────────────────────────────────────────────────
+  {
+    url: 'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=3840&q=95',
+    filename: 'hero-about.webp',
+    width: 3840,
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1486325212027-8081e485255e?w=2400&q=90',
+    filename: 'about-philosophy.webp',
+    width: 2400,
+  },
+
+  // ── THE METHOD PAGE ───────────────────────────────────────────────
+  {
+    url: 'https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?w=2400&q=90',
+    filename: 'hero-method.webp',
+    width: 2400,
+  },
+
+  // ── CONTACT PAGE ─────────────────────────────────────────────────
+  {
+    url: 'https://images.unsplash.com/photo-1551836022-4af4a7a66b8a?w=2400&q=90',
+    filename: 'hero-contact.webp',
+    width: 2400,
+  },
+
+  // ── INSIGHTS / BLOG ───────────────────────────────────────────────
+  {
+    url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1200&q=85',
+    filename: 'blog-default-cover.webp',
+    width: 1200,
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=1200&q=85',
+    filename: 'blog-financial-health.webp',
+    width: 1200,
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1568992687947-868a62a9f521?w=1200&q=85',
+    filename: 'blog-governance.webp',
+    width: 1200,
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1533073526757-2c8ca1df9f1c?w=1200&q=85',
+    filename: 'blog-recovery.webp',
+    width: 1200,
+  },
+
+  // ── OG / SOCIAL ───────────────────────────────────────────────────
+  {
+    url: 'https://images.unsplash.com/photo-1486325212027-8081e485255e?w=1200&q=90',
+    filename: 'og-background.webp',
+    width: 1200,
+  },
+]
+
+async function downloadAndConvert({ url, filename, width }) {
+  const outPath = path.join(OUTPUT_DIR, filename)
+  if (fs.existsSync(outPath)) {
+    console.log(`⏭  Skipped (exists): ${filename}`)
+    return
+  }
+  try {
+    const res = await fetch(url)
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    const buffer = Buffer.from(await res.arrayBuffer())
+    await sharp(buffer)
+      .resize(width, null, { withoutEnlargement: true })
+      .webp({ quality: 85 })
+      .toFile(outPath)
+    const meta = await sharp(outPath).metadata()
+    console.log(`✓ Downloaded: ${filename} (${meta.width}×${meta.height})`)
+  } catch (err) {
+    console.error(`✗ Failed: ${filename} — ${err.message}`)
   }
 }
-console.log(`\n${okCount}/${results.length} downloaded`);
+
+console.log(`Downloading ${images.length} images to ${OUTPUT_DIR}...\n`)
+
+for (const img of images) {
+  await downloadAndConvert(img)
+}
+
+console.log('\nDone.')

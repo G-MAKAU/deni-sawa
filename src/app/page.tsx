@@ -152,12 +152,13 @@ export default async function HomePage() {
 
               <div className="relative aspect-[3/2] lg:aspect-auto lg:h-full lg:w-full">
                 <Image
-                  src="/images/hero-1.jpg"
-                  alt="Deni Sawa Partners concluding a business advisory agreement"
+                  src="/images/hero-homepage.webp"
+                  alt="Senior business advisor in a modern Nairobi office"
                   fill
                   priority
+                  quality={90}
                   sizes="(min-width: 1024px) 50vw, 100vw"
-                  className="object-cover"
+                  className="object-cover object-center"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-charcoal/75 via-transparent to-transparent" />
                 <div className="absolute inset-0 bg-gradient-to-t from-transparent via-transparent to-charcoal/25" />

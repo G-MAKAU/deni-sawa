@@ -13,7 +13,7 @@ const config: ServiceCategoryConfig = {
   name: 'Professionals & Individuals',
   positioningTag: 'Financial Health → Resilience → Leadership',
   description: 'We help professionals and individuals build greater financial clarity, resilience and confidence.',
-  heroImage: { src: '/images/professional-health.jpg', alt: 'Professional financial planning session' },
+  heroImage: { src: '/images/hero-professionals.webp', alt: 'Professional woman in a modern office environment' },
   primaryCta: { label: 'Take Professional Financial Health Check', href: '/health-checks/professional-financial-health-check' },
   subServiceEyebrow: 'Pathways for Professionals & Individuals',
   subServices: [

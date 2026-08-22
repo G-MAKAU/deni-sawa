@@ -75,7 +75,7 @@ export default async function HealthChecksPage() {
           title="Understand Your Situation. Get Clarity. Take Action."
           subtitle="Structured assessments that turn your answers into a diagnostic report — with prioritised recommendations you can act on."
           crumbs={[{ label: 'Health Checks' }]}
-          image={{ src: '/images/health-check.jpg', alt: 'Health check assessment' }}
+          image={{ src: '/images/hero-health-checks.webp', alt: 'Professional completing a structured business assessment' }}
           compactImage
         >
           <Button asChild size="lg">
@@ -116,7 +116,7 @@ export default async function HealthChecksPage() {
           />
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             {checks.map((check, i) => {
-              const imageSrc = check.image_url ?? (i === 0 ? '/images/business-check.jpg' : '/images/professional-check.jpg');
+              const imageSrc = check.image_url ?? (i === 0 ? '/images/check-business.webp' : '/images/check-professional.webp');
               const minutes = check.estimated_minutes;
               return (
                 <Reveal

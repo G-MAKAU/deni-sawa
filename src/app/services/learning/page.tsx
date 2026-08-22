@@ -114,8 +114,8 @@ export default function LearningPage() {
       <section className="relative overflow-hidden bg-charcoal text-white">
         <div className="absolute inset-0">
           <Image
-            src="/images/academy-hero.jpg"
-            alt="Deni Sawa learning environment"
+            src="/images/hero-learning.webp"
+            alt="Professionals in an executive learning and development session"
             fill
             priority
             sizes="100vw"

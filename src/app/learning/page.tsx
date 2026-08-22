@@ -41,7 +41,7 @@ export default async function LearningPage() {
         title="Learn the numbers. Master the narrative. Lead with confidence."
         subtitle="Practitioner-led programmes for leaders, operators and teams — built from real special situations work, not textbooks."
         crumbs={[{ label: 'Learning' }]}
-        image={{ src: '/images/learning-hero.jpg', alt: 'Deni Sawa Learning Centre' }}
+        image={{ src: '/images/hero-learning.webp', alt: 'Professionals in an executive learning and development session' }}
       >
         <Button asChild size="lg">
           <Link href="/learning/executive-finance">Explore Executive Finance</Link>

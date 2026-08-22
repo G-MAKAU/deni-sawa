@@ -76,7 +76,7 @@ export default function InvestorsPage() {
         title="Rigour, visibility and a voice at the table."
         subtitle="Independent support across the investment lifecycle — from readiness before the cheque to oversight and representation after it."
         crumbs={[{ label: 'Investors' }]}
-        image={{ src: '/images/investors.jpg', alt: 'Investor oversight' }}
+        image={{ src: '/images/hero-investors.webp', alt: 'Investor reviewing portfolio performance data' }}
       >
         <Button asChild size="lg">
           <Link href="/contact?subject=Investor%20Services">Discuss Your Needs</Link>

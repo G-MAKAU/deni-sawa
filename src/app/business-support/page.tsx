@@ -27,7 +27,7 @@ export default function BusinessSupportPage() {
         title="Senior-level expertise. Part-time commitment. Full-time impact."
         subtitle="A seasoned operating bench — fractional CFO, CEO, governance, growth and special situations support — for organisations that need boardroom capability without boardroom payroll."
         crumbs={[{ label: 'Business Support' }]}
-        image={{ src: '/images/services-hero.jpg', alt: 'Deni Sawa Partners advisory team at work' }}
+        image={{ src: '/images/hero-services.webp', alt: 'Modern business district representing premium advisory services' }}
       >
         <Button asChild size="lg">
           <Link href="/business-health-checks#choose-your-assessment">Start Your Assessment</Link>

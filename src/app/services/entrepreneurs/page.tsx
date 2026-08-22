@@ -13,7 +13,7 @@ const config: ServiceCategoryConfig = {
   name: 'Entrepreneurs & Founders',
   positioningTag: 'Stability → Structure → Growth → Best-in-Class',
   description: 'Our core business support pathway for founders and owners who need stronger financial discipline, governance, execution and growth support.',
-  heroImage: { src: '/images/entrepreneur-support.jpg', alt: 'Founder business planning session' },
+  heroImage: { src: '/images/hero-entrepreneurs.webp', alt: 'Founder planning business strategy at a modern workspace' },
   primaryCta: { label: 'Take Business Health Check', href: '/health-checks/business-health-check' },
   secondaryCta: { label: 'Discuss Fractional Support', href: '/contact' },
   subServiceEyebrow: 'Pathways for Entrepreneurs & Founders',

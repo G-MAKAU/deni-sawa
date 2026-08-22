@@ -36,14 +36,14 @@ export const metadata: Metadata = {
       'Five structured pathways to financial health: professionals, entrepreneurs, investors, health checks, and learning.',
     url: `${site.url}/services`,
     siteName: site.name,
-    images: [{ url: '/images/services-hero.jpg', width: 1200, height: 630, alt: 'Deni Sawa Partners services' }],
+    images: [{ url: '/images/hero-services.webp', width: 1200, height: 630, alt: 'Deni Sawa Partners services' }],
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Services & Programmes — Deni Sawa Partners',
     description: 'Five structured pathways to financial health.',
-    images: ['/images/services-hero.jpg'],
+    images: ['/images/hero-services.webp'],
   },
   robots: {
     index: true,
@@ -248,7 +248,7 @@ export default function ServicesHubPage() {
           title="Five Pathways to Best-in-Class"
           subtitle="Three client pathways, one diagnostic platform and one learning ecosystem — structured around where you are and where you need to go."
           crumbs={[{ label: 'Services' }]}
-          image={{ src: '/images/services-hero.jpg', alt: 'Deni Sawa Partners advisory team at work' }}
+          image={{ src: '/images/hero-services.webp', alt: 'Modern business district representing premium advisory services' }}
         />
       </section>
 

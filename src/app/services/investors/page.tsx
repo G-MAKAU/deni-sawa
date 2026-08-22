@@ -13,7 +13,7 @@ const config: ServiceCategoryConfig = {
   name: 'Investors',
   positioningTag: 'Visibility → Governance → Accountability → Portfolio Performance',
   description: 'We support investors seeking stronger visibility, governance and execution discipline across SME and growth-business investments.',
-  heroImage: { src: '/images/investor-oversight.jpg', alt: 'Investor portfolio review session' },
+  heroImage: { src: '/images/hero-investors.webp', alt: 'Investor reviewing portfolio performance data' },
   primaryCta: { label: 'Investor & Partner Enquiry', href: '/contact' },
   subServiceEyebrow: 'Pathways for Investors & Partners',
   subServices: [
