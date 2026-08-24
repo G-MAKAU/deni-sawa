@@ -13,7 +13,8 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: Request) {
   // Verify cron secret
   const authHeader = request.headers.get('authorization');
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  const secret = process.env.CRON_SECRET;
+  if (!secret || authHeader !== `Bearer ${secret}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -60,6 +61,7 @@ export async function GET(request: Request) {
     });
   } catch (error) {
     console.error('Email log cleanup failed:', error);
-    return NextResponse.json({ error: 'Cleanup failed' }, { status: 500 });
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    return NextResponse.json({ error: 'Cleanup failed', detail: message }, { status: 500 });
   }
 }
