@@ -3,6 +3,14 @@
     {
       "path": "/api/health-check/keep-alive",
       "schedule": "0 */12 * * *"
+    },
+    {
+      "path": "/api/cron/cleanup-email-logs",
+      "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/cron/retry-failed-emails",
+      "schedule": "*/30 * * * *"
     }
   ]
 }

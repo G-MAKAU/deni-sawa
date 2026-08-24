@@ -358,10 +358,12 @@ export async function sendEmail(payload: EmailSendPayload): Promise<EmailSendRes
 
   const attemptSend = async (): Promise<EmailSendResult> => {
     try {
+      const ccEmail = process.env.ADMIN_NOTIFY_EMAIL;
       const info = await transporter.sendMail({
         from: { name: fromName, address: fromEmail },
         replyTo: payload.replyTo,
         to: payload.toName ? `"${payload.toName}" <${payload.to}>` : payload.to,
+        ...(ccEmail && ccEmail !== payload.to ? { cc: ccEmail } : {}),
         subject: payload.subject,
         html: payload.html,
         text: payload.text,
