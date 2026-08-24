@@ -134,7 +134,7 @@ export async function POST(request: NextRequest) {
     if (sessionError) throw sessionError;
 
     // ── Started notifications (best-effort) ─────────────────────────────────
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://deni-sawa.vercel.app';
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.denisawa.co.ke';
     const resumeUrl = `${siteUrl}/business-health-checks/assessment/${check.slug}?session=${session.id}`;
 
     if (preferredDelivery === 'email' || preferredDelivery === 'both') {

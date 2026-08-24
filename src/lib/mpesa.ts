@@ -62,7 +62,7 @@ export async function initiateStkPush(options: {
   const timestamp = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
   const shortcode = process.env.MPESA_SHORTCODE as string;
   const password = Buffer.from(`${shortcode}${process.env.MPESA_PASSKEY}${timestamp}`).toString('base64');
-  const callbackUrl = `${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://deni-sawa.vercel.app'}/api/payments/mpesa/callback`;
+  const callbackUrl = `${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.denisawa.co.ke'}/api/payments/mpesa/callback`;
 
   const token = await getAccessToken();
   const res = await fetch(`${MPESA_API_BASE()}/mpesa/stkpush/v1/processrequest`, {

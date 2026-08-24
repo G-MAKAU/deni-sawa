@@ -50,7 +50,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       regenerated: result.regenerated,
       tokensUsed: result.tokensUsed,
       generationSeconds: result.generationSeconds,
-      report_url: `${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://deni-sawa.vercel.app'}/business-health-checks/report/${result.report.report_url_token}`,
+      report_url: `${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.denisawa.co.ke'}/business-health-checks/report/${result.report.report_url_token}`,
     });
   } catch (error) {
     return jsonAdminWriteError(error, 'Failed to generate report');

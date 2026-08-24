@@ -39,7 +39,7 @@ export interface EmailSendResult {
 }
 
 function resolveSiteUrl() {
-  return process.env.NEXT_PUBLIC_SITE_URL ?? 'https://deni-sawa.vercel.app';
+  return process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.denisawa.co.ke';
 }
 
 /** Replace {{variable_name}} tokens with values from `variables`. */
@@ -122,7 +122,7 @@ export function buildBrandedEmailHtml(bodyHtml: string, previewText?: string): s
         <tr><td class="ds-header-bar"></td></tr>
         <tr><td class="ds-header">
           <img
-            src="${siteUrl}/Deni-sawa-main-logo.webp"
+            src="https://www.denisawa.co.ke/Deni-sawa-main-logo.webp"
             alt="Deni Sawa Partners"
             width="200"
             style="display:inline-block; width:200px; max-width:220px; height:auto; border:0; outline:none;"

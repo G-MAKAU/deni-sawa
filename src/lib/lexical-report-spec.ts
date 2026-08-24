@@ -118,15 +118,15 @@ editor handles it. You only set the colour.
 You may insert a tasteful image to anchor a section. ONLY use these exact URLs
 (layout "center" or "square-right" with width 240–320px is usually best):
 
-- https://deni-sawa.vercel.app/images/growth.jpg — Growth & business development
-- https://deni-sawa.vercel.app/images/recovery.jpg — Recovery & restructuring
-- https://deni-sawa.vercel.app/images/leadership.jpg — Leadership & strategy
-- https://deni-sawa.vercel.app/images/governance.jpg — Governance & controls
-- https://deni-sawa.vercel.app/images/exec-finance.jpg — Finance & cashflow
-- https://deni-sawa.vercel.app/images/strategy.jpg — Strategic planning
+- https://www.denisawa.co.ke/images/growth.jpg — Growth & business development
+- https://www.denisawa.co.ke/images/recovery.jpg — Recovery & restructuring
+- https://www.denisawa.co.ke/images/leadership.jpg — Leadership & strategy
+- https://www.denisawa.co.ke/images/governance.jpg — Governance & controls
+- https://www.denisawa.co.ke/images/exec-finance.jpg — Finance & cashflow
+- https://www.denisawa.co.ke/images/strategy.jpg — Strategic planning
 
 Example:
-{"type":"image","src":"https://deni-sawa.vercel.app/images/growth.jpg","alt":"Growth path","width":280,"layout":"center"}
+{"type":"image","src":"https://www.denisawa.co.ke/images/growth.jpg","alt":"Growth path","width":280,"layout":"center"}
 
 Never invent an image URL. At most one image per section, and omit images if
 they do not genuinely add value to the finding.
