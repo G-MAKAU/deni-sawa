@@ -132,7 +132,7 @@ export function buildBrandedEmailHtml(bodyHtml: string, previewText?: string): s
         <tr><td class="ds-body">${preheader}${bodyHtml}</td></tr>
         <tr><td class="ds-footer">
           <p style="margin:0 0 8px;">Deni Sawa Partners · Financial coaching, advisory &amp; debt solutions.</p>
-          <p style="margin:0 0 8px;">Nairobi, Kenya</p>
+          <p style="margin:0 0 8px;">Nairobi, Kenya · <a href="tel:+254702448601" style="color:#E8510A;">+254 702 448 601</a> · <a href="mailto:${site.email}" style="color:#E8510A;">${site.email}</a></p>
           <p style="margin:0 0 10px;">
             <a href="${site.social.facebook}">Facebook</a> &nbsp;·&nbsp;
             <a href="${site.social.instagram}">Instagram</a> &nbsp;·&nbsp;

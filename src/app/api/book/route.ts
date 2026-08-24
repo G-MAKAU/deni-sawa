@@ -122,7 +122,7 @@ function sendThankYou(userEmail: string, name: string, ref: string, service: str
     <div style="background:#FDF3EC;border-radius:8px;padding:20px 24px;margin:0 0 24px;border-left:3px solid #E8510A;">
       <p style="margin:0;font-size:14px;color:#1A1A1A;line-height:1.6;">
         <strong>Need an immediate response?</strong><br/>
-        Reach us directly at <a href="tel:${site.phone}" style="color:#E8510A;">${site.phone}</a> or reply to this email.
+        Reach us directly at <a href="mailto:${site.email}" style="color:#E8510A;">${site.email}</a> or <a href="tel:${site.phone.replace(/\s/g, '')}" style="color:#E8510A;">${site.phone}</a>, or reply to this email.
       </p>
     </div>
 
