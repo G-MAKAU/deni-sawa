@@ -1,8 +1,8 @@
 'use client';
 
 import { motion } from 'motion/react';
+import { useRef, useState, useEffect } from 'react';
 import type { ReactNode, ElementType } from 'react';
-import { useMounted } from '@/lib/hooks';
 
 type Direction = 'up' | 'left' | 'right' | 'scale';
 
@@ -17,37 +17,57 @@ interface RevealProps {
 }
 
 const OFFSET: Record<Direction, { x?: number; y?: number; scale?: number }> = {
-  up: { y: 16 },
-  left: { x: -32 },
-  right: { x: 32 },
-  scale: { scale: 0.97 },
+  up: { y: 24 },
+  left: { x: -40 },
+  right: { x: 40 },
+  scale: { scale: 0.95 },
 };
 
-const motionTags = new Map<string, ElementType>();
-function getMotionTag(as: string): ElementType {
-  let tag = motionTags.get(as);
-  if (!tag) {
-    tag = motion.create(as as ElementType);
-    motionTags.set(as, tag);
-  }
-  return tag;
-}
+const TAG_MAP: Record<string, string> = {
+  div: 'div',
+  section: 'section',
+  li: 'li',
+  span: 'span',
+};
 
-/** Scroll-reveal wrapper: opacity 0→1 + translateY(16px→0), 350ms. */
+/** Scroll-reveal wrapper: opacity 0→1 + directional slide, 450ms.
+ *  Uses a native IntersectionObserver for reliable SSR-safe triggering. */
 export function Reveal({ children, direction = 'up', delay = 0, className = '', as = 'div', id }: RevealProps) {
-  const MotionTag = getMotionTag(as);
-  const mounted = useMounted();
+  const ref = useRef<HTMLDivElement>(null);
+  const [inView, setInView] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setInView(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.1, rootMargin: '0px 0px -40px 0px' }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  const Tag = TAG_MAP[as] || 'div';
+  const offset = OFFSET[direction];
 
   return (
-    <MotionTag
+    <motion.div
+      ref={ref}
       id={id}
       className={className}
-      initial={!mounted ? false : { opacity: 0, ...OFFSET[direction] }}
-      whileInView={{ opacity: 1, x: 0, y: 0, scale: 1 }}
-      viewport={{ once: true, amount: 0.15, margin: '0px 0px -60px 0px' }}
-      transition={{ duration: 0.35, ease: 'easeOut', delay: delay / 1000 }}
+      initial={{ opacity: 0, ...offset }}
+      animate={inView ? { opacity: 1, x: 0, y: 0, scale: 1 } : undefined}
+      transition={{ duration: 0.45, ease: [0.25, 0.1, 0.25, 1], delay: delay / 1000 }}
+      style={{ willChange: 'opacity, transform' }}
     >
       {children}
-    </MotionTag>
+    </motion.div>
   );
 }
