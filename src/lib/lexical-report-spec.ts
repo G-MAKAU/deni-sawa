@@ -78,15 +78,33 @@ letter-spacing. Do NOT use url()/expressions.
 ## 2c. Block styling (the "style" string on paragraph/heading/tablecell nodes)
 
 Use block "style" with background-color to build elegant, highlighted panels.
+The editor auto-adds `padding: 0.75rem 1rem` and `border-radius: 6px` when you
+set `background-color` via the toolbar, so you only need to specify the colour
+in the style string — the padding and rounding are applied automatically.
 The renderer paints background-color, text-align, color, font-size, padding and
 border-radius on paragraph/heading blocks. Make the report feel designed:
 - The Overall Score / interpretation box MUST be a highlighted panel:
-  {"type":"paragraph","style":"background-color: #FDF3EC; padding: 0.9rem 1rem; border-radius: 8px;","children":[...]}
+  {"type":"paragraph","style":"background-color: #FDF3EC;","children":[...]}
 - Highlight each dimension score line with a subtle tint.
 - Use "text-align: center" for the cover block and closing call-to-action.
 - Tint table header cells via a block style inside the header cell:
   {"type":"paragraph","style":"background-color: #FDF3EC; color: #E8510A;","children":[{"type":"text","text":"Metric","format":1}]}
 Use one highlight per section maximum so the page stays clean, not cluttered.
+
+### Background filler cheat-sheet (for the AI generating JSON)
+
+| What             | style string                                          |
+|------------------|-------------------------------------------------------|
+| Highlighted panel | "background-color: #FDF3EC"                          |
+| Orange accent panel | "background-color: #FEF0E5"                        |
+| Green accent panel | "background-color: #F4F9EE"                         |
+| Tinted header cell | "background-color: #FDF3EC; color: #E8510A"         |
+| Clear a block    | "background-color: null" (removes fill, padding, rounding) |
+
+The toolbar automatically adds padding: 0.75rem 1rem and border-radius: 6px
+when a background colour is set. When clearing, it strips those too.
+Do NOT manually add padding or border-radius to a background-color style — the
+editor handles it. You only set the colour.
 
 ## 3. Callout tones
 
@@ -160,6 +178,14 @@ they do not genuinely add value to the finding.
       },
       { "type": "divider" },
       {
+        "type": "paragraph",
+        "style": "background-color: #FDF3EC; text-align: center;",
+        "children": [
+          { "type": "text", "text": "Overall Health Score ", "format": 0 },
+          { "type": "text", "text": "6.8 / 10", "format": 1, "style": "font-size: 22px; color: #E8510A" }
+        ]
+      },
+      {
         "type": "heading",
         "tag": "h2",
         "children": [
@@ -218,8 +244,9 @@ they do not genuinely add value to the finding.
                 "children": [
                   {
                     "type": "paragraph",
+                    "style": "background-color: #FDF3EC; color: #E8510A;",
                     "children": [
-                      { "type": "text", "text": "Dimension", "format": 1, "style": "color: #E8510A" }
+                      { "type": "text", "text": "Dimension", "format": 1 }
                     ]
                   }
                 ]
@@ -230,8 +257,9 @@ they do not genuinely add value to the finding.
                 "children": [
                   {
                     "type": "paragraph",
+                    "style": "background-color: #FDF3EC; color: #E8510A;",
                     "children": [
-                      { "type": "text", "text": "Score", "format": 1, "style": "color: #E8510A" }
+                      { "type": "text", "text": "Score", "format": 1 }
                     ]
                   }
                 ]

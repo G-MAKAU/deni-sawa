@@ -791,7 +791,11 @@ export function ToolbarPlugin({
       if ($isElementNode(node)) block = node;
       else block = node.getParent() ?? null;
       if (block && ($isParagraphNode(block) || $isHeadingNode(block))) {
-        block.setStyle(setCssProperty(block.getStyle(), 'background-color', null));
+        let style = block.getStyle();
+        style = setCssProperty(style, 'background-color', null);
+        style = setCssProperty(style, 'padding', null);
+        style = setCssProperty(style, 'border-radius', null);
+        block.setStyle(style);
       }
     });
   }, [editor]);
@@ -832,6 +836,8 @@ export function ToolbarPlugin({
     [editor]
   );
 
+  /** Background-fill helper: when applying, auto-adds padding + rounded-md;
+   *  when clearing, strips them too. */
   const applyBlockBackground = useCallback(
     (color: string | null) => {
       editor.update(() => {
@@ -840,9 +846,6 @@ export function ToolbarPlugin({
           $isRangeSelection(current) ? current : ($isRangeSelection(selectionRef.current) ? selectionRef.current : null);
         if (!selection) return;
         try {
-          // Fill every paragraph/heading the selection touches, not just the
-          // anchor block — a selection spanning several paragraphs should
-          // highlight all of them.
           const blocks = new Set<ElementNode>();
           for (const node of selection.getNodes()) {
             const parent = $isElementNode(node) ? node : node.getParent();
@@ -862,12 +865,36 @@ export function ToolbarPlugin({
             const block = $isElementNode(node) ? node : node.getParent() ?? null;
             if (block && ($isParagraphNode(block) || $isHeadingNode(block))) blocks.add(block);
           }
-          blocks.forEach((block) => block.setStyle(setCssProperty(block.getStyle(), 'background-color', color)));
+          blocks.forEach((block) => {
+            let style = block.getStyle();
+            if (color) {
+              // Apply bg + padding + rounded-md in one pass.
+              style = setCssProperty(style, 'background-color', color);
+              style = setCssProperty(style, 'padding', '0.75rem 1rem');
+              style = setCssProperty(style, 'border-radius', '6px');
+            } else {
+              // Clear bg + padding + rounded-md.
+              style = setCssProperty(style, 'background-color', null);
+              style = setCssProperty(style, 'padding', null);
+              style = setCssProperty(style, 'border-radius', null);
+            }
+            block.setStyle(style);
+          });
         } catch {
           const node = selection.anchor.getNode();
           const block = $isElementNode(node) ? node : node.getParent() ?? null;
           if (block && ($isParagraphNode(block) || $isHeadingNode(block))) {
-            block.setStyle(setCssProperty(block.getStyle(), 'background-color', color));
+            let style = block.getStyle();
+            if (color) {
+              style = setCssProperty(style, 'background-color', color);
+              style = setCssProperty(style, 'padding', '0.75rem 1rem');
+              style = setCssProperty(style, 'border-radius', '6px');
+            } else {
+              style = setCssProperty(style, 'background-color', null);
+              style = setCssProperty(style, 'padding', null);
+              style = setCssProperty(style, 'border-radius', null);
+            }
+            block.setStyle(style);
           }
         }
       });

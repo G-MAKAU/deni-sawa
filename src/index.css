@@ -575,7 +575,7 @@
 .ds-lexical th > [style*="background-color"] {
   box-sizing: border-box;
   margin: -0.625rem -1rem;
-  padding: 0.625rem 1rem;
+  padding: 0.75rem 1rem;
 }
 .ds-lexical td > [style*="background-color"] + [style*="background-color"],
 .ds-lexical th > [style*="background-color"] + [style*="background-color"] {
