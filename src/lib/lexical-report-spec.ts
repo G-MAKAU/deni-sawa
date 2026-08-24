@@ -78,8 +78,8 @@ letter-spacing. Do NOT use url()/expressions.
 ## 2c. Block styling (the "style" string on paragraph/heading/tablecell nodes)
 
 Use block "style" with background-color to build elegant, highlighted panels.
-The editor auto-adds `padding: 0.75rem 1rem` and `border-radius: 6px` when you
-set `background-color` via the toolbar, so you only need to specify the colour
+The editor auto-adds padding (0.75rem 1rem) and border-radius (6px) when you
+set background-color via the toolbar, so you only need to specify the colour
 in the style string — the padding and rounding are applied automatically.
 The renderer paints background-color, text-align, color, font-size, padding and
 border-radius on paragraph/heading blocks. Make the report feel designed:
