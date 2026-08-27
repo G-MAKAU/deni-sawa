@@ -193,14 +193,14 @@ export function Footer() {
               Governed by the laws of Kenya.
             </p>
             <p className="mt-2 text-[12px] text-white/30">
-              Designed and developed by{' '}
+              Designed &amp; developed by{' '}
               <a
                 href="https://www.gibson-makau.tech/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="underline transition-colors hover:text-brand"
+                className="font-medium underline transition-colors hover:text-brand"
               >
-                @MG
+                Gibson Makau
               </a>
             </p>
           </div>
