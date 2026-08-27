@@ -49,12 +49,14 @@ export function AdminLogin() {
       });
       if (authError) {
         setError('Invalid email or password. Please try again.');
+        setSubmitting(false);
         return;
       }
+      // Keep submitting=true so the button stays in "Redirecting…" state
+      // until the navigation completes.
       router.replace('/admin/dashboard');
     } catch {
       setError('Something went wrong signing you in. Please try again.');
-    } finally {
       setSubmitting(false);
     }
   };
@@ -234,9 +236,8 @@ export function AdminLogin() {
                   disabled={submitting}
                   className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#E8510A] text-sm font-bold text-white transition-colors hover:bg-[#c94508] disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
-                  <Lock className="h-4 w-4" />
-                  Sign in
+                  {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Lock className="h-4 w-4" />}
+                  {submitting ? 'Redirecting…' : 'Sign in'}
                 </button>
               </form>
             </>
