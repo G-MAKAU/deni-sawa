@@ -150,55 +150,79 @@ const SECTIONS: DocSection[] = [
     icon: Activity,
     tagline: 'The assessment engine',
     intro:
-      'Health checks are the AI-powered assessments at the heart of the platform. Each check bundles a set of sections, questions, answer prompts, delivery settings and a report template.',
+      'Health checks are the AI-powered assessments at the heart of the platform. Each check bundles a set of sections, questions, answer prompts, delivery settings and a report template. Two slugs are reserved and locked: business-health-check and professional-financial-health-check.',
     cards: [
       {
-        title: 'All Health Checks',
-        icon: ListChecks,
+        title: 'Check fields',
+        icon: Settings,
         body: (
           <div className="space-y-3 text-sm leading-relaxed text-[var(--a-text2)]">
-            <p>Lists every check with its status. Use the header actions to create a new check and the row actions to edit or archive it.</p>
+            <p>Each health check has the following fields:</p>
+            <ul className="space-y-1.5">
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Name</strong> — the check&rsquo;s display name shown in the admin list and on the public page.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Slug</strong> — the URL path segment (e.g. <Code>/business-health-checks/my-check</Code>). Reserved slugs show a &ldquo;Locked&rdquo; badge and cannot be changed.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Tagline</strong> — a short subtitle displayed under the check name on the public page.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Description</strong> — a longer explanation of what the check assesses, shown on the public landing page.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Image</strong> — the hero image for the public page. Upload via the storage picker or paste a URL.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Duration estimate</strong> — how long the assessment takes (e.g. &ldquo;10 minutes&rdquo;). Shown to visitors before they start.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Audience</strong> — who the check is for (e.g. &ldquo;Business Owners&rdquo;, &ldquo;Finance Professionals&rdquo;). Displayed on the public page.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Provider</strong> — the LLM provider used for report generation. Uses DB-stored AI settings with env fallback.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Model</strong> — the specific AI model (e.g. Claude Sonnet, GPT-4o). Selected from the provider&rsquo;s available models.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Max tokens</strong> — caps the AI response length. Higher values produce longer reports but cost more.</span></li>
+            </ul>
             <div className="space-y-2">
               <Endpoint method="GET" path="/api/admin/health-checks" />
               <Endpoint method="POST" path="/api/admin/health-checks" />
               <Endpoint method="PUT" path="/api/admin/health-checks/:id" />
+              <Endpoint method="DELETE" path="/api/admin/health-checks/:id" />
             </div>
           </div>
         ),
       },
       {
-        title: 'Check editor',
-        icon: Settings,
-        body: (
-          <div className="space-y-3 text-sm leading-relaxed text-[var(--a-text2)]">
-            <p>Configures the check&rsquo;s identity: name, slug, tagline, description, image, duration estimate, audience and the AI model used for report generation.</p>
-            <ul className="space-y-1.5">
-              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong className="text-[var(--a-ink2)]">Provider</strong> — the LLM provider (e.g. OpenRouter) and model.</span></li>
-              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong className="text-[var(--a-ink2)]">Image</strong> — uploaded via the storage picker for the public page.</span></li>
-              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong className="text-[var(--a-ink2)]">Max tokens</strong> — caps report generation length and cost.</span></li>
-            </ul>
-          </div>
-        ),
-      },
-      {
-        title: 'Sections & questions',
+        title: 'Section fields',
         icon: Table2,
         body: (
           <div className="space-y-3 text-sm leading-relaxed text-[var(--a-text2)]">
-            <p>Structure the assessment. Sections group related topics; questions are answered by visitors and feed the AI report.</p>
+            <p>Sections group related questions within a health check. Each section has:</p>
             <ul className="space-y-1.5">
-              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>Reorder with <strong>sort order</strong>, enable or archive each item.</span></li>
-              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>Question types and options determine how answers are captured.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Title</strong> — the section heading shown to visitors during the assessment.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Description</strong> — optional context shown below the title to guide the visitor.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Sort order</strong> — controls the display sequence. Lower numbers appear first.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Active</strong> — toggle to include or exclude the section from the assessment.</span></li>
             </ul>
           </div>
         ),
       },
       {
-        title: 'Prompts',
+        title: 'Question fields',
+        icon: ListChecks,
+        body: (
+          <div className="space-y-3 text-sm leading-relaxed text-[var(--a-text2)]">
+            <p>Questions are the individual items visitors answer. Each question has:</p>
+            <ul className="space-y-1.5">
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Text</strong> — the question prompt shown to the visitor.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Type</strong> — how the answer is captured: text input, multiple choice, scale (1&ndash;5 or 1&ndash;10), yes/no, or file upload.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Options</strong> — for multiple-choice questions, the list of possible answers.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Required</strong> — whether the visitor must answer before proceeding.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Sort order</strong> — controls the display sequence within the section.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Active</strong> — toggle to include or exclude the question from the assessment.</span></li>
+            </ul>
+          </div>
+        ),
+      },
+      {
+        title: 'Prompt fields',
         icon: PenLine,
         body: (
           <div className="space-y-3 text-sm leading-relaxed text-[var(--a-text2)]">
             <p>Prompts are the AI instructions that turn raw answers into a polished, branded diagnostic report. Each section can have its own prompt for more targeted analysis.</p>
+            <ul className="space-y-1.5">
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Section prompt</strong> — instructions specific to that section&rsquo;s questions and answers.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Global prompt</strong> — overall instructions for the entire report (tone, branding, structure).</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>The AI generates a full <strong>Lexical JSON state</strong> with headings, lists, tables, callouts and styled text.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>The model spec includes a few-shot example so the output is consistently structured and on-brand.</span></li>
+            </ul>
           </div>
         ),
       },
@@ -416,21 +440,68 @@ const SECTIONS: DocSection[] = [
     icon: PenLine,
     tagline: 'Publish articles & insights',
     intro:
-      'Write, categorise and publish blog posts with a full Lexical editor, cover images and SEO metadata.',
+      'Write, categorise and publish blog posts with a full Lexical editor, cover images and SEO metadata. Every post is stored in the database and served dynamically.',
     cards: [
       {
-        title: 'Post management',
+        title: 'Post fields',
         icon: FileText,
         body: (
           <div className="space-y-3 text-sm leading-relaxed text-[var(--a-text2)]">
+            <p>Each blog post has the following fields:</p>
             <ul className="space-y-1.5">
-              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>Create posts with a <strong>Lexical editor</strong>: headings, lists, images, links and callouts.</span></li>
-              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>Set category, cover image, publish date and SEO fields.</span></li>
-              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>Toggle publish state and moderate reader comments.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Title</strong> — the post headline, displayed on the public listing and as the page H1.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Slug</strong> — the URL path segment (e.g. <Code>/about/blog/my-post</Code>). Auto-generated from the title but editable.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Excerpt</strong> — a short summary shown on the blog listing card and in social share previews.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Content</strong> — the full post body in the Lexical editor. Supports headings, paragraphs, lists, images, links, callouts and code blocks.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Category</strong> — groups posts (e.g. Debt Management, Financial Wellness, Leadership). Used for filtering on the public blog page.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Author</strong> — the post author shown on the public page. Select from the admin team or enter a custom name.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Cover image</strong> — the hero image for the post. Upload via the media library or paste a URL. Used on the listing card and at the top of the post.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Published</strong> — toggle to make the post visible publicly. Drafts are only visible in the admin.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Publish date</strong> — controls the displayed date and sort order. Defaults to now but can be backdated or scheduled.</span></li>
             </ul>
           </div>
         ),
       },
+      {
+        title: 'SEO fields',
+        icon: Globe,
+        body: (
+          <div className="space-y-3 text-sm leading-relaxed text-[var(--a-text2)]">
+            <p>Every post has dedicated SEO fields for search engine optimisation:</p>
+            <ul className="space-y-1.5">
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>SEO title</strong> — overrides the page &lt;title&gt; tag. Falls back to the post title if empty.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>SEO description</strong> — the meta description shown in search results. Falls back to the excerpt.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>Open Graph and Twitter card tags are generated automatically from these fields.</span></li>
+            </ul>
+          </div>
+        ),
+      },
+      {
+        title: 'Comments',
+        icon: MessageSquare,
+        body: (
+          <div className="space-y-3 text-sm leading-relaxed text-[var(--a-text2)]">
+            <p>Readers can leave comments on published posts. All comments are managed from the admin:</p>
+            <ul className="space-y-1.5">
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>AI moderation</strong> — when enabled, each comment is screened for spam, toxicity and relevance before appearing publicly.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Moderation queue</strong> — flagged comments appear in the admin for manual approve / reject / delete.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>Comment count is displayed on the public post page.</span></li>
+            </ul>
+            <div className="space-y-2">
+              <Endpoint method="GET" path="/api/admin/blog/posts" />
+              <Endpoint method="POST" path="/api/admin/blog/posts" />
+              <Endpoint method="PUT" path="/api/admin/blog/posts/:id" />
+              <Endpoint method="DELETE" path="/api/admin/blog/posts/:id" />
+              <Endpoint method="GET" path="/api/admin/blog/comments" />
+              <Endpoint method="PUT" path="/api/admin/blog/comments/:id" />
+            </div>
+          </div>
+        ),
+      },
+    ],
+    tips: [
+      { tone: 'info', text: 'Posts are served dynamically from the database. The blog listing page caches for 10 minutes (ISR).' },
+      { tone: 'success', text: 'Use the Lexical editor toolbar to insert images from the media library — they are uploaded automatically.' },
     ],
   },
   {
@@ -439,17 +510,37 @@ const SECTIONS: DocSection[] = [
     icon: GraduationCap,
     tagline: 'LMS course catalogue',
     intro:
-      'Manage the academy course catalogue shown on the public Academy page. Courses carry a title, category, format, duration, level, description and an optional cover image.',
+      'Manage the academy course catalogue shown on the public Academy page. Courses carry a title, category, format, duration, level, description and an optional cover image. The public catalogue pulls live from the database and falls back to the static catalogue if empty.',
     cards: [
       {
-        title: 'Courses & cover images',
-        icon: ImageIcon,
+        title: 'Course fields',
+        icon: FileText,
+        body: (
+          <div className="space-y-3 text-sm leading-relaxed text-[var(--a-text2)]">
+            <p>Each course has the following fields:</p>
+            <ul className="space-y-1.5">
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Title</strong> — the course name displayed on the public listing card.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Category</strong> — groups courses (e.g. Financial Management, Leadership, Governance). Used for filtering on the public page.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Format</strong> — how the course is delivered: Online, In-Person, Hybrid, or Self-Paced.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Duration</strong> — the time commitment (e.g. &ldquo;4 weeks&rdquo;, &ldquo;2 days&rdquo;, &ldquo;6 hours&rdquo;).</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Level</strong> — the difficulty tier: Beginner, Intermediate, Advanced, or Executive.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Description</strong> — a detailed summary of what the course covers, prerequisites and outcomes.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Cover image</strong> — the hero image for the course card. Upload via the media library or paste a URL.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Featured</strong> — toggle to highlight the course at the top of the public listing.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Active</strong> — toggle to show or hide the course on the public catalogue. Inactive courses are admin-only.</span></li>
+            </ul>
+          </div>
+        ),
+      },
+      {
+        title: 'Managing courses',
+        icon: Settings,
         body: (
           <div className="space-y-3 text-sm leading-relaxed text-[var(--a-text2)]">
             <ul className="space-y-1.5">
-              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>Create and edit courses with the modal form — upload a cover image or pick one from storage.</span></li>
-              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Featured</strong> courses are highlighted; <strong>Active</strong> courses appear publicly.</span></li>
-              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>The public catalogue pulls live from the database and falls back to the static catalogue if empty.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>Click <strong>Add Course</strong> to open the modal form with all fields above.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>Click any row to edit an existing course — the same modal opens pre-filled.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>Use the <strong>Delete</strong> action to permanently remove a course (requires confirmation).</span></li>
             </ul>
             <div className="space-y-2">
               <Endpoint method="GET" path="/api/admin/academy/courses" />
@@ -461,7 +552,10 @@ const SECTIONS: DocSection[] = [
         ),
       },
     ],
-    tips: [{ tone: 'success', text: 'Upload images under 5MB (JPEG, PNG, GIF, WebP) from the course form.' }],
+    tips: [
+      { tone: 'success', text: 'Upload images under 5MB (JPEG, PNG, GIF, WebP) from the course form.' },
+      { tone: 'info', text: 'The public Academy page shows active courses grouped by category. Featured courses appear first.' },
+    ],
   },
   {
     id: 'team',

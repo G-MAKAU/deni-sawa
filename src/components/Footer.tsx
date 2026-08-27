@@ -20,7 +20,6 @@ const columns = [
   {
     title: 'Platform',
     links: [
-      { label: 'Health Checks', href: '/business-health-checks' },
       { label: 'Learning & Leadership', href: '/learning' },
       { label: 'Investors', href: '/investors' },
       { label: 'SpecialSit Network', href: '/about/specialsit-network' },
@@ -192,6 +191,17 @@ export function Footer() {
             <p className="text-[12px] leading-relaxed text-white/35">
               {site.name} provides professional advisory services. Our services do not constitute regulated financial advice.
               Governed by the laws of Kenya.
+            </p>
+            <p className="mt-2 text-[12px] text-white/30">
+              Designed and developed by{' '}
+              <a
+                href="https://www.gibson-makau.tech/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline transition-colors hover:text-brand"
+              >
+                @MG
+              </a>
             </p>
           </div>
         </div>
