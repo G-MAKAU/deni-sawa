@@ -227,6 +227,31 @@ const SECTIONS: DocSection[] = [
         ),
       },
       {
+        title: 'Import & export questions',
+        icon: Upload,
+        body: (
+          <div className="space-y-3 text-sm leading-relaxed text-[var(--a-text2)]">
+            <p>Bulk-import questions from Google Forms, spreadsheets or any structured text. Export your questions as PDF or Word for offline review.</p>
+            <p className="font-semibold text-[var(--a-ink2)]">Import modes:</p>
+            <ul className="space-y-1.5">
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>JSON format</strong> — paste a structured JSON object with sections, subsections and questions. Use the &ldquo;Load template&rdquo; button to see the expected structure.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Plain text format</strong> — paste content copied from Google Forms or any text editor. Use <Code>## Title</Code> for sections, <Code>### Heading</Code> for subsections, and <Code>[radio]</Code> / <Code>[checkbox]</Code> / <Code>[text]</Code> prefixes for question types.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Preview first</strong> — the dialog shows a tree view of sections, subsections and questions with type badges before you confirm the import.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>Indented <Code>- Option</Code> lines under a <Code>[radio]</Code> or <Code>[checkbox]</Code> question become the answer options.</span></li>
+            </ul>
+            <p className="font-semibold text-[var(--a-ink2)]">Export:</p>
+            <ul className="space-y-1.5">
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>Export all questions as a <strong>PDF</strong> or <strong>Word</strong> document for offline review or client sharing.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>The export includes section headings, question text, type labels and options.</span></li>
+            </ul>
+            <div className="space-y-2">
+              <Endpoint method="POST" path="/api/admin/health-checks/:id/import" />
+              <Endpoint method="GET" path="/api/admin/health-checks/:id/export" />
+            </div>
+          </div>
+        ),
+      },
+      {
         title: 'Rate limits',
         icon: Lock,
         body: (
