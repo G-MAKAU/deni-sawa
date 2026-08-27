@@ -99,7 +99,7 @@ export function buildBrandedEmailHtml(bodyHtml: string, previewText?: string): s
   .ds-shell { width:100%; max-width:600px; margin:0 auto; border-collapse:collapse; }
   .ds-header-bar { background:#E8510A; height:6px; }
   .ds-header { background:#FFFFFF; text-align:center; padding:28px 32px 20px; border-bottom:1px solid #F0EAE4; }
-  .ds-header img { display:inline-block; width:200px; max-width:220px; height:auto; border:0; outline:none; text-decoration:none; }
+  .ds-header img { display:inline-block; width:200px; max-width:220px; height:auto; border:0; outline:none; text-decoration:none; background:#FFFFFF; border-radius:4px; }
   .ds-tagline { color:#8A857F; font-family:Arial,sans-serif; font-size:10px; letter-spacing:0.32em; text-transform:uppercase; margin-top:6px; }
   .ds-body { background:#FFFFFF; padding:32px; font-family:Arial,Helvetica,sans-serif; color:#1A1A1A; font-size:15px; line-height:1.7; }
   .ds-body a { color:#E8510A; font-weight:600; }
@@ -122,10 +122,10 @@ export function buildBrandedEmailHtml(bodyHtml: string, previewText?: string): s
         <tr><td class="ds-header-bar"></td></tr>
         <tr><td class="ds-header">
           <img
-            src="https://www.denisawa.co.ke/Deni-sawa-main-logo.webp"
+            src="https://www.denisawa.co.ke/Deni-sawa-main-logo.png"
             alt="Deni Sawa Partners"
             width="200"
-            style="display:inline-block; width:200px; max-width:220px; height:auto; border:0; outline:none;"
+            style="display:inline-block; width:200px; max-width:220px; height:auto; border:0; outline:none; background:#FFFFFF; border-radius:4px;"
           />
           <div class="ds-tagline">Partners</div>
         </td></tr>
