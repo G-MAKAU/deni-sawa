@@ -190,7 +190,7 @@ export function Footer() {
           <div className="container-lux py-5 text-center">
             <p className="text-[12px] leading-relaxed text-white/35">
               {site.name} provides professional advisory services. Our services do not constitute regulated financial advice.
-              Governed by the laws of Kenya.
+              All rights reserved. Governed by the laws of Kenya.
             </p>
             <p className="mt-2 text-[12px] text-white/30">
               Designed &amp; developed by{' '}
