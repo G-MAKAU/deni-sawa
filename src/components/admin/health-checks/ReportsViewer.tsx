@@ -9,10 +9,9 @@ import {
   flexRender,
   type ColumnDef,
 } from '@tanstack/react-table';
-import { Check, Columns, Copy, ExternalLink, Eye, Loader2, Pencil, RefreshCw, Search } from 'lucide-react';
+import { Check, Columns, Copy, ExternalLink, Eye, Loader2, Mail, Pencil, RefreshCw, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { adminFetch, adminPut } from '@/lib/admin-client';
-import { useConfirm } from '@/components/admin/confirm';
 import { LexicalRenderer } from '@/features/lexical/LexicalRenderer';
 import { ErrorBanner, Loading, Modal, PageHeader, StatusPill, Td, Th, Toggle } from '@/components/admin/ui';
 
@@ -57,7 +56,6 @@ const DELIVERY_TONE: Record<ReportRow['delivery_status'], 'amber' | 'green' | 'r
 };
 
 export function ReportsViewer() {
-  const confirm = useConfirm();
   const [reports, setReports] = React.useState<ReportRow[]>([]);
   const [page, setPage] = React.useState(1);
   const [pageSize, setPageSize] = React.useState(20);
@@ -78,6 +76,15 @@ export function ReportsViewer() {
   const [regeneratingId, setRegeneratingId] = React.useState<string | null>(null);
   const [copiedId, setCopiedId] = React.useState<string | null>(null);
   const [errorViewReport, setErrorViewReport] = React.useState<ReportRow | null>(null);
+
+  // Regeneration modal
+  const [regenReport, setRegenReport] = React.useState<ReportRow | null>(null);
+  const [regenSendEmail, setRegenSendEmail] = React.useState(true);
+
+  // Resend email modal
+  const [resendReport, setResendReport] = React.useState<ReportRow | null>(null);
+  const [resendLoading, setResendLoading] = React.useState(false);
+  const [resendResult, setResendResult] = React.useState<{ ok: boolean; error?: string; to?: string } | null>(null);
 
   const copyLink = async (report: ReportRow) => {
     const url = `${window.location.origin}/business-health-checks/report/${report.report_url_token}`;
@@ -151,24 +158,46 @@ export function ReportsViewer() {
   };
 
   const handleRegenerate = async (report: ReportRow) => {
+    setRegenReport(report);
+    setRegenSendEmail(true);
+  };
+
+  const executeRegenerate = async () => {
+    if (!regenReport) return;
+    setRegeneratingId(regenReport.id);
     try {
-      const ok = await confirm({
-        message: `Regenerate the ${report.report_type} report for "${report.session_name}"? This replaces the existing report and re-sends it.`,
-        danger: false,
-        confirmLabel: 'Regenerate',
-        action: async () => {
-          setRegeneratingId(report.id);
-          // No body needed — the route regenerates the report identified by its id.
-          await adminFetch(`/api/admin/health-checks/reports/${report.id}/regenerate`, { method: 'POST' });
-        },
+      await adminFetch(`/api/admin/health-checks/reports/${regenReport.id}/regenerate`, {
+        method: 'POST',
+        body: JSON.stringify({ sendEmail: regenSendEmail }),
       });
-      if (!ok) return;
-      toast.success('Report regenerated and delivery re-triggered');
+      toast.success(regenSendEmail ? 'Report regenerated and email sent' : 'Report regenerated without sending email');
+      setRegenReport(null);
       void load(page, reportType, delivery, searchQuery, pageSize);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Failed to regenerate report.');
     } finally {
       setRegeneratingId(null);
+    }
+  };
+
+  const handleResendEmail = async () => {
+    if (!resendReport) return;
+    setResendLoading(true);
+    setResendResult(null);
+    try {
+      const result = await adminFetch<{ ok: boolean; error?: string; to?: string }>(
+        `/api/admin/health-checks/reports/${resendReport.id}/resend`,
+        { method: 'POST' }
+      );
+      setResendResult(result);
+      if (result.ok) {
+        toast.success(`Email resent to ${result.to}`);
+        void load(page, reportType, delivery, searchQuery, pageSize);
+      }
+    } catch (e) {
+      setResendResult({ ok: false, error: e instanceof Error ? e.message : 'Failed to resend email.' });
+    } finally {
+      setResendLoading(false);
     }
   };
 
@@ -286,6 +315,23 @@ export function ReportsViewer() {
               <Copy className="h-3.5 w-3.5" />
             )}
             {copiedId === row.original.id ? 'Copied' : 'Link'}
+          </button>
+        ),
+      },
+      {
+        id: 'resend',
+        header: '',
+        cell: ({ row }) => (
+          <button
+            type="button"
+            onClick={() => {
+              setResendReport(row.original);
+              setResendResult(null);
+            }}
+            title="Resend report email"
+            className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[12px] font-semibold text-[var(--a-text2)] transition-colors hover:bg-blue-500/10 hover:text-blue-600"
+          >
+            <Mail className="h-3.5 w-3.5" /> Resend
           </button>
         ),
       },
@@ -655,6 +701,132 @@ export function ReportsViewer() {
             )}
             {errorViewReport.generation_seconds != null && (
               <p className="text-[12px] text-[var(--a-muted)]">Generation time: {Math.round(errorViewReport.generation_seconds)}s</p>
+            )}
+          </div>
+        )}
+      </Modal>
+
+      {/* Regeneration modal with email checkbox */}
+      <Modal
+        open={regenReport !== null}
+        onClose={() => setRegenReport(null)}
+        title="Regenerate Report"
+        footer={
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setRegenReport(null)}
+              disabled={regeneratingId === regenReport?.id}
+              className="h-10 rounded-lg border border-[var(--a-border)] bg-[var(--a-card)] px-4 text-[13px] font-semibold text-[var(--a-text)] hover:bg-[var(--a-hover)] disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() => void executeRegenerate()}
+              disabled={regeneratingId === regenReport?.id}
+              className="inline-flex h-10 items-center justify-center gap-1.5 rounded-lg bg-[#E8510A] px-5 text-[13px] font-bold text-white transition-colors hover:bg-[#c94508] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {regeneratingId === regenReport?.id && <Loader2 className="h-4 w-4 animate-spin" />}
+              {regeneratingId === regenReport?.id ? 'Regenerating…' : 'Regenerate'}
+            </button>
+          </div>
+        }
+      >
+        {regenReport && (
+          <div className="space-y-4">
+            <p className="text-sm leading-relaxed text-[var(--a-text)]">
+              Regenerate the <span className="font-semibold">{regenReport.report_type}</span> report for{' '}
+              <span className="font-semibold">&ldquo;{regenReport.session_name}&rdquo;</span>?
+              This replaces the existing report content.
+            </p>
+            <label className="flex items-start gap-3 rounded-lg border border-[var(--a-border)] bg-[var(--a-subtle)] p-4 cursor-pointer hover:bg-[var(--a-hover)]">
+              <input
+                type="checkbox"
+                checked={regenSendEmail}
+                onChange={(e) => setRegenSendEmail(e.target.checked)}
+                className="mt-0.5 h-4 w-4 accent-[#E8510A]"
+              />
+              <div>
+                <p className="text-sm font-semibold text-[var(--a-ink)]">Send email after regeneration</p>
+                <p className="mt-0.5 text-[12px] text-[var(--a-muted)]">
+                  Deliver the regenerated report to {regenReport.session_name}&apos;s email address.
+                </p>
+              </div>
+            </label>
+          </div>
+        )}
+      </Modal>
+
+      {/* Resend email modal */}
+      <Modal
+        open={resendReport !== null}
+        onClose={() => setResendReport(null)}
+        title="Resend Report Email"
+        footer={
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setResendReport(null)}
+              disabled={resendLoading}
+              className="h-10 rounded-lg border border-[var(--a-border)] bg-[var(--a-card)] px-4 text-[13px] font-semibold text-[var(--a-text)] hover:bg-[var(--a-hover)] disabled:opacity-50"
+            >
+              {resendResult?.ok ? 'Close' : 'Cancel'}
+            </button>
+            {!resendResult?.ok && (
+              <button
+                type="button"
+                onClick={() => void handleResendEmail()}
+                disabled={resendLoading}
+                className="inline-flex h-10 items-center justify-center gap-1.5 rounded-lg bg-[#E8510A] px-5 text-[13px] font-bold text-white transition-colors hover:bg-[#c94508] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {resendLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+                {resendLoading ? 'Sending…' : 'Send Email'}
+              </button>
+            )}
+          </div>
+        }
+      >
+        {resendReport && (
+          <div className="space-y-4">
+            {resendResult ? (
+              resendResult.ok ? (
+                <div className="rounded-lg border border-green-200 bg-green-50 p-4">
+                  <p className="text-sm font-semibold text-green-800">Email sent successfully</p>
+                  <p className="mt-1 text-[13px] text-green-700">
+                    Report email resent to <span className="font-medium">{resendResult.to}</span>.
+                  </p>
+                </div>
+              ) : (
+                <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+                  <p className="text-sm font-semibold text-red-800">Failed to send email</p>
+                  <p className="mt-1 text-[13px] text-red-700">{resendResult.error}</p>
+                </div>
+              )
+            ) : (
+              <>
+                <div className="rounded-lg border border-[var(--a-border)] bg-[var(--a-subtle)] p-4 space-y-2">
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="text-[var(--a-muted)] w-20 shrink-0">Report</span>
+                    <span className="font-semibold text-[var(--a-ink)]">{resendReport.session_name}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="text-[var(--a-muted)] w-20 shrink-0">Check</span>
+                    <span className="text-[var(--a-ink2)]">{resendReport.check_name}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="text-[var(--a-muted)] w-20 shrink-0">Type</span>
+                    <StatusPill tone={resendReport.report_type === 'detailed' ? 'orange' : 'blue'}>{resendReport.report_type}</StatusPill>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="text-[var(--a-muted)] w-20 shrink-0">Delivery</span>
+                    <StatusPill tone={DELIVERY_TONE[resendReport.delivery_status]}>{resendReport.delivery_status}</StatusPill>
+                  </div>
+                </div>
+                <p className="text-[13px] text-[var(--a-muted)]">
+                  This will re-send the report email to the client. The admin will also be CC&apos;d.
+                </p>
+              </>
             )}
           </div>
         )}

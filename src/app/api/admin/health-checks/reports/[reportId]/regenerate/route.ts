@@ -8,6 +8,7 @@ export const dynamic = 'force-dynamic';
 export const maxDuration = 120;
 
 const paramsSchema = z.object({ reportId: z.string().uuid() });
+const bodySchema = z.object({ sendEmail: z.boolean().optional() });
 
 /** Regenerates a report (Claude + delivery) and updates it in place. */
 export async function POST(request: NextRequest, { params }: { params: Promise<{ reportId: string }> }) {
@@ -15,6 +16,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const context = await requireAdmin(request, 'update');
     const supabase = adminWriteClient(context);
     const { reportId } = paramsSchema.parse(await params);
+    const body = bodySchema.parse(await request.json().catch(() => ({})));
 
     const { data: report } = await supabase.from('health_check_reports').select('*').eq('id', reportId).maybeSingle();
     if (!report) return NextResponse.json({ error: 'Report not found.' }, { status: 404 });
@@ -29,7 +31,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ error: 'Session is not complete.' }, { status: 422 });
     }
 
-    const result = await runReportGeneration(supabase, session, report.report_type as 'summary' | 'detailed', { force: true });
+    const skipDelivery = body.sendEmail === false;
+    const result = await runReportGeneration(supabase, session, report.report_type as 'summary' | 'detailed', { force: true, skipDelivery });
 
     return NextResponse.json({
       report: result.report,
