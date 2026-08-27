@@ -149,6 +149,9 @@ export function lexicalStateToModel(
       blocks.push({ kind: 'quote', text: textString(node), runs: collectText(node) });
     } else if (type === 'callout') {
       blocks.push({ kind: 'callout', tone: (node.tone as ReportBlock['tone']) ?? 'brand', text: textString(node), runs: collectText(node) });
+    } else if (type === 'stickynote') {
+      // Sticky notes export as a "note" callout so content survives in PDF/Word.
+      blocks.push({ kind: 'callout', tone: 'growth', text: textString(node), runs: collectText(node) });
     } else if (type === 'list') {
       const listType = (node.listType as ReportBlock['listType']) ?? 'bullet';
       const items = (node.children as Record<string, unknown>[] | undefined) ?? [];
@@ -158,7 +161,7 @@ export function lexicalStateToModel(
         items: items.map((item) => textString(item)),
         checked: items.map((item) => (item.checked as boolean | undefined) ?? false),
       });
-    } else if (type === 'divider' || type === 'horizontalrule') {
+    } else if (type === 'divider' || type === 'horizontalrule' || type === 'pagebreak') {
       blocks.push({ kind: 'divider' });
     } else if (type === 'table') {
       const rows: ReportTableRow[] = ((node.children as Record<string, unknown>[] | undefined) ?? []).map((row) => {

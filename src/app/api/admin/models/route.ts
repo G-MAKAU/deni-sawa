@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { requireAdmin, jsonAdminError } from '@/lib/admin-auth';
+import { getSetting } from '@/lib/settings';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,10 +17,25 @@ const FALLBACK_OPENROUTER = [
   'openai/gpt-4o',
   'openai/gpt-4o-mini',
 ];
+// Popular OpenAI-compatible vendors (DeepSeek, Qwen, Kimi, Groq, etc.) — shown
+// as suggestions when no live list can be fetched. The admin can always type
+// any model id directly.
+const FALLBACK_OPENAI_COMPATIBLE = [
+  'deepseek-chat',
+  'deepseek-reasoner',
+  'qwen-plus',
+  'qwen-max',
+  'moonshot-v1-8k',
+  'moonshot-v1-32k',
+  'kimi-latest',
+  'llama-3.3-70b-versatile',
+  'gpt-4o',
+  'gpt-4o-mini',
+  'gpt-4.1',
+];
 
-/** Live model ids from the Anthropic API (fallback list when unavailable). */
-async function fetchAnthropicModels(): Promise<string[]> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+/** Live Anthropic model ids (fallback list when unavailable). */
+async function fetchAnthropicModels(apiKey: string): Promise<string[]> {
   if (!apiKey) return FALLBACK_ANTHROPIC;
   try {
     const res = await fetch('https://api.anthropic.com/v1/models', {
@@ -35,8 +51,7 @@ async function fetchAnthropicModels(): Promise<string[]> {
 }
 
 /** Live Gemini model ids that support generateContent (fallback list when unavailable). */
-async function fetchGoogleModels(): Promise<string[]> {
-  const apiKey = process.env.GEMINI_API_KEY;
+async function fetchGoogleModels(apiKey: string): Promise<string[]> {
   if (!apiKey) return FALLBACK_GOOGLE;
   try {
     const res = await fetch(
@@ -53,17 +68,64 @@ async function fetchGoogleModels(): Promise<string[]> {
   }
 }
 
+/** Live OpenAI-compatible model ids from the configured base URL (DeepSeek, Qwen, Kimi, Groq, OpenRouter…). */
+async function fetchOpenAICompatibleModels(baseUrl: string, apiKey: string): Promise<string[]> {
+  if (!apiKey || !baseUrl) return FALLBACK_OPENAI_COMPATIBLE;
+  try {
+    const res = await fetch(`${baseUrl.replace(/\/+$/, '')}/models`, {
+      headers: { Authorization: `Bearer ${apiKey}` },
+    });
+    if (!res.ok) return FALLBACK_OPENAI_COMPATIBLE;
+    const data = (await res.json()) as { data?: Array<{ id: string }> };
+    const ids = (data.data ?? []).map((m) => m.id).filter(Boolean);
+    return ids.length ? [...new Set(ids)].sort() : FALLBACK_OPENAI_COMPATIBLE;
+  } catch {
+    return FALLBACK_OPENAI_COMPATIBLE;
+  }
+}
+
 /**
- * Returns the models available for report generation. Fetches the live lists
- * from Anthropic and Google so newly released models appear without a redeploy;
- * the admin can also type any model name directly.
+ * Returns the models available for report generation. Fetches live lists from
+ * Anthropic, Google and the configured OpenAI-compatible base URL (if set) so
+ * newly released models appear without a redeploy; the admin can also type any
+ * model name directly.
  */
 export async function GET(request: NextRequest) {
   try {
     await requireAdmin(request, 'read');
-    const [anthropic, google] = await Promise.all([fetchAnthropicModels(), fetchGoogleModels()]);
+
+    const [anthropicKey, geminiKey, aiBaseUrl, aiApiKey] = await Promise.all([
+      getSetting('ANTHROPIC_API_KEY'),
+      getSetting('GEMINI_API_KEY'),
+      getSetting('AI_BASE_URL'),
+      getSetting('AI_API_KEY'),
+    ]);
+    const openaiBase = aiBaseUrl || process.env.OPENROUTER_API_KEY ? 'https://openrouter.ai/api/v1' : '';
+    const openaiKey = aiApiKey || process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY || '';
+
+    const [anthropic, google, openaiCompatible] = await Promise.all([
+      fetchAnthropicModels(anthropicKey || process.env.ANTHROPIC_API_KEY || ''),
+      fetchGoogleModels(geminiKey || process.env.GEMINI_API_KEY || ''),
+      fetchOpenAICompatibleModels(openaiBase || aiBaseUrl || '', openaiKey),
+    ]);
+
     return NextResponse.json(
-      { anthropic, google, openrouter: FALLBACK_OPENROUTER },
+      {
+        anthropic,
+        google,
+        openrouter: FALLBACK_OPENROUTER,
+        openaiCompatible,
+        providers: {
+          anthropic: { baseUrl: 'https://api.anthropic.com/v1' },
+          google: { baseUrl: 'https://generativelanguage.googleapis.com/v1beta' },
+          openai: { baseUrl: 'https://api.openai.com/v1' },
+          deepseek: { baseUrl: 'https://api.deepseek.com/v1' },
+          qwen: { baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1' },
+          kimi: { baseUrl: 'https://api.moonshot.cn/v1' },
+          groq: { baseUrl: 'https://api.groq.com/openai/v1' },
+          openrouter: { baseUrl: 'https://openrouter.ai/api/v1' },
+        },
+      },
       { headers: { 'Cache-Control': 'public, max-age=300' } }
     );
   } catch (error) {

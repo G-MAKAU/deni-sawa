@@ -1,12 +1,13 @@
 'use client';
 
 import * as React from 'react';
-import { Bot, Database, Globe, Loader2, Lock, Mail, MessageCircle, Phone, Server } from 'lucide-react';
+import { Database, Globe, Loader2, Mail, MessageCircle, Phone, Server } from 'lucide-react';
 import { adminFetch } from '@/lib/admin-client';
 import { site } from '@/data/site';
 import { socialLinks } from '@/components/SocialLinks';
 import { cn } from '@/lib/utils';
 import { AdminCard, ErrorBanner, Loading, PageHeader, StatusPill } from '@/components/admin/ui';
+import { AiSettingsEditor, type AiOverview } from '@/components/admin/settings/AiSettingsEditor';
 
 interface SmtpProfileInfo {
   key: string;
@@ -38,6 +39,7 @@ interface SettingsData {
       metaConfigured: boolean;
     };
     anthropic: { configured: boolean; model: string };
+    ai: AiOverview;
     supabase: { configured: boolean };
   };
 }
@@ -74,7 +76,7 @@ export function SettingsClient() {
 
   return (
     <>
-      <PageHeader title="Settings" subtitle="Read-only overview of the environment configuration for this deployment." crumbs={[{ label: 'Settings' }]} />
+      <PageHeader title="Settings" subtitle="Environment overview plus database-managed AI provider & model configuration." crumbs={[{ label: 'Settings' }]} />
 
       <div className="grid gap-6 lg:grid-cols-2">
         <AdminCard title="Site">
@@ -234,28 +236,11 @@ export function SettingsClient() {
           </div>
         </AdminCard>
 
-        <AdminCard title="AI (Anthropic)">
-          <div className="flex items-start gap-3">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-[#E8510A]/10 text-[#E8510A]">
-              <Bot className="h-4 w-4" />
-            </span>
-            <div className="space-y-1 text-sm text-[var(--a-text2)]">
-              <p>
-                <span className="font-semibold text-[var(--a-ink2)]">Status:</span>{' '}
-                <StatusPill tone={settings.anthropic.configured ? 'green' : 'amber'}>
-                  {settings.anthropic.configured ? 'Configured' : 'Not set — fallback reports are used'}
-                </StatusPill>
-              </p>
-              <p>
-                <span className="font-semibold text-[var(--a-ink2)]">Default model:</span> {settings.anthropic.model}
-              </p>
-            </div>
-          </div>
-        </AdminCard>
+        <AiSettingsEditor ai={settings.ai} onSaved={(ai) => setData((d) => (d ? { ...d, settings: { ...d.settings, ai } } : d))} />
 
         <div className="flex items-center gap-2 rounded-lg border border-[var(--a-border)] bg-[var(--a-card)] px-4 py-3 text-xs text-[var(--a-muted)] lg:col-span-2">
-          <Lock className="h-3.5 w-3.5 text-[#5A9E28]" />
-          Secrets are never exposed here — only whether each service is configured.
+          <Database className="h-3.5 w-3.5 text-[#5A9E28]" />
+          AI keys are encrypted before storage. Other secrets are never exposed here — only whether each service is configured.
         </div>
       </div>
     </>

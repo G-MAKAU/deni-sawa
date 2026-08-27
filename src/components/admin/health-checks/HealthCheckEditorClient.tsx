@@ -8,6 +8,7 @@ import { FileDown, FileText, FolderOpen, Image as ImageIcon, Loader2, Save, X } 
 import { adminDownload, adminFetch, adminPut } from '@/lib/admin-client';
 import { AdminCard, AsyncButton, ErrorBanner, Field, Loading, PageHeader, Toggle } from '@/components/admin/ui';
 import { StorageImagePicker } from '@/components/admin/StorageImagePicker';
+import { isReservedHealthCheckSlug } from '@/lib/health-check-slugs';
 
 interface CheckDetail {
   id: string;
@@ -87,6 +88,8 @@ export function HealthCheckEditorClient() {
   if (error) return <ErrorBanner message={error} />;
   if (!check) return <Loading label="Loading health check…" />;
 
+  const slugLocked = isReservedHealthCheckSlug(check.slug);
+
   const handleSave = async () => {
     if (!name.trim()) {
       setError('Name is required.');
@@ -96,7 +99,7 @@ export function HealthCheckEditorClient() {
     try {
       await adminPut(`/api/admin/health-checks/${id}`, {
         name: name.trim(),
-        slug: slugTouched ? slug.trim() : undefined,
+        slug: slugLocked ? undefined : slugTouched ? slug.trim() : undefined,
         description: description.trim() || null,
         image_url: imageUrl.trim() || null,
         estimated_minutes: estimatedMinutes ? Number(estimatedMinutes) : null,
@@ -188,10 +191,30 @@ export function HealthCheckEditorClient() {
           <AdminCard title="Details" subtitle="Public information shown on the intro page.">
             <div className="grid gap-5 sm:grid-cols-2">
               <Field label="Name" required>
-                <input className={INPUT_CLASS} value={name} onChange={(e) => { setName(e.target.value); if (!slugTouched) setSlug(makeSlug(e.target.value)); }} />
+                <input className={INPUT_CLASS} value={name} onChange={(e) => { setName(e.target.value); if (!slugTouched && !slugLocked) setSlug(makeSlug(e.target.value)); }} />
               </Field>
-              <Field label="URL slug" hint="Leave to auto-generate from the name.">
-                <input className={`${INPUT_CLASS} font-mono`} value={slug} onChange={(e) => { setSlug(e.target.value); setSlugTouched(true); }} />
+              <Field
+                label="URL slug"
+                hint={
+                  slugLocked
+                    ? `Locked — used on the public site at /${check.slug}.`
+                    : 'Leave to auto-generate from the name.'
+                }
+              >
+                <div className="relative">
+                  <input
+                    className={`${INPUT_CLASS} font-mono ${slugLocked ? 'cursor-not-allowed opacity-60' : ''}`}
+                    value={slug}
+                    disabled={slugLocked}
+                    onChange={(e) => { setSlug(e.target.value); setSlugTouched(true); }}
+                  />
+                  {slugLocked && (
+                    <span className="absolute right-3 top-1/2 inline-flex -translate-y-1/2 items-center gap-1 rounded-md bg-[var(--a-subtle)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[var(--a-muted)]">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-lock"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                      Locked
+                    </span>
+                  )}
+                </div>
               </Field>
               <Field label="Estimated minutes" className="sm:col-span-2">
                 <input

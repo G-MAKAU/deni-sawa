@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { jsonrepair } from 'jsonrepair';
 import { withLexicalDesignSpec } from '@/lib/lexical-report-spec';
+import { getSettings } from '@/lib/settings';
 
 export interface GenerateReportOptions {
   systemPrompt: string;
@@ -17,7 +18,20 @@ export interface GeneratedReport {
   generationSeconds: number;
 }
 
-export type ReportProvider = 'anthropic' | 'google' | 'openrouter';
+/**
+ * 'anthropic' = native Claude API; 'google' = native Gemini API;
+ * 'openai' = any OpenAI-compatible /chat/completions endpoint (OpenAI, DeepSeek,
+ * Qwen, Kimi/Moonshot, Groq, OpenRouter, Mistral, etc.). 'openrouter' is kept
+ * as a legacy alias for 'openai' with the OpenRouter base URL.
+ */
+export type ReportProvider = 'anthropic' | 'google' | 'openai' | 'openrouter';
+
+export interface ProviderConfig {
+  type: Exclude<ReportProvider, 'openrouter'>;
+  baseUrl?: string;
+  apiKey: string;
+  model: string;
+}
 
 /** True when a parsed EditorState actually contains readable content. */
 function stateHasContent(state: Record<string, unknown>): boolean {
@@ -74,7 +88,9 @@ const ALLOWED_NODES = new Set([
   'listitem',
   'text',
   'callout',
+  'stickynote',
   'divider',
+  'pagebreak',
   'link',
   'image',
   'table',
@@ -82,7 +98,7 @@ const ALLOWED_NODES = new Set([
   'tablecell',
 ]);
 const TEXT_KEYS = new Set(['text', 'link']);
-const LEAF_KEYS = new Set(['divider']);
+const LEAF_KEYS = new Set(['divider', 'pagebreak']);
 const HEADING_TAGS = new Set(['h1', 'h2', 'h3', 'h4', 'h5', 'h6']);
 const LIST_TYPES = new Set(['bullet', 'number', 'check']);
 const IMAGE_LAYOUTS = new Set(['inline', 'square-left', 'square-right', 'tight-left', 'tight-right', 'center', 'behind', 'front']);
@@ -397,15 +413,12 @@ export function buildFallbackReport(options: {
 
 /**
  * Generates a Lexical-state report via the Anthropic Claude API using the
- * stored prompt configuration. Throws when the API key is missing or the
- * response cannot be parsed, so callers can catch and fall back knowingly.
+ * provided configuration. Throws when the response cannot be parsed, so
+ * callers can catch and fall back knowingly.
  */
-export async function generateReportWithClaude(options: GenerateReportOptions): Promise<GeneratedReport> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) throw new Error('Anthropic API key is not configured.');
-
+export async function generateReportWithClaude(config: ProviderConfig, options: GenerateReportOptions): Promise<GeneratedReport> {
+  const { apiKey, model } = config;
   const startedAt = Date.now();
-  const model = options.model ?? process.env.ANTHROPIC_MODEL ?? 'claude-sonnet-4-5';
   // The stored value can be up to 200,000 (context window), but the API rejects
   // output tokens beyond the model's practical ceiling — clamp to a safe max.
   const maxTokens = Math.min(options.maxTokens ?? 4000, 32000);
@@ -444,12 +457,9 @@ export async function generateReportWithClaude(options: GenerateReportOptions): 
  * Claude path — the model must return a valid Lexical EditorState JSON.
  * Throws on failure so callers can fall back knowingly.
  */
-export async function generateReportWithGemini(options: GenerateReportOptions): Promise<GeneratedReport> {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) throw new Error('Gemini API key is not configured.');
-
+export async function generateReportWithGemini(config: ProviderConfig, options: GenerateReportOptions): Promise<GeneratedReport> {
+  const { apiKey, model } = config;
   const startedAt = Date.now();
-  const model = options.model ?? process.env.GEMINI_MODEL ?? 'gemini-2.5-flash';
   // Gemini 2.5 supports up to 65,536 output tokens — allow long reports.
   const maxTokens = Math.min(options.maxTokens ?? 4000, 65536);
 
@@ -517,30 +527,162 @@ export async function generateReportWithGemini(options: GenerateReportOptions): 
   throw new Error('Gemini generation failed.');
 }
 
-/** Dispatches to the configured provider (anthropic | google | openrouter). Throws on failure. */
-export function generateReportForProvider(
+/** Dispatches to the configured provider. Falls back to a secondary provider when set. */
+export async function generateReportForProvider(
   provider: ReportProvider,
   options: GenerateReportOptions
 ): Promise<GeneratedReport> {
-  if (provider === 'google') return generateReportWithGemini(options);
-  if (provider === 'openrouter') return generateReportWithOpenRouter(options);
-  return generateReportWithClaude(options);
+  const primary = await resolveProviderConfig(provider);
+  try {
+    return await generateReportForConfig(primary, options);
+  } catch (primaryError) {
+    const fallback = await resolveFallbackConfig();
+    if (!fallback) throw primaryError;
+    console.warn(`Primary AI provider failed (${primary.label}); falling back to ${fallback.label}.`, primaryError);
+    try {
+      return await generateReportForConfig(fallback, options);
+    } catch (fallbackError) {
+      throw new Error(
+        `AI generation failed on both providers (${primary.label} & ${fallback.label}). ${fallbackError instanceof Error ? fallbackError.message : ''}`
+      );
+    }
+  }
+}
+
+/** Routes a resolved config to the right adapter. */
+async function generateReportForConfig(
+  config: ProviderConfig & { label: string },
+  options: GenerateReportOptions
+): Promise<GeneratedReport> {
+  if (config.type === 'anthropic') return generateReportWithClaude(config, options);
+  if (config.type === 'google') return generateReportWithGemini(config, options);
+  return generateReportWithOpenAICompatible(config, options);
 }
 
 /**
- * Generates a Lexical-state report via OpenRouter (OpenAI-compatible chat
- * completions). Uses the configured OpenRouter model id (e.g.
- * "google/gemini-2.5-flash"), so any provider's models are available without a
- * per-vendor key. Retries once on failure; throws so callers can fall back.
+ * Resolves the primary provider configuration: DB settings first (60s cache),
+ * then legacy environment variables derived from the requested provider.
  */
-export async function generateReportWithOpenRouter(options: GenerateReportOptions): Promise<GeneratedReport> {
-  const apiKey = process.env.OPENROUTER_API_KEY;
-  if (!apiKey) throw new Error('OpenRouter API key is not configured.');
+export async function resolveProviderConfig(provider: ReportProvider): Promise<ProviderConfig & { label: string }> {
+  const s = await getSettings([
+    'AI_PROVIDER_TYPE',
+    'AI_BASE_URL',
+    'AI_API_KEY',
+    'AI_MODEL',
+    'ANTHROPIC_API_KEY',
+    'ANTHROPIC_MODEL',
+    'GEMINI_API_KEY',
+    'GEMINI_MODEL',
+    'OPENROUTER_API_KEY',
+    'OPENROUTER_MODEL',
+    'OPENAI_API_KEY',
+    'OPENAI_MODEL',
+  ]);
 
+  const configuredType = s.AI_PROVIDER_TYPE;
+  if (configuredType && s.AI_API_KEY) {
+    const type = configuredType as ProviderConfig['type'];
+    const model =
+      s.AI_MODEL ||
+      envModelFor(type) ||
+      (type === 'google' ? 'gemini-2.5-flash' : type === 'anthropic' ? 'claude-sonnet-4-5' : 'gpt-4o-mini');
+    return {
+      type,
+      baseUrl: s.AI_BASE_URL ?? defaultBaseUrl(type),
+      apiKey: s.AI_API_KEY,
+      model,
+      label: `AI · ${model}`,
+    };
+  }
+
+  // Legacy env path.
+  if (provider === 'google') {
+    const apiKey = s.GEMINI_API_KEY ?? process.env.GEMINI_API_KEY;
+    if (!apiKey) throw new Error('Gemini API key is not configured.');
+    return {
+      type: 'google',
+      apiKey,
+      model: s.GEMINI_MODEL ?? process.env.GEMINI_MODEL ?? 'gemini-2.5-flash',
+      label: 'Gemini',
+    };
+  }
+  if (provider === 'openrouter' || provider === 'openai') {
+    const apiKey = s.OPENROUTER_API_KEY ?? process.env.OPENROUTER_API_KEY ?? process.env.OPENAI_API_KEY;
+    if (!apiKey) throw new Error('OpenAI-compatible API key is not configured.');
+    const baseUrl = provider === 'openrouter' ? 'https://openrouter.ai/api/v1' : 'https://api.openai.com/v1';
+    const model =
+      s.OPENROUTER_MODEL ??
+      process.env.OPENROUTER_MODEL ??
+      process.env.OPENAI_MODEL ??
+      (provider === 'openrouter' ? 'google/gemini-2.5-flash' : 'gpt-4o-mini');
+    return { type: 'openai', baseUrl, apiKey, model, label: provider === 'openrouter' ? 'OpenRouter' : 'OpenAI' };
+  }
+  const apiKey = s.ANTHROPIC_API_KEY ?? process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) throw new Error('Anthropic API key is not configured.');
+  return {
+    type: 'anthropic',
+    apiKey,
+    model: s.ANTHROPIC_MODEL ?? process.env.ANTHROPIC_MODEL ?? 'claude-sonnet-4-5',
+    label: 'Claude',
+  };
+}
+
+/** Resolves the optional secondary provider config from DB settings. */
+export async function resolveFallbackConfig(): Promise<(ProviderConfig & { label: string }) | null> {
+  const s = await getSettings([
+    'AI_FALLBACK_PROVIDER_TYPE',
+    'AI_FALLBACK_BASE_URL',
+    'AI_FALLBACK_API_KEY',
+    'AI_FALLBACK_MODEL',
+  ]);
+
+  const type = s.AI_FALLBACK_PROVIDER_TYPE as ProviderConfig['type'] | null;
+  const apiKey = s.AI_FALLBACK_API_KEY;
+  if (!type || !apiKey) return null;
+
+  const model =
+    s.AI_FALLBACK_MODEL ||
+    envModelFor(type) ||
+    (type === 'google' ? 'gemini-2.5-flash' : type === 'anthropic' ? 'claude-sonnet-4-5' : 'gpt-4o-mini');
+
+  return {
+    type,
+    baseUrl: s.AI_FALLBACK_BASE_URL ?? defaultBaseUrl(type),
+    apiKey,
+    model,
+    label: `Fallback · ${model}`,
+  };
+}
+
+function envModelFor(type: ProviderConfig['type']): string | null {
+  if (type === 'anthropic') return process.env.ANTHROPIC_MODEL ?? null;
+  if (type === 'google') return process.env.GEMINI_MODEL ?? null;
+  return process.env.OPENAI_MODEL ?? process.env.OPENROUTER_MODEL ?? null;
+}
+
+function defaultBaseUrl(type: ProviderConfig['type']): string {
+  if (type === 'anthropic') return 'https://api.anthropic.com/v1';
+  if (type === 'google') return 'https://generativelanguage.googleapis.com/v1beta';
+  return 'https://api.openai.com/v1';
+}
+
+/**
+ * Generates a Lexical-state report through any OpenAI-compatible
+ * `/chat/completions` endpoint (OpenAI, DeepSeek, Qwen/DashScope,
+ * Kimi/Moonshot, Groq, OpenRouter, Mistral, etc.). Retries once on failure;
+ * throws so callers can fall back. Reasoning-model artifacts
+ * (`reasoning_content`/`reasoning`) are stripped before parsing.
+ */
+export async function generateReportWithOpenAICompatible(
+  config: ProviderConfig,
+  options: GenerateReportOptions
+): Promise<GeneratedReport> {
+  const apiKey = config.apiKey;
+  const baseUrl = (config.baseUrl ?? 'https://api.openai.com/v1').replace(/\/+$/, '');
+  const model = config.model;
   const startedAt = Date.now();
-  const model = options.model ?? process.env.OPENROUTER_MODEL ?? 'google/gemini-2.5-flash';
-  // Keep the request within typical credit balances — OpenRouter rejects large
-  // max_tokens with a 402 when the account can't afford them.
+  // Keep the request within typical credit balances — some gateways reject large
+  // max_tokens with 402 when the account can't afford them.
   const maxTokens = Math.min(options.maxTokens ?? 4000, 16000);
 
   const attempts: Array<{ suffix: string; label: string }> = [
@@ -555,7 +697,7 @@ export async function generateReportWithOpenRouter(options: GenerateReportOption
 
   for (const attempt of attempts) {
     try {
-      const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      const res = await fetch(`${baseUrl}/chat/completions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -587,25 +729,28 @@ export async function generateReportWithOpenRouter(options: GenerateReportOption
           const affordable = match ? Number(match[1]) : 0;
           if (affordable > 0 && affordable < affordableTokens) {
             affordableTokens = affordable;
-            console.warn(`OpenRouter insufficient credits — retrying with max_tokens=${affordable}`);
+            console.warn(`Insufficient credits — retrying with max_tokens=${affordable}`);
             if (attempt.label === 'retry') {
-              throw new Error(`OpenRouter generation failed: ${detail}`);
+              throw new Error(`Provider request failed: ${detail}`);
             }
             continue;
           }
         }
-        throw new Error(`OpenRouter request failed (${res.status}${detail ? `): ${detail}` : ')'}`);
+        throw new Error(`Provider request failed (${res.status}${detail ? `): ${detail}` : ')'}`);
       }
 
       const data = (await res.json()) as {
-        choices?: Array<{ message?: { content?: string } }>;
+        choices?: Array<{ message?: { content?: string; reasoning_content?: string } }>;
         usage?: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number };
       };
-      const text = data.choices?.[0]?.message?.content?.trim() ?? '';
-      if (!text) throw new Error('OpenRouter returned an empty response.');
+      const text =
+        data.choices?.[0]?.message?.content?.trim() ??
+        data.choices?.[0]?.message?.reasoning_content?.trim() ??
+        '';
+      if (!text) throw new Error('Provider returned an empty response.');
 
       const json = extractJson(text);
-      if (!json) throw new Error('OpenRouter did not return a valid JSON report.');
+      if (!json) throw new Error('Provider did not return a valid JSON report.');
 
       const state = assertStateHasContent(validateLexicalState(parseJsonLenient(json)));
       return {
@@ -617,11 +762,93 @@ export async function generateReportWithOpenRouter(options: GenerateReportOption
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       if (attempt.label === 'retry') {
-        throw new Error(`OpenRouter generation failed: ${message}`);
+        throw new Error(`Provider generation failed: ${message}`);
       }
-      console.warn(`OpenRouter generation ${attempt.label} failed, retrying:`, message);
+      console.warn(`Provider generation ${attempt.label} failed, retrying:`, message);
     }
   }
 
-  throw new Error('OpenRouter generation failed.');
+  throw new Error('Provider generation failed.');
+}
+
+/** Legacy alias retained for compatibility — routes to the OpenAI-compatible adapter. */
+export async function generateReportWithOpenRouter(options: GenerateReportOptions): Promise<GeneratedReport> {
+  const apiKey = process.env.OPENROUTER_API_KEY;
+  if (!apiKey) throw new Error('OpenRouter API key is not configured.');
+  const model = process.env.OPENROUTER_MODEL ?? 'google/gemini-2.5-flash';
+  return generateReportWithOpenAICompatible(
+    { type: 'openai', baseUrl: 'https://openrouter.ai/api/v1', apiKey, model },
+    options
+  );
+}
+
+/**
+ * Returns plain text from any configured provider type — used for lightweight
+ * tasks (e.g. comment moderation) that do not need a Lexical report.
+ */
+export async function generateModelText(
+  config: ProviderConfig & { label: string },
+  system: string,
+  user: string,
+  maxTokens = 800
+): Promise<string> {
+  if (config.type === 'anthropic') {
+    const anthropic = new Anthropic({ apiKey: config.apiKey });
+    const message = await anthropic.messages.create({
+      model: config.model,
+      max_tokens: maxTokens,
+      system,
+      messages: [{ role: 'user', content: user }],
+    });
+    return message.content
+      .filter((block) => block.type === 'text')
+      .map((block) => block.text)
+      .join('');
+  }
+
+  if (config.type === 'google') {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(config.model)}:generateContent?key=${encodeURIComponent(config.apiKey)}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: system }] },
+          contents: [{ role: 'user', parts: [{ text: user }] }],
+          generationConfig: { maxOutputTokens: maxTokens, temperature: 0 },
+        }),
+      }
+    );
+    if (!res.ok) throw new Error(`Gemini request failed (${res.status})`);
+    const data = (await res.json()) as {
+      candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+    };
+    return (data.candidates?.[0]?.content?.parts ?? [])
+      .map((p) => p.text || '')
+      .join('')
+      .trim();
+  }
+
+  const baseUrl = (config.baseUrl ?? 'https://api.openai.com/v1').replace(/\/+$/, '');
+  const res = await fetch(`${baseUrl}/chat/completions`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${config.apiKey}`,
+    },
+    body: JSON.stringify({
+      model: config.model,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: user },
+      ],
+      max_tokens: maxTokens,
+      temperature: 0,
+    }),
+  });
+  if (!res.ok) throw new Error(`Provider request failed (${res.status})`);
+  const data = (await res.json()) as {
+    choices?: Array<{ message?: { content?: string } }>;
+  };
+  return (data.choices?.[0]?.message?.content ?? '').trim();
 }

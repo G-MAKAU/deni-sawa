@@ -21,6 +21,12 @@ function normalizeComment(row: Record<string, unknown>) {
     content: String(row.content ?? ''),
     status: String(row.status ?? 'pending'),
     created_at: String(row.created_at ?? ''),
+    ai_moderated: Boolean(row.ai_moderated),
+    moderation_verdict: row.moderation_verdict ? String(row.moderation_verdict) : null,
+    moderation_reasons: Array.isArray(row.moderation_reasons)
+      ? (row.moderation_reasons as unknown[]).map(String)
+      : [],
+    moderation_model: row.moderation_model ? String(row.moderation_model) : null,
   };
 }
 
@@ -35,7 +41,7 @@ export async function GET(request: NextRequest) {
     const listQuery = supabase
       .from('blog_comments')
       .select(
-        'id,parent_id,blog_post_id,author_name,author_email,author_website,content,status,created_at,blog_post:blog_posts!blog_comments_blog_post_id_fkey(title,slug)'
+        'id,parent_id,blog_post_id,author_name,author_email,author_website,content,status,created_at,ai_moderated,moderation_verdict,moderation_reasons,moderation_model,blog_post:blog_posts!blog_comments_blog_post_id_fkey(title,slug)'
       )
       .order('created_at', { ascending: false })
       .limit(limit);
@@ -96,7 +102,7 @@ export async function PATCH(request: NextRequest) {
       .update({ status: parsed.data.status })
       .eq('id', parsed.data.id)
       .select(
-        'id,parent_id,blog_post_id,author_name,author_email,author_website,content,status,created_at,blog_post:blog_posts!blog_comments_blog_post_id_fkey(title,slug)'
+        'id,parent_id,blog_post_id,author_name,author_email,author_website,content,status,created_at,ai_moderated,moderation_verdict,moderation_reasons,moderation_model,blog_post:blog_posts!blog_comments_blog_post_id_fkey(title,slug)'
       )
       .single();
 

@@ -117,7 +117,7 @@ export function LexicalEditor({ state, onChange, placeholder = 'Start writing…
         <CodeHighlightPlugin />
         <CheckListPlugin />
         <PastePlugin />
-        <TablePlugin />
+        <TablePlugin hasCellBackgroundColor />
         <HorizontalRulePlugin />
         <ClickableLinkPlugin />
         <AutoLinkPlugin matchers={AUTO_LINK_MATCHERS} />

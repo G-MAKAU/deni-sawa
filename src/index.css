@@ -385,6 +385,57 @@
   background: linear-gradient(90deg, transparent, var(--card-border) 20%, var(--brand) 50%, var(--card-border) 80%, transparent);
 }
 
+/* PageBreakNode — dashed rule labelled "Page Break" */
+.ds-page-break {
+  margin: 2rem 0;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  user-select: none;
+}
+.ds-page-break span {
+  flex-shrink: 0;
+  font-family: var(--font-jetbrains);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.ds-page-break::before,
+.ds-page-break::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: repeating-linear-gradient(90deg, var(--card-border) 0 6px, transparent 6px 12px);
+}
+
+/* StickyNoteNode — taped note card, inline flow */
+.ds-sticky-note {
+  position: relative;
+  margin: 1.75rem 0 1.25rem;
+  padding: 1.25rem 1.5rem;
+  border-radius: 4px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.14);
+  transform: rotate(-0.6deg);
+}
+.ds-sticky-note::before {
+  content: "";
+  position: absolute;
+  top: -9px;
+  left: 50%;
+  width: 46px;
+  height: 16px;
+  background: rgba(255, 255, 255, 0.5);
+  transform: translateX(-50%) rotate(-2deg);
+  border-radius: 2px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+}
+.ds-sticky-note p { margin: 0.35rem 0; line-height: 1.6; }
+.ds-sticky-note--yellow { background: #FFF7C4; color: #3B3700; }
+.ds-sticky-note--green  { background: #E8F4D6; color: #1F3D00; }
+.ds-sticky-note--blue   { background: #DDEFFB; color: #002A42; }
+
 /* Lexical checklists — the checkbox glyph is drawn with ::before on the
    list item (Lexical sets role="checkbox" + aria-checked on check items). */.ds-lexical-content li[role="checkbox"] {
   position: relative;

@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { faqAnswers } from '@/data/content';
 import { learningPrograms, learningPathways } from '@/data/site';
+import { getSetting } from '@/lib/settings';
 
 interface ChatRequest {
   message?: string;
@@ -128,8 +129,13 @@ export async function POST(req: NextRequest) {
       return Response.json({ reply: faq }, { status: 200 });
     }
 
-    const apiKey = process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY;
-    const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+    const [dbGeminiKey, dbOpenaiKey, dbGeminiModel] = await Promise.all([
+      getSetting('GEMINI_API_KEY'),
+      getSetting('OPENAI_API_KEY'),
+      getSetting('GEMINI_MODEL'),
+    ]);
+    const apiKey = dbGeminiKey || dbOpenaiKey || process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY;
+    const model = dbGeminiModel || process.env.GEMINI_MODEL || 'gemini-2.5-flash';
 
     if (!apiKey) {
       return Response.json({ reply: fallbackReply(message) }, { status: 200 });

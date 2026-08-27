@@ -3,8 +3,8 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { toast } from 'sonner';
-import { CheckCircle2, ExternalLink, MessageSquare, XCircle } from 'lucide-react';
-import { adminFetch } from '@/lib/admin-client';
+import { Bot, CheckCircle2, ExternalLink, MessageSquare, XCircle } from 'lucide-react';
+import { adminFetch, adminPut } from '@/lib/admin-client';
 import { AdminCard, EmptyState, ErrorBanner, Loading, StatusPill, type StatusTone } from '@/components/admin/ui';
 import { useConfirm } from '@/components/admin/confirm';
 import { cn } from '@/lib/utils';
@@ -21,6 +21,10 @@ interface AdminComment {
   content: string;
   status: 'pending' | 'approved' | 'rejected';
   created_at: string;
+  ai_moderated: boolean;
+  moderation_verdict: string | null;
+  moderation_reasons: string[];
+  moderation_model: string | null;
 }
 
 interface Counts {
@@ -75,6 +79,33 @@ export function CommentsModerationClient() {
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [busyId, setBusyId] = React.useState<string | null>(null);
+  const [aiEnabled, setAiEnabled] = React.useState<boolean | null>(null);
+  const [aiToggling, setAiToggling] = React.useState(false);
+
+  React.useEffect(() => {
+    (async () => {
+      try {
+        const data = await adminFetch<{ settings: { comments?: { aiModerationEnabled?: boolean } } }>('/api/admin/settings');
+        setAiEnabled(data.settings.comments?.aiModerationEnabled ?? true);
+      } catch {
+        setAiEnabled(true);
+      }
+    })();
+  }, []);
+
+  const toggleAi = async () => {
+    setAiToggling(true);
+    try {
+      const next = aiEnabled === false;
+      await adminPut('/api/admin/settings', { settings: { COMMENT_AI_MODERATION_ENABLED: next ? 'true' : 'false' } });
+      setAiEnabled(next);
+      toast.success(next ? 'AI moderation enabled' : 'AI moderation disabled — comments will wait for manual review');
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Failed to update AI moderation setting');
+    } finally {
+      setAiToggling(false);
+    }
+  };
 
   const load = React.useCallback(async (target: Filter = filter) => {
     setLoading(true);
@@ -155,7 +186,22 @@ export function CommentsModerationClient() {
         title="Moderate Comments"
         subtitle="Review, approve, reject or remove reader comments on published posts."
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => void toggleAi()}
+              disabled={aiToggling || aiEnabled === null}
+              className={cn(
+                'inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition-colors disabled:opacity-50',
+                aiEnabled
+                  ? 'bg-[#5A9E28]/10 text-[#5A9E28] hover:bg-[#5A9E28]/20'
+                  : 'border border-[var(--a-border)] text-[var(--a-muted)] hover:text-[#E8510A]'
+              )}
+              title="Moderate new comments automatically with AI on submit"
+            >
+              <Bot className="h-3.5 w-3.5" />
+              AI moderation: {aiEnabled ? 'On' : 'Off'}
+            </button>
             {FILTERS.map((item) => {
               const count = item.key === 'all' ? counts.total : counts[item.key];
               const active = filter === item.key;
@@ -238,6 +284,14 @@ export function CommentsModerationClient() {
 
                 <div className="min-w-0 flex-1">
                   <p className="whitespace-pre-line text-sm leading-relaxed text-[var(--a-text)]">{comment.content}</p>
+                  {comment.ai_moderated && comment.moderation_reasons.length > 0 && (
+                    <div className="mt-2 rounded-md border border-[var(--a-border)] bg-[var(--a-subtle)] px-2.5 py-1.5 text-[11px] text-[var(--a-muted)]">
+                      <span className="inline-flex items-center gap-1 font-semibold text-[var(--a-ink2)]">
+                        <Bot className="h-3 w-3 text-[#E8510A]" /> AI verdict: {comment.moderation_verdict ?? 'review'}
+                      </span>
+                      <span className="ml-1.5">— {comment.moderation_reasons.join(' · ')}</span>
+                    </div>
+                  )}
                   <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-[var(--a-muted)]">
                     <span>{formatDate(comment.created_at)}</span>
                     {comment.post_slug ? (

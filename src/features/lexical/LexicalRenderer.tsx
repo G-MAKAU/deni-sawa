@@ -51,7 +51,7 @@ export function LexicalRenderer({ state, className }: LexicalRendererProps) {
           <ListPlugin />
           <ElementStylePlugin state={state} />
           <CodeHighlightPlugin />
-          <TablePlugin />
+          <TablePlugin hasCellBackgroundColor />
           <HorizontalRulePlugin />
           <ClickableLinkPlugin />
           <span className="hidden" data-lexical-namespace={NAMESPACE} />

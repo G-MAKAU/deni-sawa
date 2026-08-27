@@ -33,7 +33,9 @@ renderer fully supports tables, checklists and background colours now. Use them.
 - listitem — {"type":"listitem","value":1,"checked":true|false,"children":[...]}
 - text — {"type":"text","text":"...","format":<bitmask>,"style":"..."}
 - callout — {"type":"callout","tone":"brand"|"growth"|"dark","children":[paragraph]}
+- stickynote — {"type":"stickynote","color":"yellow"|"green"|"blue","children":[paragraph]}  (a hand-written note for a key reminder or client takeaway)
 - divider — {"type":"divider"}  (use between major sections)
+- pagebreak — {"type":"pagebreak"}  (use between major sections when a hard page boundary is wanted in exports)
 - link — {"type":"link","url":"https://...","text":"label","format":0}
 - image — {"type":"image","src":"https://...","alt":"...","width":<px|null>,"layout":"center"|"square-left"|"square-right"|"inline"}
 - table — {"type":"table","children":[tablerow]}
@@ -146,8 +148,15 @@ they do not genuinely add value to the finding.
   table, risk tables and milestone tables. Tables are strongly preferred over
   run-on bullet lists for anything tabular.
 - Use a callout for the single top-priority recommendation per section.
+- Use a sticky note ("type":"stickynote") sparingly, for ONE high-visibility
+  client takeaway or a short "remember this" note — never more than 2–10 per
+  report, and keep its text to 1–2 short sentences. Pick "yellow" by default;
+  use "green"/"blue" only when it matches the section theme.
 - Use a quote for advisor notes / direct recommendations.
 - Put a divider between every major section for clean separation.
+- Use a page break ("type":"pagebreak") only between major sections when the
+  following section should start on its own page in exports (e.g. before the
+  recommendations or the action roadmap). Use sparingly — never mid-section.
 - Keep paragraphs short (2–3 sentences). Prefer scannable structure over prose.
 
 ## 5. Hard rules

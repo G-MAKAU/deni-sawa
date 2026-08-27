@@ -24,37 +24,66 @@ function applySerializedStyle(dom: HTMLElement, style: unknown) {
   }
 }
 
+/** Mirrors a node's model styles onto its live DOM element. Returns false when no DOM exists yet. */
+function applyNodeStyles(editor: ReturnType<typeof useLexicalComposerContext>[0], node: ElementNode): boolean {
+  const dom = editor.getElementByKey(node.getKey());
+  if (!dom) return false;
+  const style = node.getStyle();
+  let applied = false;
+  for (const prop of BLOCK_STYLE_PROPS) {
+    const value = parseCssProperty(style, prop);
+    if (value) {
+      dom.style.setProperty(prop, value);
+      applied = true;
+    }
+  }
+  return applied;
+}
+
+function walkAll(editor: ReturnType<typeof useLexicalComposerContext>[0], fn: (node: ElementNode) => void) {
+  const walk = (node: ElementNode) => {
+    fn(node);
+    for (const child of node.getChildren()) {
+      if ($isElementNode(child)) walk(child);
+    }
+  };
+  for (const child of $getRoot().getChildren()) {
+    if ($isElementNode(child)) walk(child);
+  }
+}
+
 /**
  * Two jobs:
- *  1. Live editor — mirror an element's in-memory `background-color` onto its
- *     DOM (Lexical does not paint element styles itself).
- *  2. Read-only reports — Lexical drops element `style` on import, so re-apply
- *     the serialized block styles (background-color, text-align, color, font-size)
- *     by walking the raw state in lockstep with the live node tree.
+ *  1. Live mirror — keep an element's in-memory block styles (background-color,
+ *     text-align, color, font-size, padding, …) in sync with its DOM on every
+ *     update (Lexical does not paint element styles itself).
+ *  2. Read-only reports — Lexical drops element `style` on import in some
+ *     render paths, so re-apply the serialized block styles by walking the raw
+ *     state in lockstep with the live node tree, retrying until the DOM exists.
  */
 export function ElementStylePlugin({ state }: { state?: Record<string, unknown> | string }) {
   const [editor] = useLexicalComposerContext();
 
+  // Live mirror — runs on every update and once shortly after mount so late
+  // reconciliation still gets the styles painted.
   useEffect(() => {
-    return editor.registerUpdateListener(({ editorState }) => {
-      editorState.read(() => {
-        const walk = (node: ElementNode) => {
-          const dom = editor.getElementByKey(node.getKey());
-          if (dom) {
-            const bg = parseCssProperty(node.getStyle(), 'background-color');
-            dom.style.backgroundColor = bg ?? '';
-          }
-          for (const child of node.getChildren()) {
-            if ($isElementNode(child)) walk(child);
-          }
-        };
-        for (const child of $getRoot().getChildren()) {
-          if ($isElementNode(child)) walk(child);
-        }
+    const sync = () => {
+      editor.getEditorState().read(() => {
+        walkAll(editor, (node) => {
+          applyNodeStyles(editor, node);
+        });
       });
-    });
+    };
+    const unregister = editor.registerUpdateListener(sync);
+    const t = window.setTimeout(sync, 80);
+    return () => {
+      unregister();
+      window.clearTimeout(t);
+    };
   }, [editor]);
 
+  // Rehydration from the raw serialized state, retrying until the live DOM for
+  // every element is available so styles are never silently skipped.
   useEffect(() => {
     let raw: JsonNode | null = null;
     if (typeof state === 'string') {
@@ -66,12 +95,11 @@ export function ElementStylePlugin({ state }: { state?: Record<string, unknown> 
     } else {
       raw = (state as JsonNode | undefined) ?? null;
     }
-    if (!raw) return;
+    const rawChildren = (raw?.root as JsonNode | undefined)?.children;
+    if (!raw || !Array.isArray(rawChildren)) return;
 
-    const rawChildren = (raw.root as JsonNode | undefined)?.children;
-    if (!Array.isArray(rawChildren)) return;
-
-    const apply = (serializedChildren: unknown[], liveChildren: LexicalNode[]) => {
+    const walk = (serializedChildren: unknown[], liveChildren: LexicalNode[]): boolean => {
+      let missing = false;
       const n = Math.min(serializedChildren.length, liveChildren.length);
       for (let i = 0; i < n; i++) {
         const s = serializedChildren[i] as JsonNode | undefined;
@@ -79,31 +107,36 @@ export function ElementStylePlugin({ state }: { state?: Record<string, unknown> 
         if (!s || !live) continue;
         if ($isElementNode(live)) {
           const dom = editor.getElementByKey(live.getKey());
-          if (dom) applySerializedStyle(dom, s.style);
+          if (dom) {
+            applySerializedStyle(dom, s.style);
+          } else {
+            missing = true;
+          }
         }
         if (Array.isArray(s.children) && $isElementNode(live)) {
-          apply(s.children, live.getChildren());
+          const childMissing = walk(s.children, live.getChildren());
+          if (childMissing) missing = true;
         }
       }
+      return missing;
     };
 
-    let applied = false;
-    const runOnce = () => {
-      if (applied) return;
-      applied = true;
+    let attempts = 0;
+    let timer: number | undefined;
+    const run = () => {
+      let missing = false;
       editor.getEditorState().read(() => {
-        apply(rawChildren, $getRoot().getChildren());
+        missing = walk(rawChildren, $getRoot().getChildren());
       });
+      if (missing && attempts < 10) {
+        attempts += 1;
+        timer = window.setTimeout(run, 80);
+      }
     };
-
-    // First update listener fires after the composer hydrates the DOM; the
-    // timeout is a safety net for editors whose state is already committed.
-    const unregister = editor.registerUpdateListener(runOnce);
-    const t = window.setTimeout(runOnce, 50);
+    run();
 
     return () => {
-      unregister();
-      window.clearTimeout(t);
+      if (timer !== undefined) window.clearTimeout(timer);
     };
   }, [editor, state]);
 

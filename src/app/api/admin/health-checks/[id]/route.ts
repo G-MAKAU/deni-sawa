@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { requireAdmin, jsonAdminError } from '@/lib/admin-auth';
+import { isReservedHealthCheckSlug } from '@/lib/health-check-slugs';
 
 export const dynamic = 'force-dynamic';
 
@@ -57,6 +58,19 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: 'Validation failed', details: parsed.error.flatten() }, { status: 422 });
     }
 
+    // Reserved public slugs (e.g. /business-health-check) must never change.
+    if (parsed.data.slug !== undefined) {
+      const { data: existing } = await supabase.from('health_checks').select('slug').eq('id', id).single();
+      if (!existing) throw new Error('Health check not found.');
+      const currentSlug = existing.slug as string;
+      if (parsed.data.slug !== currentSlug && (isReservedHealthCheckSlug(currentSlug) || isReservedHealthCheckSlug(parsed.data.slug))) {
+        return NextResponse.json(
+          { error: `The slug "${currentSlug}" is reserved for the public site and cannot be changed.` },
+          { status: 400 }
+        );
+      }
+    }
+
     const { data, error } = await supabase.from('health_checks').update(parsed.data).eq('id', id).select().single();
     if (error) throw error;
 
@@ -70,6 +84,14 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
   try {
     const { supabase } = await requireAdmin(request, 'delete');
     const { id } = paramsSchema.parse(await params);
+
+    const { data: existing } = await supabase.from('health_checks').select('slug').eq('id', id).single();
+    if (existing && isReservedHealthCheckSlug(existing.slug as string)) {
+      return NextResponse.json(
+        { error: `"${existing.slug}" is reserved for the public site and cannot be deleted.` },
+        { status: 400 }
+      );
+    }
 
     const { error } = await supabase.from('health_checks').delete().eq('id', id);
     if (error) throw error;

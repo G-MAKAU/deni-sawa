@@ -38,6 +38,8 @@ export function ReportEditor({ reportId }: ReportEditorProps) {
   const [error, setError] = React.useState<string | null>(null);
 
   const [editorState, setEditorState] = React.useState<Record<string, unknown> | null>(null);
+  // Always holds the latest editor state so save never reads a stale closure.
+  const editorStateRef = React.useRef<Record<string, unknown> | null>(null);
   // Only render the editor once the real stored state has been loaded, so the
   // initial mount never flashes a blank document.
   const [editorReady, setEditorReady] = React.useState(false);
@@ -54,6 +56,7 @@ export function ReportEditor({ reportId }: ReportEditorProps) {
       const { report: loaded } = await adminFetch<{ report: ReportDetail }>(`/api/admin/health-checks/reports/${reportId}`);
       setReport(loaded);
       setEditorState(loaded.lexical_state);
+      editorStateRef.current = loaded.lexical_state;
       setEditorReady(true);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load report.');
@@ -98,11 +101,12 @@ export function ReportEditor({ reportId }: ReportEditorProps) {
   }, []);
 
   const handleSave = async () => {
-    if (!editorState) return;
+    const current = editorStateRef.current;
+    if (!current) return;
     setSaving(true);
     try {
       const { report: updated } = await adminPut<{ report: ReportDetail }>(`/api/admin/health-checks/reports/${reportId}`, {
-        lexical_state: editorState,
+        lexical_state: current,
       });
       setReport(updated);
       setSavedFlash(true);
@@ -197,7 +201,11 @@ export function ReportEditor({ reportId }: ReportEditorProps) {
             <LexicalEditor
               key={report.id}
               state={editorState}
-              onChange={(state) => setEditorState(state as Record<string, unknown>)}
+              onChange={(state) => {
+                const next = state as Record<string, unknown>;
+                setEditorState(next);
+                editorStateRef.current = next;
+              }}
               placeholder="Edit the report content…"
               floatingToolbar
               onUploadImage={handleUploadImage}

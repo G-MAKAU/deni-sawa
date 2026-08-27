@@ -63,6 +63,8 @@ import {
   AlignVerticalJustifyCenter,
   AlignVerticalJustifyEnd,
   Minus,
+  FileMinus,
+  StickyNote,
   MessageSquareQuote,
   Table as TableIcon,
   Grid2X2,
@@ -81,6 +83,8 @@ import {
 } from 'lucide-react';
 import { $createCalloutNode, $isCalloutNode } from '../nodes/CalloutNode';
 import { $createDividerNode, $isDividerNode } from '../nodes/DividerNode';
+import { $createPageBreakNode, $isPageBreakNode } from '../nodes/PageBreakNode';
+import { $createStickyNoteNode, $isStickyNoteNode } from '../nodes/StickyNoteNode';
 import { $createImageNode } from '../nodes/ImageNode';
 import { $createVariableNode } from '../nodes/VariableNode';
 import { toast } from 'sonner';
@@ -99,7 +103,9 @@ type BlockFormat =
   | 'table'
   | 'bullet'
   | 'number'
-  | 'check';
+  | 'check'
+  | 'pagebreak'
+  | 'stickynote';
 
 type AlignFormat = 'left' | 'center' | 'right' | 'justify';
 
@@ -118,6 +124,8 @@ const blockLabels: Record<BlockFormat, string> = {
   bullet: 'Bulleted List',
   number: 'Numbered List',
   check: 'Check List',
+  pagebreak: 'Page Break',
+  stickynote: 'Sticky Note',
 };
 
 const blockOrder: BlockFormat[] = [
@@ -129,6 +137,8 @@ const blockOrder: BlockFormat[] = [
   'code',
   'callout',
   'divider',
+  'pagebreak',
+  'stickynote',
   'table',
   'bullet',
   'number',
@@ -195,6 +205,8 @@ function getSelectionBlock(selection: ReturnType<typeof $getSelection>): BlockFo
       }
       if ($isCalloutNode(block)) return 'callout';
       if ($isDividerNode(block)) return 'divider';
+      if ($isPageBreakNode(block)) return 'pagebreak';
+      if ($isStickyNoteNode(block)) return 'stickynote';
       if ($isTableNode(block)) return 'table';
       block = block.getParent();
     }
@@ -655,7 +667,16 @@ export function ToolbarPlugin({
           }));
 
           const selectedCells = getSelectedCells(selection);
-          cellKeysRef.current = selectedCells.length > 0 ? new Set(selectedCells.map((c) => c.getKey())) : null;
+          // Only grow or clear cellKeysRef — never shrink. When the user
+          // opens a colour-picker dialog the selection often collapses to
+          // a single cell; if we overwrite with that smaller set the
+          // multi-cell intent is lost and the colour applies to one cell.
+          const nextKeys = selectedCells.length > 0 ? new Set(selectedCells.map((c) => c.getKey())) : null;
+          if (!nextKeys) {
+            cellKeysRef.current = null;
+          } else if (!cellKeysRef.current || nextKeys.size >= cellKeysRef.current.size) {
+            cellKeysRef.current = nextKeys;
+          }
         } catch {
           // Never let a stale selection from a sibling editor crash the toolbar.
           setToolbar((prev) => ({ ...prev, block: 'paragraph' }));
@@ -717,6 +738,16 @@ export function ToolbarPlugin({
             const paragraph = $createParagraphNode();
             selection.insertNodes([$createDividerNode(), paragraph]);
             paragraph.selectStart();
+            return;
+          }
+          case 'pagebreak': {
+            const paragraph = $createParagraphNode();
+            selection.insertNodes([$createPageBreakNode(), paragraph]);
+            paragraph.selectStart();
+            return;
+          }
+          case 'stickynote': {
+            $setBlocksType(selection, () => $createStickyNoteNode());
             return;
           }
           case 'table': {
@@ -1090,6 +1121,8 @@ export function ToolbarPlugin({
                 >
                   {fmt === 'table' && <TableIcon className="h-3.5 w-3.5" />}
                   {fmt === 'divider' && <Minus className="h-3.5 w-3.5" />}
+                  {fmt === 'pagebreak' && <FileMinus className="h-3.5 w-3.5" />}
+                  {fmt === 'stickynote' && <StickyNote className="h-3.5 w-3.5" />}
                   {fmt === 'code' && <Code2 className="h-3.5 w-3.5" />}
                   {fmt === 'bullet' && <List className="h-3.5 w-3.5" />}
                   {fmt === 'number' && <ListOrdered className="h-3.5 w-3.5" />}

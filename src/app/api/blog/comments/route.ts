@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseClient } from '@/lib/supabase/client';
+import { getServiceClient } from '@/lib/supabase/service';
+import { moderateComment, verdictToStatus } from '@/lib/comment-moderation';
 
 interface PublicComment {
   id: string;
@@ -103,9 +105,40 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Post not found' }, { status: 404 });
     }
 
-    const { error } = await supabase
-      .from('blog_comments')
-      .insert({
+    // AI moderation runs at submit time. The anon client is restricted to
+    // status='pending' by RLS, so when a service-role key is configured we use
+    // it to apply the AI verdict directly; otherwise the comment stays pending
+    // for manual review (verdict is still recorded).
+    const moderation = await moderateComment(name, comment);
+    const aiStatus = verdictToStatus(moderation.verdict);
+    let client;
+    try {
+      client = getServiceClient();
+    } catch {
+      client = null;
+    }
+    const insertStatus = client ? aiStatus : 'pending';
+
+    const row = {
+      blog_post_id: postId,
+      author_name: name,
+      author_email: email,
+      author_website: website || null,
+      content: comment,
+      status: insertStatus,
+      ai_moderated: moderation.aiModerated,
+      moderation_verdict: moderation.aiModerated ? moderation.verdict : null,
+      moderation_reasons: moderation.reasons,
+      moderation_model: moderation.model,
+      moderated_at: moderation.aiModerated ? new Date().toISOString() : null,
+    };
+
+    const { error } = await (client ?? supabase).from('blog_comments').insert(row);
+
+    // If the moderation columns don't exist yet (migration pending), fall back
+    // to the minimal row so comment submission never regresses.
+    if (error && /column .* does not exist/i.test(error.message ?? '')) {
+      const { error: minimalError } = await (client ?? supabase).from('blog_comments').insert({
         blog_post_id: postId,
         author_name: name,
         author_email: email,
@@ -113,10 +146,29 @@ export async function POST(request: Request) {
         content: comment,
         status: 'pending',
       });
+      if (minimalError) {
+        return NextResponse.json({ error: 'Failed to submit comment' }, { status: 500 });
+      }
+      return NextResponse.json(
+        {
+          comment: { id: crypto.randomUUID(), author_name: name, created_at: new Date().toISOString() },
+          status: 'pending',
+          message: `Thank you, ${name}. Your comment has been submitted and is awaiting moderation.`,
+        },
+        { status: 201 }
+      );
+    }
 
     if (error) {
       return NextResponse.json({ error: 'Failed to submit comment' }, { status: 500 });
     }
+
+    const message =
+      aiStatus === 'approved'
+        ? `Thank you, ${name}. Your comment has been approved and is now live.`
+        : aiStatus === 'rejected'
+          ? `Thank you for your comment, ${name}. It did not pass our moderation and was not published.`
+          : `Thank you, ${name}. Your comment has been submitted and is awaiting moderation.`;
 
     return NextResponse.json(
       {
@@ -125,7 +177,8 @@ export async function POST(request: Request) {
           author_name: name,
           created_at: new Date().toISOString(),
         },
-        message: `Thank you, ${name}. Your comment has been submitted and is awaiting moderation.`,
+        status: aiStatus,
+        message,
       },
       { status: 201 }
     );

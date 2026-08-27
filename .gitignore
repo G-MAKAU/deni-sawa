@@ -35,3 +35,4 @@ Thumbs.db
 # deployment
 .vercel/
 .env
+build_out3.txt 

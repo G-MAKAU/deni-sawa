@@ -13,6 +13,8 @@ import { CalloutNode } from './nodes/CalloutNode';
 import { DividerNode } from './nodes/DividerNode';
 import { ImageNode } from './nodes/ImageNode';
 import { VariableNode } from './nodes/VariableNode';
+import { PageBreakNode } from './nodes/PageBreakNode';
+import { StickyNoteNode } from './nodes/StickyNoteNode';
 import { LexicalTheme } from './LexicalTheme';
 
 export const NAMESPACE = 'deni-sawa';
@@ -35,6 +37,8 @@ export const EDITOR_NODES: Klass<LexicalNode>[] = [
   DividerNode,
   ImageNode,
   VariableNode,
+  PageBreakNode,
+  StickyNoteNode,
 ];
 
 export interface BuildConfigOptions {
