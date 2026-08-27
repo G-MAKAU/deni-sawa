@@ -200,7 +200,7 @@ export function Footer() {
                 rel="noopener noreferrer"
                 className="font-medium underline transition-colors hover:text-brand"
               >
-                Gibson Makau
+                @MG
               </a>
             </p>
           </div>
