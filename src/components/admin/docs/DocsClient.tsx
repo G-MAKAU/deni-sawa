@@ -3,9 +3,10 @@
 import * as React from 'react';
 import {
   Activity, BookOpen, BookMarked, Building2, CheckCircle2, ClipboardList, FileText, GraduationCap,
-  Image as ImageIcon, Info, KeyRound, LayoutDashboard, ListChecks, Lock, Mail, MailOpen,
+  Globe, Image as ImageIcon, Info, KeyRound, LayoutDashboard, ListChecks, Lock, Mail, MailOpen,
   MessageCircle, MessageSquare, Network, PenLine, Plug, Save, Search, Send, Settings,
-  ShieldCheck, SlidersHorizontal, Sparkles, Table2, Upload, Users, Webhook, Zap, type LucideIcon,
+  ShieldCheck, SlidersHorizontal, Sparkles, StickyNote, Table2, Upload, Users, Webhook,
+  Zap, type LucideIcon,
 } from 'lucide-react';
 import { PageHeader, StatusPill } from '@/components/admin/ui';
 import { cn } from '@/lib/utils';
@@ -237,22 +238,54 @@ const SECTIONS: DocSection[] = [
         ),
       },
       {
-        title: 'Reports & report editor',
+        title: 'Report editor',
         icon: FileText,
         body: (
           <div className="space-y-3 text-sm leading-relaxed text-[var(--a-text2)]">
-            <p>View generated reports and open the <strong>Lexical report editor</strong> to refine any report before it is delivered. The editor supports headings, lists, checklists, callouts, dividers, tables, quotes, links and images.</p>
+            <p>The <strong>Lexical report editor</strong> gives you full control over generated reports before delivery. Every report is a rich Lexical document that can be refined with a word-processor-like experience.</p>
+            <p className="font-semibold text-[var(--a-ink2)]">Available blocks:</p>
             <ul className="space-y-1.5">
-              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>Add an image from your machine or browse the media library.</span></li>
-              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>Save edits and re-deliver to the visitor via email or WhatsApp.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Headings</strong> (H1, H2, H3), <strong>paragraphs</strong>, <strong>lists</strong> (bullet, number, check) and <strong>quotes</strong>.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Tables</strong> — click a cell to edit; select cells and use the toolbar to set background colour on individual or multiple cells.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Callouts</strong> — brand, growth or dark tone, for highlighting key findings.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Page breaks</strong> — dashed rule that forces a new page in PDF/Word exports. Insert via the toolbar block dropdown.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Sticky notes</strong> — coloured note cards (yellow, green, blue) for client takeaways. Insert via the toolbar block dropdown.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Images</strong> — upload or pick from the media library, with layout options (inline, square, behind, etc.).</span></li>
+            </ul>
+            <p className="font-semibold text-[var(--a-ink2)]">Inline formatting:</p>
+            <ul className="space-y-1.5">
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>Bold, italic, underline, strikethrough, inline code, subscript/superscript.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Text colour</strong> — set via the toolbar for verdicts, ratings and key figures.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Block background</strong> — paragraph/heading tint for inline callouts.</span></li>
+            </ul>
+            <p className="font-semibold text-[var(--a-ink2)]">Table cell background:</p>
+            <ul className="space-y-1.5">
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>Click a single cell, then use the background colour picker in the toolbar.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Multi-cell</strong>: drag across cells or shift-click to select multiple, then apply colour to all at once.</span></li>
+            </ul>
+          </div>
+        ),
+      },
+      {
+        title: 'Report delivery & export',
+        icon: Globe,
+        body: (
+          <div className="space-y-3 text-sm leading-relaxed text-[var(--a-text2)]">
+            <p>Once a report is finalised, deliver it to the visitor or export it for offline use.</p>
+            <ul className="space-y-1.5">
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Re-deliver</strong> — send via email or WhatsApp directly from the admin.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Export PDF</strong> — renders the Lexical state into a branded, print-ready PDF.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Export Word</strong> — downloads a .docx file for offline editing.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>Page breaks in the editor map to page boundaries in both export formats.</span></li>
             </ul>
           </div>
         ),
       },
     ],
     tips: [
-      { tone: 'warning', text: 'Reports are generated with the configured AI provider — generation can take 30\u201360 seconds.' },
-      { tone: 'info', text: 'Pending migrations must be applied before new check columns are visible (see Deployment section).' },
+      { tone: 'warning', text: 'Reports are generated with the configured AI provider — generation can take 30–60 seconds depending on model and section count.' },
+      { tone: 'info', text: 'Reserved slugs (business-health-check, professional-financial-health-check) are locked both server-side and in the admin UI.' },
+      { tone: 'success', text: 'The report editor auto-saves your work. Use Ctrl+S to save manually at any time.' },
     ],
   },
   {
@@ -473,8 +506,127 @@ const SECTIONS: DocSection[] = [
     ],
   },
   {
+    id: 'ai-settings',
+    label: 'AI Settings',
+    icon: Sparkles,
+    tagline: 'Configure AI providers and models',
+    intro:
+      'The AI Settings page lets you configure which LLM providers and models power report generation and comment moderation. Settings are stored in the database and secrets are encrypted with AES-256-GCM.',
+    cards: [
+      {
+        title: 'Provider configuration',
+        icon: Plug,
+        body: (
+          <div className="space-y-3 text-sm leading-relaxed text-[var(--a-text2)]">
+            <p>Choose from pre-configured provider presets or set up a custom OpenAI-compatible endpoint:</p>
+            <ul className="space-y-1.5">
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Anthropic</strong> — Claude models (Opus, Sonnet, Haiku). Requires an Anthropic API key.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>OpenAI</strong> — GPT-4o, GPT-4.1, etc. Requires an OpenAI API key.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Google</strong> — Gemini models. Requires a Google AI Studio API key.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>OpenRouter</strong> — access to multiple providers through a single key.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>DeepSeek, Qwen, Kimi, Groq</strong> — other supported providers with native integration.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Custom</strong> — any OpenAI-compatible API (e.g. self-hosted, Azure, Fireworks). Enter the base URL and API key manually.</span></li>
+            </ul>
+          </div>
+        ),
+      },
+      {
+        title: 'Model picker',
+        icon: ListChecks,
+        body: (
+          <div className="space-y-3 text-sm leading-relaxed text-[var(--a-text2)]">
+            <p>After selecting a provider, the model picker fetches available models live from the provider&rsquo;s API. Pick the default model for report generation and comment moderation.</p>
+            <ul className="space-y-1.5">
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Primary model</strong> — used for health check report generation.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Fallback provider</strong> — automatically used if the primary provider fails or is unavailable.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Comment moderation model</strong> — the model used for AI-powered comment screening.</span></li>
+            </ul>
+            <div className="space-y-2">
+              <Endpoint method="GET" path="/api/admin/settings" />
+              <Endpoint method="PUT" path="/api/admin/settings" />
+              <Endpoint method="GET" path="/api/admin/models" />
+            </div>
+          </div>
+        ),
+      },
+      {
+        title: 'Security',
+        icon: ShieldCheck,
+        body: (
+          <div className="space-y-3 text-sm leading-relaxed text-[var(--a-text2)]">
+            <ul className="space-y-1.5">
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>API keys are encrypted with <strong>AES-256-GCM</strong> before storage using the <Code>CREDENTIALS_ENCRYPTION_KEY</Code> env var.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>Settings are only readable by <strong>Super Admin</strong> and <strong>Admin</strong> roles. The GET endpoint returns masked values.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>Only whitelisted keys can be updated — the allowlist prevents accidental exposure of internal fields.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>Env vars (<Code>ANTHROPIC_API_KEY</Code>, <Code>OPENAI_API_KEY</Code>, etc.) serve as fallback if no DB setting is configured.</span></li>
+            </ul>
+          </div>
+        ),
+      },
+    ],
+    tips: [
+      { tone: 'warning', text: 'Changing the primary model takes effect on the next report generation — already-queued jobs continue with the previous model.' },
+      { tone: 'info', text: 'The fallback chain is: DB settings → env vars → error. At least one provider must be configured for reports to generate.' },
+    ],
+  },
+  {
+    id: 'comment-moderation',
+    label: 'Comment Moderation',
+    icon: MessageSquare,
+    tagline: 'AI-powered comment screening',
+    intro:
+      'Blog comments can be automatically screened by AI before they appear publicly. The system checks for spam, toxicity, off-topic content and flags inappropriate submissions for admin review.',
+    cards: [
+      {
+        title: 'How it works',
+        icon: Sparkles,
+        body: (
+          <div className="space-y-3 text-sm leading-relaxed text-[var(--a-text2)]">
+            <ul className="space-y-1.5">
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>A visitor submits a comment on a blog post.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>The AI reviews the comment content, author name and email for spam indicators, toxicity and relevance.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Approved</strong> comments appear immediately. <strong>Rejected</strong> comments are hidden. <strong>Flagged</strong> comments go to the moderation queue for admin review.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>The AI verdict and reasoning are shown on each comment in the admin moderation UI.</span></li>
+            </ul>
+          </div>
+        ),
+      },
+      {
+        title: 'Configuration',
+        icon: Settings,
+        body: (
+          <div className="space-y-3 text-sm leading-relaxed text-[var(--a-text2)]">
+            <ul className="space-y-1.5">
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>Toggle AI moderation on/off in <strong>Admin Settings</strong> via the <Code>COMMENT_AI_MODERATION_ENABLED</Code> key.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>Uses the same provider chain as report generation (DB settings → env fallback).</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>If the AI service is unavailable, comments default to <strong>approved</strong> (fail-open) so legitimate comments are not lost.</span></li>
+            </ul>
+          </div>
+        ),
+      },
+      {
+        title: 'Moderation queue',
+        icon: ClipboardList,
+        body: (
+          <div className="space-y-3 text-sm leading-relaxed text-[var(--a-text2)]">
+            <p>The admin moderation page shows all comments with their AI verdict, reason and status. Admins can approve, reject or delete any comment regardless of the AI decision.</p>
+            <div className="space-y-2">
+              <Endpoint method="GET" path="/api/admin/blog/comments" />
+              <Endpoint method="PUT" path="/api/admin/blog/comments/:id" />
+              <Endpoint method="DELETE" path="/api/admin/blog/comments/:id" />
+            </div>
+          </div>
+        ),
+      },
+    ],
+    tips: [
+      { tone: 'info', text: 'AI moderation uses the same model configured in AI Settings for comment moderation. Switch providers there.' },
+      { tone: 'warning', text: 'Disabling AI moderation means all comments appear immediately without screening. Use the admin queue to moderate manually.' },
+    ],
+  },
+  {
     id: 'settings',
-    label: 'Settings',
+    label: 'Site Settings',
     icon: SlidersHorizontal,
     tagline: 'Site-wide behaviour',
     intro: 'Central settings that shape public behaviour — including the consent and cookie banner used across the site.',
@@ -487,6 +639,7 @@ const SECTIONS: DocSection[] = [
             <ul className="space-y-1.5">
               <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Cookie / consent banner</strong> — enabled/disabled site-wide, including GA4 consent gating.</span></li>
               <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>Health check consent requirements and other behavioural toggles.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>AI comment moderation</strong> — toggle automatic comment screening on/off.</span></li>
               <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>Everything is saved through authenticated admin endpoints with audit fields.</span></li>
             </ul>
           </div>
@@ -652,11 +805,31 @@ export function DocsClient() {
                 <p className="text-sm font-semibold text-[var(--a-ink2)]">Deployment notes</p>
                 <p className="mt-0.5 text-xs leading-relaxed text-[var(--a-muted)]">
                   Database schema changes live in <Code>supabase/migrations</Code>. Run <Code>supabase db push</Code> to
-                  apply pending migrations (report editing, UI copy, consent, WhatsApp Meta fields, academy images) before
-                  the new columns appear in the console. New env vars: <Code>CREDENTIALS_ENCRYPTION_KEY</Code> (already
-                  required) and the Meta webhook uses the stored verify token.
+                  apply pending migrations before the new columns appear in the console.
                 </p>
               </div>
+            </div>
+            <div className="mt-4 space-y-3 text-xs leading-relaxed text-[var(--a-text2)]">
+              <p className="font-semibold text-[var(--a-ink2)]">Required migrations:</p>
+              <ul className="space-y-1.5">
+                <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#5A9E28]" /><span><Code>20260814000001_create_health_checks.sql</Code> — health check tables, report editing columns.</span></li>
+                <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#5A9E28]" /><span><Code>20260820000001_create_app_settings.sql</Code> — DB-managed AI provider settings.</span></li>
+                <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#5A9E28]" /><span><Code>20260822000001_add_ai_comment_moderation.sql</Code> — comment moderation fields.</span></li>
+              </ul>
+              <p className="font-semibold text-[var(--a-ink2)]">Environment variables:</p>
+              <ul className="space-y-1.5">
+                <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#5A9E28]" /><span><strong>Bootstrap (always in Vercel)</strong>: <Code>NEXT_PUBLIC_SUPABASE_URL</Code>, <Code>NEXT_PUBLIC_SUPABASE_ANON_KEY</Code>, <Code>SUPABASE_SERVICE_ROLE_KEY</Code>, <Code>CREDENTIALS_ENCRYPTION_KEY</Code>.</span></li>
+                <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#5A9E28]" /><span><strong>AI fallback (optional)</strong>: <Code>ANTHROPIC_API_KEY</Code>, <Code>OPENAI_API_KEY</Code>, <Code>GOOGLE_AI_API_KEY</Code>, <Code>OPENROUTER_API_KEY</Code> — used when no DB setting is configured.</span></li>
+                <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#5A9E28]" /><span><strong>Email</strong>: <Code>EMAIL_HOST</Code>, <Code>EMAIL_USER</Code>, <Code>EMAIL_PASS</Code> (primary) and <Code>EMAIL2_*</Code> (secondary profile).</span></li>
+                <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#5A9E28]" /><span><strong>WhatsApp</strong>: <Code>WHATSAPP_ACCESS_TOKEN</Code>, <Code>WHATSAPP_PHONE_NUMBER_ID</Code> (or configure via admin UI).</span></li>
+              </ul>
+              <p className="font-semibold text-[var(--a-ink2)]">Key architecture decisions:</p>
+              <ul className="space-y-1.5">
+                <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#5A9E28]" /><span>AI provider keys are stored in the <Code>app_settings</Code> table, encrypted with AES-256-GCM. The admin UI shows masked values — full keys are never returned to the browser.</span></li>
+                <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#5A9E28]" /><span>Env vars serve as fallback when no DB setting exists. The resolution order is: DB setting → env var → error.</span></li>
+                <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#5A9E28]" /><span>The report editor stores a Lexical JSON state. Page breaks and sticky notes survive export to PDF/Word.</span></li>
+                <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#5A9E28]" /><span>Comment moderation is fail-open: if the AI is unavailable, comments are approved automatically so legitimate submissions are not lost.</span></li>
+              </ul>
             </div>
           </div>
         </div>
