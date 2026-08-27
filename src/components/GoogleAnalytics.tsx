@@ -7,15 +7,12 @@ import { COOKIE_CONSENT_KEY } from '@/components/CookieConsent';
 const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
 
 /**
- * Google Analytics 4 with consent gating (GA4 Consent Mode v2).
- * The gtag script is only loaded once analytics consent is stored in
- * ds_cookie_consent with analytics: true. Consent changes (Accept all,
- * Manage preferences) re-evaluate via the 'ds-consent-change' event and
- * update analytics_storage to 'granted' / 'denied' accordingly.
+ * Google Analytics 4 with Consent Mode v2.
+ * The gtag script ALWAYS loads so Google Tag Assistant can verify it.
+ * Analytics data is only sent once the visitor grants analytics consent
+ * via the cookie banner. Before consent, analytics_storage is 'denied'.
  */
 export function GoogleAnalytics() {
-  const [enabled, setEnabled] = React.useState(false);
-
   React.useEffect(() => {
     const apply = () => {
       let analyticsGranted = false;
@@ -26,7 +23,6 @@ export function GoogleAnalytics() {
       } catch {
         analyticsGranted = false;
       }
-      setEnabled(analyticsGranted);
       const w = window as unknown as { dataLayer?: unknown[]; gtag?: (...args: unknown[]) => void };
       w.dataLayer = w.dataLayer ?? [];
       if (!w.gtag) {
@@ -47,17 +43,15 @@ export function GoogleAnalytics() {
 
   return (
     <>
-      {enabled && <Script src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`} strategy="afterInteractive" />}
-      {enabled && (
-        <Script id="ga-init" strategy="afterInteractive">
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', '${GA_ID}', { anonymize_ip: true, analytics_storage: 'granted' });
-          `}
-        </Script>
-      )}
+      <Script src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`} strategy="afterInteractive" />
+      <Script id="ga-init" strategy="afterInteractive">
+        {`
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', '${GA_ID}', { anonymize_ip: true, analytics_storage: 'denied' });
+        `}
+      </Script>
     </>
   );
 }
