@@ -444,7 +444,7 @@ export async function generateReportWithClaude(config: ProviderConfig, options: 
     return {
       state,
       model,
-      tokensUsed: message.usage?.input_tokens ?? 0,
+      tokensUsed: (message.usage?.input_tokens ?? 0) + (message.usage?.output_tokens ?? 0),
       generationSeconds: (Date.now() - startedAt) / 1000,
     };
   } catch (error) {
@@ -498,6 +498,7 @@ export async function generateReportWithGemini(config: ProviderConfig, options: 
 
       const data = (await res.json()) as {
         candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+        usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number; totalTokenCount?: number };
       };
       const text = data.candidates?.[0]?.content?.parts
         ?.map((p) => p.text || '')
@@ -512,6 +513,7 @@ export async function generateReportWithGemini(config: ProviderConfig, options: 
       return {
         state,
         model,
+        tokensUsed: data.usageMetadata?.totalTokenCount ?? undefined,
         generationSeconds: (Date.now() - startedAt) / 1000,
       };
     } catch (error) {
