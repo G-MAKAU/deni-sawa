@@ -673,6 +673,7 @@ function Tip({ tip }: { tip: DocTip }) {
 export function DocsClient() {
   const [query, setQuery] = React.useState('');
   const [activeId, setActiveId] = React.useState(SECTIONS[0].id);
+  const isScrollingRef = React.useRef(false);
 
   const q = query.trim().toLowerCase();
   const sections = q
@@ -687,10 +688,48 @@ export function DocsClient() {
       })).filter((section) => section.cards.length > 0 || section.label.toLowerCase().includes(q) || section.tagline.toLowerCase().includes(q))
     : SECTIONS;
 
+  /* Scroll-spy: observe all doc sections and highlight the sidebar item
+     whose section is closest to the top of the viewport. */
+  React.useEffect(() => {
+    const sectionEls = sections
+      .map((s) => document.getElementById(`doc-${s.id}`))
+      .filter(Boolean) as HTMLElement[];
+    if (sectionEls.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (isScrollingRef.current) return;
+        // Pick the entry whose top is closest to (but below) the viewport top.
+        let best: { id: string; top: number } | null = null;
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          const id = entry.target.id.replace(/^doc-/, '');
+          const top = entry.boundingClientRect.top;
+          if (!best || (top >= 0 && top < best.top) || (top < 0 && top > best.top)) {
+            best = { id, top };
+          }
+        }
+        if (best) setActiveId(best.id);
+      },
+      { rootMargin: '-10% 0px -75% 0px', threshold: 0 }
+    );
+
+    for (const el of sectionEls) observer.observe(el);
+    return () => observer.disconnect();
+  }, [sections]);
+
   const scrollTo = (id: string) => {
     setActiveId(id);
+    isScrollingRef.current = true;
     document.getElementById(`doc-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setTimeout(() => { isScrollingRef.current = false; }, 800);
   };
+
+  /* Keep the active sidebar item scrolled into view within the sticky panel. */
+  React.useEffect(() => {
+    const btn = document.getElementById(`sidebar-${activeId}`);
+    btn?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }, [activeId]);
 
   return (
     <>
@@ -723,6 +762,7 @@ export function DocsClient() {
                 return (
                   <li key={section.id}>
                     <button
+                      id={`sidebar-${section.id}`}
                       type="button"
                       onClick={() => scrollTo(section.id)}
                       className={cn(
