@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server';
+import { faqAnswers } from '@/data/content';
 import { getSetting } from '@/lib/settings';
 
 interface ChatRequest {
@@ -45,6 +46,10 @@ HOW TO RELATE TO SERVICES
 TONE
 Calm, professional, quietly confident. Like a senior advisor who has seen it all and knows exactly what to do next.`;
 
+const FAQ_CONTEXT = `\n\nFrequently asked questions (answer these with the exact details below when asked):\n${faqAnswers
+  .map((f) => `Q: ${f.title}\nA: ${f.answer}`)
+  .join('\n\n')}`;
+
 function fallbackReply(message: string): string {
   const lower = (message || '').toLowerCase();
   if (!message) return 'Welcome to Deni Sawa Partners. How can I help you today?';
@@ -78,7 +83,7 @@ export async function POST(req: NextRequest) {
       return Response.json({ reply: fallbackReply(message) }, { status: 200 });
     }
 
-    const system = body.systemPrompt || DEFAULT_SYSTEM_PROMPT;
+    const system = `${body.systemPrompt || DEFAULT_SYSTEM_PROMPT}${FAQ_CONTEXT}`;
 
     const contents: { role: 'user' | 'model'; parts: { text: string }[] }[] = [];
     for (const h of body.history || []) {
@@ -96,12 +101,14 @@ export async function POST(req: NextRequest) {
         body: JSON.stringify({
           systemInstruction: { parts: [{ text: system }] },
           contents,
-          generationConfig: { maxOutputTokens: 200, temperature: 0.7 },
+          generationConfig: { maxOutputTokens: 250, temperature: 0.7 },
         }),
       }
     );
 
     if (!geminiRes.ok) {
+      const errBody = await geminiRes.text().catch(() => '');
+      console.error(`Gemini API error (${geminiRes.status}):`, errBody.slice(0, 300));
       return Response.json({ reply: fallbackReply(message) }, { status: 200 });
     }
 
@@ -112,11 +119,13 @@ export async function POST(req: NextRequest) {
       .trim();
 
     if (!text) {
+      console.error('Gemini returned empty response:', JSON.stringify(data).slice(0, 300));
       return Response.json({ reply: fallbackReply(message) }, { status: 200 });
     }
 
     return Response.json({ reply: text }, { status: 200 });
-  } catch {
+  } catch (err) {
+    console.error('Chat route error:', err);
     return Response.json(
       { reply: 'Sorry, I hit a snag. Please reach us directly at advisory@denisawa.co.ke or +254 702 448 601.' },
       { status: 200 }
