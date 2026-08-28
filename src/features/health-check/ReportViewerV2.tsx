@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { format } from 'date-fns';
-import { FileDown, FileText, Loader2, Lock, Sparkles } from 'lucide-react';
+import { FileDown, FileText, Loader2, Lock, Phone, Sparkles } from 'lucide-react';
 import { LexicalRenderer } from '@/features/lexical/LexicalRenderer';
 import { ShareMenu } from '@/components/ShareMenu';
 import { cn } from '@/lib/utils';
@@ -310,124 +310,208 @@ export function ReportViewerV2({ token }: { token: string }) {
         )}
       </div>
 
-      {/* Upgrade to a paid detailed report */}
+      {/* Upgrade to a paid detailed report — summary only */}
       {report.report_type === 'summary' && report.payment_status !== 'paid' && (
-        <div className="mt-6 rounded-lg border border-brand/25 bg-brand/5 px-6 py-5">
-          <div className="flex items-start gap-3">
-            <Sparkles className="mt-0.5 h-5 w-5 shrink-0 text-brand" />
-            <div>
-              <p className="font-semibold text-foreground">Unlock the full diagnostic</p>
-              <p className="mt-0.5 text-sm text-muted-foreground">
-                The detailed report adds category-by-category findings, what each finding means for your business, a prioritised recommendation list, an action plan, advisor commentary, and PDF/Word export — valid for 12 months.
-              </p>
+        <div className="mt-8 overflow-hidden rounded-xl border border-brand/25 bg-gradient-to-br from-brand/5 via-background to-growth/5">
+          <div className="border-b border-brand/10 bg-brand/5 px-6 py-4">
+            <div className="flex items-center gap-2.5">
+              <Sparkles className="h-5 w-5 text-brand" />
+              <p className="font-display text-lg font-semibold text-foreground">Unlock the Full Diagnostic</p>
             </div>
+            <p className="mt-1 text-sm text-muted-foreground">
+              You&apos;re viewing a <span className="font-semibold">summary report</span> — a snapshot of your top priorities.
+              Upgrade to get the complete picture.
+            </p>
           </div>
 
-          {upgradeState === 'idle' && (
-            <div className="mt-4 flex flex-wrap gap-3">
-              {report.detailed_price > 0 && (
+          <div className="px-6 py-5">
+            {/* What's included */}
+            <div className="mb-5 rounded-lg border border-card-border bg-card p-4">
+              <p className="text-[11px] font-bold uppercase tracking-widest text-brand">What the Full Report includes</p>
+              <ul className="mt-2.5 space-y-1.5 text-sm text-foreground">
+                <li className="flex items-start gap-2"><span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-brand" /> Category-by-category findings with detailed analysis</li>
+                <li className="flex items-start gap-2"><span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-brand" /> What each finding means for your business</li>
+                <li className="flex items-start gap-2"><span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-brand" /> Prioritised recommendation list</li>
+                <li className="flex items-start gap-2"><span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-brand" /> Step-by-step action plan</li>
+                <li className="flex items-start gap-2"><span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-brand" /> Advisor commentary</li>
+                <li className="flex items-start gap-2"><span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-brand" /> PDF &amp; Word export — valid for 12 months</li>
+              </ul>
+            </div>
+
+            {/* How it works */}
+            <div className="mb-5 rounded-lg border border-card-border bg-card p-4">
+              <p className="text-[11px] font-bold uppercase tracking-widest text-brand">How it works</p>
+              <div className="mt-2.5 flex flex-col gap-3 sm:flex-row sm:items-start">
+                <div className="flex items-start gap-2.5">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand/10 text-[11px] font-bold text-brand">1</span>
+                  <p className="text-sm text-foreground">Choose your plan below and enter your M-Pesa number</p>
+                </div>
+                <div className="flex items-start gap-2.5">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand/10 text-[11px] font-bold text-brand">2</span>
+                  <p className="text-sm text-foreground">You&apos;ll receive an M-Pesa prompt on your phone — enter your PIN to pay</p>
+                </div>
+                <div className="flex items-start gap-2.5">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand/10 text-[11px] font-bold text-brand">3</span>
+                  <p className="text-sm text-foreground">Your full report is generated instantly and delivered to your email/WhatsApp</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Upgrade options */}
+            {upgradeState === 'idle' && (
+              <div className="grid gap-3 sm:grid-cols-2">
+                {report.detailed_price > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => chooseUpgrade('detailed')}
+                    className="group rounded-xl border-2 border-brand/20 bg-card p-5 text-left transition-all hover:border-brand hover:shadow-md"
+                  >
+                    <p className="text-[11px] font-bold uppercase tracking-widest text-brand">Full Report</p>
+                    <p className="mt-2 font-display text-2xl font-bold text-foreground">
+                      KES {report.detailed_price.toLocaleString()}
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">One-time payment · Report delivered instantly</p>
+                    <span className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-brand group-hover:underline">
+                      Get Full Report →
+                    </span>
+                  </button>
+                )}
+                {report.detailed_call_price > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => chooseUpgrade('detailed_call')}
+                    className="group rounded-xl border-2 border-growth/25 bg-card p-5 text-left transition-all hover:border-growth hover:shadow-md"
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <Phone className="h-3.5 w-3.5 text-growth" />
+                      <p className="text-[11px] font-bold uppercase tracking-widest text-growth">Full Report + Advisory Call</p>
+                    </div>
+                    <p className="mt-2 font-display text-2xl font-bold text-foreground">
+                      KES {report.detailed_call_price.toLocaleString()}
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Full report + 30-min call with a financial advisor
+                    </p>
+                    {report.detailed_price > 0 && (
+                      <p className="mt-1 text-[11px] font-medium text-growth">
+                        + KES {(report.detailed_call_price - report.detailed_price).toLocaleString()} for the advisory call
+                      </p>
+                    )}
+                    <span className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-growth group-hover:underline">
+                      Get Report + Call →
+                    </span>
+                  </button>
+                )}
+              </div>
+            )}
+
+            {upgradeState === 'phone' && (
+              <div className="max-w-sm space-y-2">
+                <p className="text-sm font-semibold text-foreground">Enter your WhatsApp number for the advisory call:</p>
+                <input
+                  type="tel"
+                  value={upgradePhone}
+                  onChange={(e) => setUpgradePhone(e.target.value)}
+                  placeholder="+254 700 000 000"
+                  className="w-full rounded-btn border border-card-border bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-brand focus:outline-none"
+                />
+                {upgradeError && <p className="text-xs font-medium text-red-600">{upgradeError}</p>}
                 <button
                   type="button"
-                  onClick={() => chooseUpgrade('detailed')}
-                  className="inline-flex items-center gap-2 rounded-btn bg-brand px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-brand-600"
+                  onClick={() => void startUpgrade('detailed_call')}
+                  className="rounded-btn bg-brand px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-brand-600"
                 >
-                  Detailed report · KES {report.detailed_price.toLocaleString()}
+                  Continue to payment
                 </button>
-              )}
-              {report.detailed_call_price > 0 && (
-                <button
-                  type="button"
-                  onClick={() => chooseUpgrade('detailed_call')}
-                  className="inline-flex items-center gap-2 rounded-btn border border-brand/40 bg-white px-5 py-2.5 text-sm font-bold text-brand transition-colors hover:bg-brand/10"
-                >
-                  Detailed + Advisory Call · KES {report.detailed_call_price.toLocaleString()}
-                </button>
-              )}
-            </div>
-          )}
+              </div>
+            )}
 
-          {upgradeState === 'phone' && (
-            <div className="mt-4 max-w-sm space-y-2">
-              <p className="text-sm text-foreground">Enter your WhatsApp number so we can schedule your advisory call:</p>
-              <input
-                type="tel"
-                value={upgradePhone}
-                onChange={(e) => setUpgradePhone(e.target.value)}
-                placeholder="+254 700 000 000"
-                className="w-full rounded-btn border border-card-border bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-brand focus:outline-none"
-              />
-              {upgradeError && <p className="text-xs font-medium text-red-600">{upgradeError}</p>}
-              <button
-                type="button"
-                onClick={() => void startUpgrade('detailed_call')}
-                className="rounded-btn bg-brand px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-brand-600"
-              >
-                Continue to payment
-              </button>
-            </div>
-          )}
-
-          {upgradeState === 'initiating' && (
-            <p className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin text-brand" /> Preparing your detailed report… this can take a minute.
-            </p>
-          )}
-
-          {upgradeState === 'stk' && (
-            <div className="mt-4 max-w-md space-y-3">
-              <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                <Loader2 className="h-4 w-4 animate-spin text-brand" /> Payment request of KES {upgradeAmount.toLocaleString()} sent.
+            {upgradeState === 'initiating' && (
+              <p className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin text-brand" /> Preparing your detailed report… this can take a minute.
               </p>
-              <p className="text-sm text-muted-foreground">
-                Approve the M-Pesa prompt on your phone. This is a sandbox/simulated payment — use the button below to complete it in the test environment.
-              </p>
-              <button
-                type="button"
-                onClick={() => void confirmPaid()}
-                className="rounded-btn bg-growth px-5 py-2.5 text-sm font-bold text-white transition-colors hover:brightness-110"
-              >
-                I've paid — confirm payment
-              </button>
-              {upgradeError && <p className="text-xs font-medium text-red-600">{upgradeError}</p>}
-            </div>
-          )}
+            )}
 
-          {upgradeState === 'polling' && (
-            <p className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin text-brand" /> Waiting for payment confirmation…
-            </p>
-          )}
-
-          {upgradeState === 'error' && (
-            <div className="mt-4 space-y-2">
-              <p className="text-sm font-medium text-red-600">{upgradeError}</p>
-              {upgradePlan && (
+            {upgradeState === 'stk' && (
+              <div className="max-w-md space-y-3">
+                <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin text-brand" /> Payment request of KES {upgradeAmount.toLocaleString()} sent.
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Approve the M-Pesa prompt on your phone. This is a sandbox/simulated payment — use the button below to complete it in the test environment.
+                </p>
                 <button
                   type="button"
-                  onClick={() => void startUpgrade(upgradePlan)}
-                  className="rounded-btn border border-card-border px-4 py-2 text-sm font-semibold text-foreground hover:border-brand/40 hover:text-brand"
+                  onClick={() => void confirmPaid()}
+                  className="rounded-btn bg-growth px-5 py-2.5 text-sm font-bold text-white transition-colors hover:brightness-110"
                 >
-                  Try again
+                  I&apos;ve paid — confirm payment
                 </button>
-              )}
-            </div>
-          )}
+                {upgradeError && <p className="text-xs font-medium text-red-600">{upgradeError}</p>}
+              </div>
+            )}
 
-          {upgradeState === 'paid' && (
-            <div className="mt-4 flex flex-wrap items-center gap-4">
-              <p className="text-sm font-semibold text-growth">Payment confirmed — your detailed report is ready.</p>
-              {paidReportUrl ? (
-                <a href={paidReportUrl} className="rounded-btn bg-growth px-5 py-2.5 text-sm font-bold text-white transition-colors hover:brightness-110">
-                  View detailed report →
-                </a>
-              ) : (
-                <p className="text-sm text-muted-foreground">It's on its way to your email/WhatsApp.</p>
-              )}
-              {upgradePlan === 'detailed_call' && (
-                <p className="text-xs text-muted-foreground">An advisor will contact you shortly to schedule your call.</p>
-              )}
+            {upgradeState === 'polling' && (
+              <p className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin text-brand" /> Waiting for payment confirmation…
+              </p>
+            )}
+
+            {upgradeState === 'error' && (
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-red-600">{upgradeError}</p>
+                {upgradePlan && (
+                  <button
+                    type="button"
+                    onClick={() => void startUpgrade(upgradePlan)}
+                    className="rounded-btn border border-card-border px-4 py-2 text-sm font-semibold text-foreground hover:border-brand/40 hover:text-brand"
+                  >
+                    Try again
+                  </button>
+                )}
+              </div>
+            )}
+
+            {upgradeState === 'paid' && (
+              <div className="flex flex-wrap items-center gap-4">
+                <p className="text-sm font-semibold text-growth">Payment confirmed — your detailed report is ready.</p>
+                {paidReportUrl ? (
+                  <a href={paidReportUrl} className="rounded-btn bg-growth px-5 py-2.5 text-sm font-bold text-white transition-colors hover:brightness-110">
+                    View detailed report →
+                  </a>
+                ) : (
+                  <p className="text-sm text-muted-foreground">It&apos;s on its way to your email/WhatsApp.</p>
+                )}
+                {upgradePlan === 'detailed_call' && (
+                  <p className="text-xs text-muted-foreground">An advisor will contact you shortly to schedule your call.</p>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Advisory call upsell — detailed report only */}
+      {report.report_type === 'detailed' && report.payment_status === 'paid' && report.detailed_call_price > report.detailed_price && !report.session_whatsapp && (
+        <div className="mt-8 rounded-xl border border-growth/25 bg-growth/5 px-6 py-5">
+          <div className="flex items-start gap-3">
+            <Phone className="mt-0.5 h-5 w-5 shrink-0 text-growth" />
+            <div>
+              <p className="font-semibold text-foreground">Want to discuss this with an advisor?</p>
+              <p className="mt-0.5 text-sm text-muted-foreground">
+                Book a 30-minute advisory call to walk through your report, ask questions, and get personalised guidance.
+              </p>
+              <p className="mt-1 text-[11px] font-medium text-growth">
+                + KES {(report.detailed_call_price - report.detailed_price).toLocaleString()} for the advisory call
+              </p>
+              <a
+                href="#contact"
+                className="mt-3 inline-flex items-center gap-1.5 rounded-btn bg-growth px-4 py-2 text-sm font-bold text-white transition-colors hover:brightness-110"
+              >
+                <Phone className="h-3.5 w-3.5" /> Book an advisory call
+              </a>
             </div>
-          )}
+          </div>
         </div>
       )}
     </div>
