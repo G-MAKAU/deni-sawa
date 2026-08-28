@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getServiceClient } from '@/lib/supabase/service';
-import { runReportGeneration } from '@/lib/generate-report';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 120;
@@ -13,11 +12,9 @@ const schema = z.object({
 });
 
 /**
- * Upgrades an existing summary session to a paid plan (used from the summary
- * report viewer). The detailed report is GENERATED FIRST so it is ready the
- * moment payment is confirmed — the user pays to view, never the reverse.
- * Sets the report selection + price and marks payment pending; the client then
- * initiates the M-Pesa STK push.
+ * Upgrades an existing summary session to a paid plan. Sets the report
+ * selection + price and marks payment pending — the report is generated
+ * AFTER payment is confirmed (not before).
  */
 export async function POST(request: Request) {
   let body: unknown;
@@ -55,10 +52,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'No price is configured for this report yet.' }, { status: 422 });
     }
 
-    // Capture a phone number when one is provided (used for the call option).
     const whatsapp = parsed.data.phone?.trim() || session.whatsapp || null;
 
-    // The Detailed + Advisory Call option must have a WhatsApp number.
     if (isCall && !whatsapp) {
       return NextResponse.json(
         { error: 'Whatsapp_required' },
@@ -76,10 +71,6 @@ export async function POST(request: Request) {
         payment_status: 'pending',
       })
       .eq('id', session.id);
-
-    // Generate the detailed report NOW (deferred delivery until paid) so the
-    // user pays to view it — the report is always ready when payment clears.
-    await runReportGeneration(supabase, session, 'detailed', { skipDelivery: true });
 
     return NextResponse.json({ ok: true, amount, requires_call: isCall, whatsapp: whatsapp ?? null });
   } catch (error) {

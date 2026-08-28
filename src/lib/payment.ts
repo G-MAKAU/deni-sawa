@@ -8,9 +8,11 @@ import { site } from '@/data/site';
 /**
  * Marks a session as paid and releases the report:
  *  - flips payment_status -> 'paid'
- *  - delivers the generated report via the session's preferred channel
- *  - for the Detailed + Advisory Call option, notifies the admin (email +
- *    WhatsApp) once so a call can be scheduled.
+ *  - generates the detailed report (if not already generated)
+ *  - delivers via the session's preferred channel
+ *  - sends a payment confirmation email to the user
+ *  - for the Detailed + Advisory Call option, notifies the admin + sends
+ *    user a call-scheduling confirmation
  */
 export async function markPaidAndDeliver(supabase: SupabaseClient, sessionId: string, reference: string): Promise<void> {
   const { data: session } = await supabase
@@ -29,7 +31,8 @@ export async function markPaidAndDeliver(supabase: SupabaseClient, sessionId: st
     .update({ payment_status: 'paid', payment_reference: reference })
     .eq('id', sessionId);
 
-  const { data: report } = await supabase
+  // Check if a detailed report already exists (e.g. from a direct paid flow).
+  const { data: existingReport } = await supabase
     .from('health_check_reports')
     .select('id, report_url_token')
     .eq('session_id', sessionId)
@@ -40,15 +43,14 @@ export async function markPaidAndDeliver(supabase: SupabaseClient, sessionId: st
   let reportUrlToken: string | null = null;
   let reportId: string | null = null;
 
-  if (report) {
-    // Report already generated (direct paid flow, delivery was deferred).
-    reportId = report.id;
-    if (delivery === 'email' || delivery === 'both') await deliverReportByEmail(supabase, report.id);
-    if (delivery === 'whatsapp' || delivery === 'both') await deliverReportByWhatsApp(supabase, report.id);
-    reportUrlToken = report.report_url_token;
+  if (existingReport) {
+    // Report already generated — deliver it directly.
+    reportId = existingReport.id;
+    reportUrlToken = existingReport.report_url_token;
+    if (delivery === 'email' || delivery === 'both') await deliverReportByEmail(supabase, existingReport.id);
+    if (delivery === 'whatsapp' || delivery === 'both') await deliverReportByWhatsApp(supabase, existingReport.id);
   } else {
-    // Upgrade from summary: generate the detailed report now (which also
-    // delivers it via the session's preferred channel).
+    // No report yet — generate now and deliver.
     const result = await runReportGeneration(supabase, session, 'detailed');
     reportId = result.report.id;
     reportUrlToken = result.report.report_url_token;
@@ -58,10 +60,90 @@ export async function markPaidAndDeliver(supabase: SupabaseClient, sessionId: st
     await supabase.from('health_check_reports').update({ is_paid: true }).eq('id', reportId);
   }
 
-  // Detailed + Advisory Call → notify the admin once.
+  // Send payment confirmation email to the user.
+  await sendPaymentConfirmation(supabase, session, reportUrlToken);
+
+  // Detailed + Advisory Call → notify admin + confirm call to user.
   if (session.requires_call && !session.admin_notified) {
     await notifyAdminOfCall(supabase, session, reportUrlToken);
     await supabase.from('health_check_sessions').update({ admin_notified: true }).eq('id', sessionId);
+    await sendCallScheduledEmail(session, reportUrlToken);
+  }
+}
+
+async function sendPaymentConfirmation(
+  supabase: SupabaseClient,
+  session: {
+    full_name: string;
+    email: string | null;
+    whatsapp: string | null;
+    payment_amount: number | null;
+    health_check_id: string;
+    requires_call: boolean | null;
+  },
+  reportUrlToken: string | null
+): Promise<void> {
+  if (!session.email) return;
+
+  const { data: check } = await supabase.from('health_checks').select('name').eq('id', session.health_check_id).maybeSingle();
+  const checkName = (check as { name?: string } | null)?.name ?? 'Health Check';
+  const siteUrl = resolveSiteUrl();
+  const reportUrl = reportUrlToken ? `${siteUrl}/business-health-checks/report/${reportUrlToken}` : '';
+
+  const planLabel = session.requires_call ? 'Full Report + Advisory Call' : 'Full Report';
+  const bodyHtml = `
+    <h1>Payment confirmed — your report is ready</h1>
+    <p>Hi ${session.full_name},</p>
+    <p>Thank you for your payment of <strong>KES ${Number(session.payment_amount ?? 0).toLocaleString()}</strong> for the <strong>${planLabel}</strong> of your ${checkName}.</p>
+    <p>Your full diagnostic report has been generated and is ready to view:</p>
+    <p><a href="${reportUrl}" style="display:inline-block;background:#E8510A;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold;">View Your Report</a></p>
+    ${session.requires_call ? '<p>Our advisory team will contact you shortly via WhatsApp to schedule your call.</p>' : ''}
+    <p>If you have any questions, reply to this email or reach us on WhatsApp at +254 702 448 601.</p>
+  `;
+
+  try {
+    await sendEmail({
+      to: session.email,
+      subject: `Your ${checkName} report is ready`,
+      html: buildBrandedEmailHtml(bodyHtml),
+    });
+  } catch (error) {
+    console.error('Payment confirmation email failed:', error);
+  }
+}
+
+async function sendCallScheduledEmail(
+  session: {
+    full_name: string;
+    email: string | null;
+    whatsapp: string | null;
+    payment_amount: number | null;
+    health_check_id: string;
+  },
+  reportUrlToken: string | null
+): Promise<void> {
+  if (!session.email) return;
+
+  const siteUrl = resolveSiteUrl();
+  const reportUrl = reportUrlToken ? `${siteUrl}/business-health-checks/report/${reportUrlToken}` : '';
+
+  const bodyHtml = `
+    <h1>Your advisory call is being scheduled</h1>
+    <p>Hi ${session.full_name},</p>
+    <p>Along with your full diagnostic report, you&apos;ve selected the <strong>Advisory Call</strong> option.</p>
+    <p>One of our senior business advisors will contact you via WhatsApp at <strong>${session.whatsapp ?? 'the number on file'}</strong> within the next 24 hours to schedule your 30-minute session.</p>
+    ${reportUrl ? `<p>In the meantime, you can review your report here: <a href="${reportUrl}">${reportUrl}</a></p>` : ''}
+    <p>If you need to reschedule or have any questions, reply to this email or call us at +254 702 448 601.</p>
+  `;
+
+  try {
+    await sendEmail({
+      to: session.email,
+      subject: 'Your advisory call is being scheduled',
+      html: buildBrandedEmailHtml(bodyHtml),
+    });
+  } catch (error) {
+    console.error('Call scheduled email failed:', error);
   }
 }
 
