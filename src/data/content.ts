@@ -349,8 +349,18 @@ export const faqAnswers = [
   },
   {
     title: 'What services does Deni Sawa Partners offer?',
-    keywords: ['service', 'services', 'offer', 'cfo', 'ceo', 'governance', 'advisory', 'professional'],
-    answer: `We work across five service areas, each with a clear pathway. For professionals and individuals: the Professional Financial Health Check, debt and cashflow support, budgeting and savings discipline, plus financial resilience learning and Executive Finance (Financial Health → Resilience → Leadership). For entrepreneurs and founders: Fractional CFO and Fractional CEO support, governance and KPIs, recovery and restructuring, and growth strategy (Stability → Structure → Growth → Best-in-Class). For investors: investment readiness assessment, portfolio monitoring and independent representation (Visibility → Governance → Accountability → Portfolio Performance). Then two diagnostic gateways — the Business Health Check and the Professional Financial Health Check, both free and AI-powered — and Learning & Programs, including the Deni Sawa Method and the SpecialSit Network. Every engagement starts with diagnosis, usually the relevant Health Check.`,
+    keywords: ['services', 'offer', 'what do you do'],
+    answer: `We work across five areas: Professional & Individual support, Entrepreneur & Founder advisory (including Fractional CFO/CEO), Investor services, free AI-powered Health Checks, and Learning & Programs. Each follows a clear pathway from diagnosis to results. Which area interests you?`,
+  },
+  {
+    title: 'What is a Fractional CFO?',
+    keywords: ['fractional cfo', 'what is a fractional cfo', 'cfo', 'finance function'],
+    answer: `A Fractional CFO provides senior financial leadership on a part-time basis — cashflow discipline, budgeting, management reporting and financial visibility — without the cost of a full-time hire. Ideal for businesses that have outgrown reactive finance. Would you like to explore how that fits your situation?`,
+  },
+  {
+    title: 'What is a Fractional CEO?',
+    keywords: ['fractional ceo', 'what is a fractional ceo', 'ceo', 'strategic leadership'],
+    answer: `A Fractional CEO provides strategic leadership on a part-time basis — execution support, governance, performance management and growth direction — for founders who need senior leadership without a full-time commitment. Shall I open the Business Health Check to see where you stand?`,
   },
   {
     title: 'Is my information confidential?',
