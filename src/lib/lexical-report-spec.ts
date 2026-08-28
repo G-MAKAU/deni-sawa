@@ -144,6 +144,9 @@ they do not genuinely add value to the finding.
 - Use bullet lists for findings, numbered lists for ordered steps/priorities.
 - Use a CHECK list ("listType":"check", each item "checked":false) for the
   action checklist in the recommendations and roadmap — this is required.
+  Set "checked":true for items that are already done or confirmed by the
+  respondent's answers. Set "checked":false for items that are recommended
+  but not yet done. This gives the reader a visual progress indicator.
 - Use a TABLE for structured data: the client snapshot, the six-dimension score
   table, risk tables and milestone tables. Tables are strongly preferred over
   run-on bullet lists for anything tabular.
@@ -313,9 +316,9 @@ they do not genuinely add value to the finding.
           {
             "type": "listitem",
             "value": 1,
-            "checked": false,
+            "checked": true,
             "children": [
-              { "type": "text", "text": "Open a separate business bank account this week", "format": 0 }
+              { "type": "text", "text": "Separate business bank account (already in place)", "format": 0 }
             ]
           },
           {
