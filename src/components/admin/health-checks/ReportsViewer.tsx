@@ -267,7 +267,7 @@ export function ReportsViewer() {
       {
         accessorKey: 'tokens_used',
         header: 'Tokens used',
-        cell: ({ row }) => row.original.tokens_used != null ? String(row.original.tokens_used) : '-',
+        cell: ({ row }) => row.original.tokens_used != null ? row.original.tokens_used.toLocaleString() : '-',
       },
       {
         accessorKey: 'generation_seconds',
@@ -581,7 +581,7 @@ export function ReportsViewer() {
                 <StatusPill tone="amber">fallback</StatusPill>
               )}
               {detail.tokens_used != null && (
-                <span className="text-[12px]">{detail.tokens_used} tokens</span>
+                <span className="text-[12px]">{detail.tokens_used?.toLocaleString()} tokens</span>
               )}
               {detail.generation_seconds != null && (
                 <span className="text-[12px]">{Math.round(detail.generation_seconds)}s</span>
@@ -697,7 +697,7 @@ export function ReportsViewer() {
               </div>
             )}
             {errorViewReport.tokens_used != null && (
-              <p className="text-[12px] text-[var(--a-muted)]">Tokens used: {errorViewReport.tokens_used}</p>
+              <p className="text-[12px] text-[var(--a-muted)]">Tokens used: {errorViewReport.tokens_used?.toLocaleString()}</p>
             )}
             {errorViewReport.generation_seconds != null && (
               <p className="text-[12px] text-[var(--a-muted)]">Generation time: {Math.round(errorViewReport.generation_seconds)}s</p>
