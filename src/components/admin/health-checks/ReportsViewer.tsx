@@ -9,7 +9,7 @@ import {
   flexRender,
   type ColumnDef,
 } from '@tanstack/react-table';
-import { Check, Columns, Copy, ExternalLink, Eye, Loader2, Mail, Pencil, RefreshCw, Search } from 'lucide-react';
+import { Check, Columns, Copy, ExternalLink, Eye, Loader2, Mail, Pencil, RefreshCw, Search, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { adminFetch, adminPut } from '@/lib/admin-client';
 import { LexicalRenderer } from '@/features/lexical/LexicalRenderer';
@@ -85,6 +85,12 @@ export function ReportsViewer() {
   const [resendReport, setResendReport] = React.useState<ReportRow | null>(null);
   const [resendLoading, setResendLoading] = React.useState(false);
   const [resendResult, setResendResult] = React.useState<{ ok: boolean; error?: string; to?: string } | null>(null);
+
+  // Upgrade modal
+  const [upgradeReport, setUpgradeReport] = React.useState<ReportRow | null>(null);
+  const [upgradePlan, setUpgradePlan] = React.useState<'detailed' | 'detailed_call'>('detailed');
+  const [upgradeSendEmail, setUpgradeSendEmail] = React.useState(true);
+  const [upgradeLoading, setUpgradeLoading] = React.useState(false);
 
   const copyLink = async (report: ReportRow) => {
     const url = `${window.location.origin}/business-health-checks/report/${report.report_url_token}`;
@@ -198,6 +204,26 @@ export function ReportsViewer() {
       setResendResult({ ok: false, error: e instanceof Error ? e.message : 'Failed to resend email.' });
     } finally {
       setResendLoading(false);
+    }
+  };
+
+  const executeUpgrade = async () => {
+    if (!upgradeReport) return;
+    setUpgradeLoading(true);
+    try {
+      const result = await adminFetch<{ ok: boolean; report_url?: string }>(
+        `/api/admin/health-checks/reports/${upgradeReport.id}/upgrade`,
+        { method: 'POST', body: JSON.stringify({ plan: upgradePlan, sendEmail: upgradeSendEmail }) }
+      );
+      if (result.ok) {
+        toast.success('Report upgraded successfully');
+        setUpgradeReport(null);
+        void load(page, reportType, delivery, searchQuery, pageSize);
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Failed to upgrade report.');
+    } finally {
+      setUpgradeLoading(false);
     }
   };
 
@@ -354,6 +380,27 @@ export function ReportsViewer() {
             Regenerate
           </button>
         ),
+      },
+      {
+        id: 'upgrade',
+        header: '',
+        cell: ({ row }) => {
+          if (row.original.report_type !== 'summary') return null;
+          return (
+            <button
+              type="button"
+              onClick={() => {
+                setUpgradeReport(row.original);
+                setUpgradePlan('detailed');
+                setUpgradeSendEmail(true);
+              }}
+              title="Upgrade to detailed report"
+              className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[12px] font-semibold text-[#E8510A] transition-colors hover:bg-[#E8510A]/10"
+            >
+              <Sparkles className="h-3.5 w-3.5" /> Upgrade
+            </button>
+          );
+        },
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -828,6 +875,77 @@ export function ReportsViewer() {
                 </p>
               </>
             )}
+          </div>
+        )}
+      </Modal>
+
+      {/* Upgrade report modal */}
+      <Modal
+        open={upgradeReport !== null}
+        onClose={() => setUpgradeReport(null)}
+        title="Upgrade to Detailed Report"
+        footer={
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setUpgradeReport(null)}
+              disabled={upgradeLoading}
+              className="h-10 rounded-lg border border-[var(--a-border)] bg-[var(--a-card)] px-4 text-[13px] font-semibold text-[var(--a-text)] hover:bg-[var(--a-hover)] disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() => void executeUpgrade()}
+              disabled={upgradeLoading}
+              className="inline-flex h-10 items-center justify-center gap-1.5 rounded-lg bg-[#E8510A] px-5 text-[13px] font-bold text-white transition-colors hover:bg-[#c94508] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {upgradeLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+              {upgradeLoading ? 'Upgrading…' : 'Upgrade Report'}
+            </button>
+          </div>
+        }
+      >
+        {upgradeReport && (
+          <div className="space-y-4">
+            <p className="text-sm leading-relaxed text-[var(--a-text)]">
+              Upgrade the <span className="font-semibold">summary</span> report for{' '}
+              <span className="font-semibold">&ldquo;{upgradeReport.session_name}&rdquo;</span> to a full detailed report.
+              This generates the detailed report, marks it as paid, and delivers it to the client.
+            </p>
+            <div className="space-y-2">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--a-muted)]">Plan</p>
+              <div className="flex gap-2">
+                <label className="flex items-center gap-2 rounded-lg border border-[var(--a-border)] bg-[var(--a-subtle)] p-3 cursor-pointer hover:bg-[var(--a-hover)] has-[:checked]:border-[#E8510A] has-[:checked]:bg-[#E8510A]/5">
+                  <input type="radio" name="upgrade-plan" value="detailed" checked={upgradePlan === 'detailed'} onChange={() => setUpgradePlan('detailed')} className="accent-[#E8510A]" />
+                  <div>
+                    <p className="text-sm font-semibold text-[var(--a-ink)]">Full Report</p>
+                    <p className="text-[12px] text-[var(--a-muted)]">Report only</p>
+                  </div>
+                </label>
+                <label className="flex items-center gap-2 rounded-lg border border-[var(--a-border)] bg-[var(--a-subtle)] p-3 cursor-pointer hover:bg-[var(--a-hover)] has-[:checked]:border-[#E8510A] has-[:checked]:bg-[#E8510A]/5">
+                  <input type="radio" name="upgrade-plan" value="detailed_call" checked={upgradePlan === 'detailed_call'} onChange={() => setUpgradePlan('detailed_call')} className="accent-[#E8510A]" />
+                  <div>
+                    <p className="text-sm font-semibold text-[var(--a-ink)]">Full Report + Call</p>
+                    <p className="text-[12px] text-[var(--a-muted)]">Report + advisory call</p>
+                  </div>
+                </label>
+              </div>
+            </div>
+            <label className="flex items-start gap-3 rounded-lg border border-[var(--a-border)] bg-[var(--a-subtle)] p-4 cursor-pointer hover:bg-[var(--a-hover)]">
+              <input
+                type="checkbox"
+                checked={upgradeSendEmail}
+                onChange={(e) => setUpgradeSendEmail(e.target.checked)}
+                className="mt-0.5 h-4 w-4 accent-[#E8510A]"
+              />
+              <div>
+                <p className="text-sm font-semibold text-[var(--a-ink)]">Send email to client</p>
+                <p className="mt-0.5 text-[12px] text-[var(--a-muted)]">
+                  Deliver the upgraded report to {upgradeReport.session_name}&apos;s email address.
+                </p>
+              </div>
+            </label>
           </div>
         )}
       </Modal>
