@@ -8,9 +8,16 @@ const ADMIN_VERIFIED_MAX_AGE = 60 * 5; // 5 minutes
 
 /**
  * Timeout wrapper — rejects if the promise takes longer than `ms`.
+ * Cleans up the timer to avoid unhandled rejections on success.
  */
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
-  return Promise.race([promise, new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), ms))]);
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('timeout')), ms);
+    promise.then(
+      (value) => { clearTimeout(timer); resolve(value); },
+      (err) => { clearTimeout(timer); reject(err); },
+    );
+  });
 }
 
 const MIDDLEWARE_TIMEOUT_MS = 8000; // 8 seconds — Vercel Edge limit is 30s but we want headroom
