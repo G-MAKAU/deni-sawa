@@ -140,11 +140,12 @@ export async function runReportGeneration(
     session.business_name ? `, business name "${session.business_name}"` : ''
   }. Here are their answers:\n\n${qaText}\n\nPREMIUM REPORT FORMAT — use every formatting tool to craft an elegant, professional report:\n- Clear heading hierarchy: H1 for the report title, H2 for each major section, H3 for sub-findings.\n- Bold key figures, ratings and important terms for emphasis.\n- Bullet lists for findings and numbered lists for sequential steps; use checklist items where a "done/confirmed" state is meaningful.\n- Quote blocks for priority callouts and advisor notes.\n- Callout blocks for recommendations and "why it matters" highlights.\n- Horizontal dividers between major sections for clean visual separation.\n- Table nodes for scores, comparisons and milestones — the renderer and exports (PDF/Word) support tables.\n- Add a relevant link where it genuinely adds value.\n- Keep the tone premium, polished and easy to scan — never cramped or cluttered.`;
 
-  const summaryRestrictions = reportType === 'summary'
-    ? `\n\nIMPORTANT — SUMMARY REPORT RESTRICTIONS (this is the FREE tier):\n- List the top 3 priority areas by NAME ONLY. Do not explain findings in detail.\n- Do NOT include category-by-category findings or what each finding means.\n- Do NOT include recommendations, action steps, or an action plan.\n- Do NOT include an advisor commentary section.\n- Keep the report concise — executive summary + top 3 priorities named, nothing more.\n- End the report with this exact call-to-action: "Upgrade to the Full Report to see category-by-category findings, what they mean for your business, and a prioritised action plan."`
-    : '';
+  // ── Summary restrictions (disabled — report now follows the DB prompt only) ──
+  // const summaryRestrictions = reportType === 'summary'
+  //   ? `\n\nIMPORTANT — SUMMARY REPORT RESTRICTIONS (this is the FREE tier):\n- List the top 3 priority areas by NAME ONLY. Do not explain findings in detail.\n- Do NOT include category-by-category findings or what each finding means.\n- Do NOT include recommendations, action steps, or an action plan.\n- Do NOT include an advisor commentary section.\n- Keep the report concise — executive summary + top 3 priorities named, nothing more.\n- End the report with this exact call-to-action: "Upgrade to the Full Report to see category-by-category findings, what they mean for your business, and a prioritised action plan."`
+  //   : '';
 
-  const userContent = baseContent + summaryRestrictions + `\n\nOutput format: Return ONLY a valid Lexical EditorState JSON object — no prose, no markdown fences. Ensure strictly valid JSON: every key and string value double-quoted, no trailing commas.`;
+  const userContent = baseContent + `\n\nOutput format: Return ONLY a valid Lexical EditorState JSON object — no prose, no markdown fences. Ensure strictly valid JSON: every key and string value double-quoted, no trailing commas.`;
 
   const provider = (prompt?.provider as ReportProvider | undefined) ?? 'anthropic';
   let generated;
