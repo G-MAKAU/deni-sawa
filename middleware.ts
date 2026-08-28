@@ -45,12 +45,15 @@ export async function middleware(request: NextRequest) {
     const res = NextResponse.redirect(url);
     res.cookies.delete(LAST_ACTIVITY_COOKIE);
     res.cookies.delete(ADMIN_VERIFIED_COOKIE);
-    // Fire-and-forget signOut — Edge won't wait for it.
-    createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '',
-      { cookies: { getAll: () => request.cookies.getAll(), setAll: () => {} } }
-    ).auth.signOut().catch(() => {});
+    // Fire-and-forget signOut — only if env vars are present.
+    const signOutKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY;
+    if (process.env.NEXT_PUBLIC_SUPABASE_URL && signOutKey) {
+      createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL,
+        signOutKey,
+        { cookies: { getAll: () => request.cookies.getAll(), setAll: () => {} } }
+      ).auth.signOut().catch(() => {});
+    }
     return res;
   }
 
@@ -65,14 +68,23 @@ export async function middleware(request: NextRequest) {
   }
 
   // --- Slow path: verify session + admin status (bounded by timeout) ---
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey =
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY;
+
+  if (!supabaseUrl || !supabaseKey) {
+    // Env vars missing — can't authenticate. Let request through; page-level
+    // routes will show proper errors.
+    response.cookies.set(LAST_ACTIVITY_COOKIE, Date.now().toString(), {
+      httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', maxAge: 60 * 60 * 24,
+    });
+    return response;
+  }
+
   try {
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
-        process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
-        process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY ??
-        '',
-      {
+    const supabase = createServerClient(supabaseUrl, supabaseKey, {
         cookies: {
           getAll: () => request.cookies.getAll(),
           setAll: (cookiesToSet) =>
