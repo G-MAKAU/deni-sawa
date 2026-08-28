@@ -108,8 +108,8 @@ export async function POST(req: NextRequest) {
 
     if (!geminiRes.ok) {
       const errBody = await geminiRes.text().catch(() => '');
-      console.error(`Gemini API error (${geminiRes.status}):`, errBody.slice(0, 300));
-      return Response.json({ reply: fallbackReply(message) }, { status: 200 });
+      console.error(`Gemini API error (${geminiRes.status}):`, errBody.slice(0, 500));
+      return Response.json({ reply: `AI service error (${geminiRes.status}): ${errBody.slice(0, 200) || 'Unknown error'}. Please try again or contact us at advisory@denisawa.co.ke.` }, { status: 200 });
     }
 
     const data = await geminiRes.json();
@@ -119,8 +119,8 @@ export async function POST(req: NextRequest) {
       .trim();
 
     if (!text) {
-      console.error('Gemini returned empty response:', JSON.stringify(data).slice(0, 300));
-      return Response.json({ reply: fallbackReply(message) }, { status: 200 });
+      console.error('Gemini returned empty response:', JSON.stringify(data).slice(0, 500));
+      return Response.json({ reply: `AI returned an empty response. Please try again or contact us at advisory@denisawa.co.ke.` }, { status: 200 });
     }
 
     return Response.json({ reply: text }, { status: 200 });
