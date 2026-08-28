@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
       getSetting('OPENAI_API_KEY'),
       getSetting('GEMINI_MODEL'),
     ]);
-    const apiKey = dbGeminiKey || dbOpenaiKey || process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY;
+    const apiKey = (dbGeminiKey || dbOpenaiKey || process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY) as string;
     const model = dbGeminiModel || process.env.GEMINI_MODEL || 'gemini-flash-latest';
 
     if (!apiKey) {
@@ -93,61 +93,37 @@ export async function POST(req: NextRequest) {
     }
     contents.push({ role: 'user', parts: [{ text: message }] });
 
-    const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          systemInstruction: { parts: [{ text: system }] },
-          contents,
-            generationConfig: { maxOutputTokens: 1000, temperature: 0.7 },
-        }),
-      }
-    );
+    const payload = {
+      systemInstruction: { parts: [{ text: system }] },
+      contents,
+      generationConfig: { maxOutputTokens: 1000, temperature: 0.7 },
+    };
 
-    // If model not found (404), retry once with gemini-flash-latest
-    if (geminiRes.status === 404 && model !== 'gemini-flash-latest') {
-      const retryRes = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${encodeURIComponent(apiKey)}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            systemInstruction: { parts: [{ text: system }] },
-            contents,
-            generationConfig: { maxOutputTokens: 1000, temperature: 0.7 },
-          }),
-        }
+    async function callGemini(m: string) {
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${encodeURIComponent(apiKey)}`,
+        { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }
       );
-      if (retryRes.ok) {
-        const retryData = await retryRes.json();
-        const retryText = retryData?.candidates?.[0]?.content?.parts
-          ?.map((p: { text?: string }) => p.text || '')
-          .join('')
-          .trim();
-        if (retryText) return Response.json({ reply: retryText }, { status: 200 });
-      }
+      if (!res.ok) return null;
+      const data = await res.json();
+      return data?.candidates?.[0]?.content?.parts?.map((p: { text?: string }) => p.text || '').join('').trim() || null;
     }
 
-    if (!geminiRes.ok) {
-      const errBody = await geminiRes.text().catch(() => '');
-      console.error(`Gemini API error (${geminiRes.status}):`, errBody.slice(0, 500));
-      return Response.json({ reply: `AI service error (${geminiRes.status}): ${errBody.slice(0, 200) || 'Unknown error'}. Please try again or contact us at advisory@denisawa.co.ke.` }, { status: 200 });
+    // 1. Try DB model → 2. Try .env model → 3. Try gemini-flash-latest
+    const envModel = process.env.GEMINI_MODEL || 'gemini-flash-latest';
+    const candidates = [model, envModel, 'gemini-flash-latest'].filter((v, i, a) => v && a.indexOf(v) === i);
+
+    let reply: string | null = null;
+    let lastError = '';
+    for (const m of candidates) {
+      reply = await callGemini(m);
+      if (reply) break;
+      lastError = m;
     }
 
-    const data = await geminiRes.json();
-    const text = data?.candidates?.[0]?.content?.parts
-      ?.map((p: { text?: string }) => p.text || '')
-      .join('')
-      .trim();
+    if (reply) return Response.json({ reply }, { status: 200 });
 
-    if (!text) {
-      console.error('Gemini returned empty response:', JSON.stringify(data).slice(0, 500));
-      return Response.json({ reply: `AI returned an empty response. Please try again or contact us at advisory@denisawa.co.ke.` }, { status: 200 });
-    }
-
-    return Response.json({ reply: text }, { status: 200 });
+    return Response.json({ reply: `AI service error — model "${lastError}" failed. Please try again or contact us at advisory@denisawa.co.ke.` }, { status: 200 });
   } catch (err) {
     console.error('Chat route error:', err);
     return Response.json(
