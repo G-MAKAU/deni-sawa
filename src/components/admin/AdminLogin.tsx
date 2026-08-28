@@ -52,6 +52,15 @@ export function AdminLogin() {
         setSubmitting(false);
         return;
       }
+      // Fire-and-forget login notification email (don't block navigation).
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session?.access_token) {
+          fetch('/api/admin/auth/login-notify', {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${session.access_token}` },
+          }).catch(() => {});
+        }
+      }).catch(() => {});
       // Keep submitting=true so the button stays in "Redirecting…" state
       // until the navigation completes.
       router.replace('/admin/dashboard');
