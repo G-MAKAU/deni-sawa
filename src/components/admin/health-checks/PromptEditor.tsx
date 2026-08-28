@@ -36,8 +36,8 @@ const PROVIDERS: ReportProvider[] = ['anthropic', 'google', 'openrouter'];
 
 const FALLBACK_MODELS: Record<ReportProvider, string[]> = {
   anthropic: ['claude-sonnet-4-6', 'claude-sonnet-4-5', 'claude-opus-4-1', 'claude-haiku-4-5'],
-  google: ['gemini-3.6-flash', 'gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.0-flash'],
-  openrouter: ['anthropic/claude-sonnet-4-6', 'anthropic/claude-opus-4-1', 'google/gemini-3.6-flash', 'openai/gpt-4o'],
+  google: ['gemini-flash-latest', 'gemini-pro-latest', 'gemini-3.6-flash', 'gemini-2.5-flash'],
+  openrouter: ['anthropic/claude-sonnet-4-6', 'anthropic/claude-opus-4-1', 'google/gemini-flash-latest', 'openai/gpt-4o'],
 };
 
 /** Builds a minimal Lexical EditorState from plain text (paragraph per line). */

@@ -77,7 +77,7 @@ export async function POST(req: NextRequest) {
       getSetting('GEMINI_MODEL'),
     ]);
     const apiKey = dbGeminiKey || dbOpenaiKey || process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY;
-    const model = dbGeminiModel || process.env.GEMINI_MODEL || 'gemini-3.6-flash';
+    const model = dbGeminiModel || process.env.GEMINI_MODEL || 'gemini-flash-latest';
 
     if (!apiKey) {
       return Response.json({ reply: fallbackReply(message) }, { status: 200 });
@@ -105,6 +105,30 @@ export async function POST(req: NextRequest) {
         }),
       }
     );
+
+    // If model not found (404), retry once with gemini-flash-latest
+    if (geminiRes.status === 404 && model !== 'gemini-flash-latest') {
+      const retryRes = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${encodeURIComponent(apiKey)}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            systemInstruction: { parts: [{ text: system }] },
+            contents,
+            generationConfig: { maxOutputTokens: 250, temperature: 0.7 },
+          }),
+        }
+      );
+      if (retryRes.ok) {
+        const retryData = await retryRes.json();
+        const retryText = retryData?.candidates?.[0]?.content?.parts
+          ?.map((p: { text?: string }) => p.text || '')
+          .join('')
+          .trim();
+        if (retryText) return Response.json({ reply: retryText }, { status: 200 });
+      }
+    }
 
     if (!geminiRes.ok) {
       const errBody = await geminiRes.text().catch(() => '');

@@ -6,14 +6,14 @@ import { getSetting } from '@/lib/settings';
 export const dynamic = 'force-dynamic';
 
 const FALLBACK_ANTHROPIC = ['claude-sonnet-4-6', 'claude-sonnet-4-5', 'claude-opus-4-1', 'claude-haiku-4-5'];
-const FALLBACK_GOOGLE = ['gemini-3.6-flash', 'gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.0-flash'];
+const FALLBACK_GOOGLE = ['gemini-flash-latest', 'gemini-pro-latest', 'gemini-3.6-flash', 'gemini-2.5-flash'];
 const FALLBACK_OPENROUTER = [
   'anthropic/claude-sonnet-4-6',
   'anthropic/claude-sonnet-4-5',
   'anthropic/claude-opus-4-1',
   'anthropic/claude-haiku-4-5',
-  'google/gemini-3.6-flash',
-  'google/gemini-2.5-pro',
+  'google/gemini-flash-latest',
+  'google/gemini-pro-latest',
   'openai/gpt-4o',
   'openai/gpt-4o-mini',
 ];
