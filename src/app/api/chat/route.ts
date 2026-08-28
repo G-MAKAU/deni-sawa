@@ -101,7 +101,7 @@ export async function POST(req: NextRequest) {
         body: JSON.stringify({
           systemInstruction: { parts: [{ text: system }] },
           contents,
-            generationConfig: { maxOutputTokens: 500, temperature: 0.7 },
+            generationConfig: { maxOutputTokens: 1000, temperature: 0.7 },
         }),
       }
     );
@@ -116,7 +116,7 @@ export async function POST(req: NextRequest) {
           body: JSON.stringify({
             systemInstruction: { parts: [{ text: system }] },
             contents,
-          generationConfig: { maxOutputTokens: 500, temperature: 0.7 },
+            generationConfig: { maxOutputTokens: 1000, temperature: 0.7 },
           }),
         }
       );
