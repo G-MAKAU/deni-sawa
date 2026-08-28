@@ -587,7 +587,7 @@ export async function resolveProviderConfig(provider: ReportProvider): Promise<P
     const model =
       s.AI_MODEL ||
       envModelFor(type) ||
-      (type === 'google' ? 'gemini-2.5-flash' : type === 'anthropic' ? 'claude-sonnet-4-5' : 'gpt-4o-mini');
+      (type === 'google' ? 'gemini-3.6-flash' : type === 'anthropic' ? 'claude-sonnet-4-5' : 'gpt-4o-mini');
     return {
       type,
       baseUrl: s.AI_BASE_URL ?? defaultBaseUrl(type),
@@ -604,7 +604,7 @@ export async function resolveProviderConfig(provider: ReportProvider): Promise<P
     return {
       type: 'google',
       apiKey,
-      model: s.GEMINI_MODEL ?? process.env.GEMINI_MODEL ?? 'gemini-2.5-flash',
+      model: s.GEMINI_MODEL ?? process.env.GEMINI_MODEL ?? 'gemini-3.6-flash',
       label: 'Gemini',
     };
   }
@@ -616,7 +616,7 @@ export async function resolveProviderConfig(provider: ReportProvider): Promise<P
       s.OPENROUTER_MODEL ??
       process.env.OPENROUTER_MODEL ??
       process.env.OPENAI_MODEL ??
-      (provider === 'openrouter' ? 'google/gemini-2.5-flash' : 'gpt-4o-mini');
+      (provider === 'openrouter' ? 'google/gemini-3.6-flash' : 'gpt-4o-mini');
     return { type: 'openai', baseUrl, apiKey, model, label: provider === 'openrouter' ? 'OpenRouter' : 'OpenAI' };
   }
   const apiKey = s.ANTHROPIC_API_KEY ?? process.env.ANTHROPIC_API_KEY;
@@ -645,7 +645,7 @@ export async function resolveFallbackConfig(): Promise<(ProviderConfig & { label
   const model =
     s.AI_FALLBACK_MODEL ||
     envModelFor(type) ||
-    (type === 'google' ? 'gemini-2.5-flash' : type === 'anthropic' ? 'claude-sonnet-4-5' : 'gpt-4o-mini');
+    (type === 'google' ? 'gemini-3.6-flash' : type === 'anthropic' ? 'claude-sonnet-4-5' : 'gpt-4o-mini');
 
   return {
     type,
@@ -777,7 +777,7 @@ export async function generateReportWithOpenAICompatible(
 export async function generateReportWithOpenRouter(options: GenerateReportOptions): Promise<GeneratedReport> {
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) throw new Error('OpenRouter API key is not configured.');
-  const model = process.env.OPENROUTER_MODEL ?? 'google/gemini-2.5-flash';
+  const model = process.env.OPENROUTER_MODEL ?? 'google/gemini-3.6-flash';
   return generateReportWithOpenAICompatible(
     { type: 'openai', baseUrl: 'https://openrouter.ai/api/v1', apiKey, model },
     options

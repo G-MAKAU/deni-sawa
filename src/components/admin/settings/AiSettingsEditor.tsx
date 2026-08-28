@@ -39,13 +39,13 @@ interface Preset {
 
 const PRESETS: Preset[] = [
   { id: 'anthropic', type: 'anthropic', baseUrl: 'https://api.anthropic.com/v1', label: 'Anthropic (Claude)', models: ['claude-sonnet-4-6', 'claude-sonnet-4-5', 'claude-opus-4-1', 'claude-haiku-4-5'] },
-  { id: 'google', type: 'google', baseUrl: 'https://generativelanguage.googleapis.com/v1beta', label: 'Google (Gemini)', models: ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.0-flash'] },
+  { id: 'google', type: 'google', baseUrl: 'https://generativelanguage.googleapis.com/v1beta', label: 'Google (Gemini)', models: ['gemini-3.6-flash', 'gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.0-flash'] },
   { id: 'openai', type: 'openai', baseUrl: 'https://api.openai.com/v1', label: 'OpenAI', models: ['gpt-4o', 'gpt-4o-mini', 'gpt-4.1'] },
   { id: 'deepseek', type: 'openai', baseUrl: 'https://api.deepseek.com/v1', label: 'DeepSeek', models: ['deepseek-chat', 'deepseek-reasoner'] },
   { id: 'qwen', type: 'openai', baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1', label: 'Qwen (Alibaba)', models: ['qwen-plus', 'qwen-max', 'qwen-turbo'] },
   { id: 'kimi', type: 'openai', baseUrl: 'https://api.moonshot.cn/v1', label: 'Kimi (Moonshot)', models: ['moonshot-v1-8k', 'moonshot-v1-32k', 'kimi-latest'] },
   { id: 'groq', type: 'openai', baseUrl: 'https://api.groq.com/openai/v1', label: 'Groq', models: ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant'] },
-  { id: 'openrouter', type: 'openai', baseUrl: 'https://openrouter.ai/api/v1', label: 'OpenRouter', models: ['google/gemini-2.5-flash', 'deepseek/deepseek-chat', 'anthropic/claude-sonnet-4-6'] },
+  { id: 'openrouter', type: 'openai', baseUrl: 'https://openrouter.ai/api/v1', label: 'OpenRouter', models: ['google/gemini-3.6-flash', 'deepseek/deepseek-chat', 'anthropic/claude-sonnet-4-6'] },
   { id: 'custom', type: 'openai', baseUrl: '', label: 'Custom (OpenAI-compatible)', models: [] },
 ];
 

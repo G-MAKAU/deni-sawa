@@ -77,7 +77,7 @@ export async function POST(req: NextRequest) {
       getSetting('GEMINI_MODEL'),
     ]);
     const apiKey = dbGeminiKey || dbOpenaiKey || process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY;
-    const model = dbGeminiModel || process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+    const model = dbGeminiModel || process.env.GEMINI_MODEL || 'gemini-3.6-flash';
 
     if (!apiKey) {
       return Response.json({ reply: fallbackReply(message) }, { status: 200 });
