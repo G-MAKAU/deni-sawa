@@ -13,7 +13,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
     const { data: report, error } = await supabase
       .from('health_check_reports')
       .select(
-        '*, session:health_check_sessions(full_name, business_name, health_check_id, whatsapp, report_selection, payment_status, payment_amount), checks:health_check_sessions!inner(health_checks(name, detailed_price, detailed_call_price))'
+        '*, session:health_check_sessions(full_name, business_name, health_check_id, whatsapp, report_selection, payment_status, payment_amount)'
       )
       .eq('report_url_token', token)
       .maybeSingle();
@@ -38,9 +38,24 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
     await supabase.from('health_check_reports').update({ accessed_at: new Date().toISOString() }).eq('id', report.id);
 
     const session = Array.isArray(report.session) ? report.session[0] : report.session;
-    const checks = Array.isArray(report.checks) ? report.checks : [];
-    const check = (checks[0] as { health_checks?: { name?: string; detailed_price?: number | null; detailed_call_price?: number | null } } | undefined)?.health_checks;
-    const checkName = check?.name ?? 'Health Check';
+    const healthCheckId = (session as { health_check_id?: string } | undefined)?.health_check_id ?? '';
+
+    // Fetch health check prices separately (nested join unreliable).
+    let checkName = 'Health Check';
+    let detailedPrice = 0;
+    let detailedCallPrice = 0;
+    if (healthCheckId) {
+      const { data: hc } = await supabase
+        .from('health_checks')
+        .select('name, detailed_price, detailed_call_price')
+        .eq('id', healthCheckId)
+        .maybeSingle();
+      if (hc) {
+        checkName = (hc as { name?: string }).name ?? checkName;
+        detailedPrice = Number((hc as { detailed_price?: number | null }).detailed_price ?? 0);
+        detailedCallPrice = Number((hc as { detailed_call_price?: number | null }).detailed_call_price ?? 0);
+      }
+    }
 
     // Header/Footer come live from the prompt template (health_check_report_prompts).
     const { data: prompt } = await supabase
@@ -71,8 +86,8 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
         report_selection: (session as { report_selection?: string | null } | undefined)?.report_selection ?? 'summary',
         payment_status: (session as { payment_status?: string | null } | undefined)?.payment_status ?? 'none',
         payment_amount: Number((session as { payment_amount?: number | null } | undefined)?.payment_amount ?? 0),
-        detailed_price: Number(check?.detailed_price ?? 0),
-        detailed_call_price: Number(check?.detailed_call_price ?? 0),
+        detailed_price: detailedPrice,
+        detailed_call_price: detailedCallPrice,
       },
     });
   } catch (error) {
