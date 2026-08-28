@@ -13,6 +13,7 @@ import { TimePicker } from '@/components/ui/time-picker';
 interface Message {
   role: 'user' | 'assistant';
   content: string;
+  retry?: boolean;
 }
 
 type Tab = 'suggestions' | 'chat';
@@ -230,13 +231,14 @@ export function AIChatWidget() {
         throw new Error('Invalid response format');
       }
 
-      setMessages((prev) => [...prev, { role: 'assistant', content: data.reply }]);
+      setMessages((prev) => [...prev, { role: 'assistant', content: data.reply, retry: data.retry }]);
     } catch {
       setMessages((prev) => [
         ...prev,
         {
           role: 'assistant',
-          content: `I'm having trouble connecting right now. Please reach us directly at ${business.email} or ${business.phone}.`,
+          content: `I'm having trouble connecting right now. Please try again, or reach us at ${business.email} or ${business.phone}.`,
+          retry: true,
         },
       ]);
     } finally {
@@ -423,6 +425,20 @@ export function AIChatWidget() {
                       )}
                     >
                       {msg.content}
+                      {msg.retry && msg.role === 'assistant' && (
+                        <button
+                          onClick={() => {
+                            const lastUserMsg = [...messages].reverse().find((m) => m.role === 'user');
+                            if (lastUserMsg) {
+                              setMessages((prev) => prev.filter((m) => m !== msg));
+                              sendMessage(lastUserMsg.content);
+                            }
+                          }}
+                          className="mt-2 flex items-center gap-1 text-[11px] font-semibold text-brand hover:underline"
+                        >
+                          <RefreshCw className="h-3 w-3" /> Try again
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}

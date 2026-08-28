@@ -123,11 +123,12 @@ export async function POST(req: NextRequest) {
 
     if (reply) return Response.json({ reply }, { status: 200 });
 
-    return Response.json({ reply: `AI service error — model "${lastError}" failed. Please try again or contact us at advisory@denisawa.co.ke.` }, { status: 200 });
+    console.error('All Gemini models failed:', lastError);
+    return Response.json({ reply: 'I was unable to process that just now. Please try again, or reach us at advisory@denisawa.co.ke or +254 702 448 601.', retry: true }, { status: 200 });
   } catch (err) {
     console.error('Chat route error:', err);
     return Response.json(
-      { reply: 'Sorry, I hit a snag. Please reach us directly at advisory@denisawa.co.ke or +254 702 448 601.' },
+      { reply: 'Something went wrong. Please try again, or reach us at advisory@denisawa.co.ke or +254 702 448 601.', retry: true },
       { status: 200 }
     );
   }
