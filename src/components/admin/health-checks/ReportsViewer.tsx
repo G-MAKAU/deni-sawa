@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 import { adminFetch, adminPut } from '@/lib/admin-client';
 import { LexicalRenderer } from '@/features/lexical/LexicalRenderer';
 import { ErrorBanner, Loading, Modal, PageHeader, StatusPill, Td, Th, Toggle } from '@/components/admin/ui';
+import { DatePicker } from '@/components/ui/date-picker';
 
 interface ReportRow {
   id: string;
@@ -270,18 +271,35 @@ export function ReportsViewer() {
           };
 
           if (editing) {
+            const handleSelect = async (iso: string) => {
+              setSaving(true);
+              try {
+                const isoDate = iso ? `${iso}T23:59:59.000Z` : null;
+                await adminPut(`/api/admin/health-checks/reports/${report.id}`, { expires_at: isoDate });
+                setReports((prev) => prev.map((r) => (r.id === report.id ? { ...r, expires_at: isoDate } : r)));
+                setEditing(false);
+                toast.success('Expiry updated');
+              } catch {
+                toast.error('Failed to update expiry');
+              } finally {
+                setSaving(false);
+              }
+            };
+
             return (
-              <div className="flex items-center gap-1">
-                <input
-                  type="date"
-                  value={draft}
-                  onChange={(e) => setDraft(e.target.value)}
-                  className="w-[130px] rounded border border-[var(--a-border)] bg-[var(--a-card)] px-1.5 py-0.5 text-[11px]"
+              <div className="flex items-center gap-1.5">
+                <DatePicker
+                  value={draft || undefined}
+                  onSelect={handleSelect}
+                  placeholder="Set expiry"
+                  disablePast={false}
+                  clearable
+                  className="w-[150px]"
                 />
-                <button type="button" onClick={save} disabled={saving} className="text-[11px] font-semibold text-[#5A9E28] hover:underline">
-                  {saving ? '…' : 'Save'}
+                <button type="button" onClick={() => { adminPut(`/api/admin/health-checks/reports/${report.id}`, { expires_at: null }).then(() => { setReports((prev) => prev.map((r) => (r.id === report.id ? { ...r, expires_at: null } : r))); setEditing(false); toast.success('Expiry cleared'); }).catch(() => toast.error('Failed')); }} className="shrink-0 text-[11px] text-[var(--a-muted)] hover:underline" disabled={saving}>
+                  Never
                 </button>
-                <button type="button" onClick={() => setEditing(false)} className="text-[11px] text-[var(--a-muted)] hover:underline">
+                <button type="button" onClick={() => setEditing(false)} className="shrink-0 text-[11px] text-[var(--a-muted)] hover:underline">
                   Cancel
                 </button>
               </div>
