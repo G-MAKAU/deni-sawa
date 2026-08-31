@@ -213,13 +213,10 @@ function runStyle(run: ReportTextRun): Record<string, string | number> {
   if (run.underline && !run.strike) style.textDecoration = 'underline';
   if (run.strike) style.textDecoration = 'line-through';
   if (run.color) style.color = run.color;
-  // react-pdf expects a numeric fontSize (in pt) — a string like "14px" breaks layout.
   if (run.fontSize) {
     const pt = run.fontSize * 0.75;
     if (pt > 0 && pt < 150) style.fontSize = pt;
   }
-  // react-pdf only ships Helvetica/Times/Courier — map the known families so a
-  // custom family degrades gracefully instead of breaking.
   if (run.fontFamily) {
     const fam = run.fontFamily.toLowerCase();
     if (fam.includes('times') || fam.includes('georgia') || fam.includes('serif')) style.fontFamily = 'Times-Roman';
@@ -229,20 +226,43 @@ function runStyle(run: ReportTextRun): Record<string, string | number> {
   return style;
 }
 
+/** Recursively sanitise any style object / array tree so react-pdf never
+ *  receives extreme numeric values (e.g. from Lexical internal fields that
+ *  leak through as numbers). Numbers outside 0–1500 are clamped; non-finite
+ *  values are removed entirely. */
+function sanitizeStyles(node: unknown): unknown {
+  if (typeof node === 'number') {
+    if (!Number.isFinite(node)) return undefined;
+    if (node < 0) return Math.max(node, -1500);
+    if (node > 1500) return 1500;
+    return node;
+  }
+  if (Array.isArray(node)) return node.map(sanitizeStyles);
+  if (node && typeof node === 'object') {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(node)) {
+      out[k] = sanitizeStyles(v);
+    }
+    return out;
+  }
+  return node;
+}
+
 /** Branded PDF document built from the lexical report model. */
 export function HealthReportDocument({ model }: { model: ExportModel }) {
+  const safeModel = sanitizeStyles(model) as ExportModel;
   return (
     <Document
-      title={`${model.title} — Deni Sawa Partners`}
+      title={`${safeModel.title} — Deni Sawa Partners`}
       author="Deni Sawa Partners"
       creator="Deni Sawa Partners"
       subject="Diagnostic Health Report"
     >
       <Page size="A4" style={styles.page}>
-        <ReportHeader title={model.title} />
+        <ReportHeader title={safeModel.title} />
         <View style={styles.accentBar} />
 
-        {model.blocks.map((block, i) => {
+        {safeModel.blocks.map((block, i) => {
           switch (block.kind) {
             case 'heading': {
               const headingStyle =
