@@ -15,7 +15,7 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
 
     const { data: report, error } = await supabase
       .from('health_check_reports')
-      .select('*, session:health_check_sessions(*), checks:health_check_sessions!inner(health_checks(slug, name))')
+      .select('*, session:health_check_sessions(full_name, business_name, health_check_id)')
       .eq('report_url_token', token)
       .maybeSingle();
 
@@ -26,16 +26,27 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
       return NextResponse.json({ error: 'Report has no content to export.' }, { status: 400 });
     }
 
-    const checks = Array.isArray(report.checks) ? report.checks : [];
-    const check = (checks[0] as { health_checks?: { slug?: string; name?: string } } | undefined)?.health_checks;
-    const checkType = check?.slug?.startsWith('professional') ? 'professional' : 'business';
-    const title = check?.name ?? 'Health Check Report';
-
     const session = Array.isArray(report.session) ? report.session[0] : report.session;
+    const healthCheckId = (session as { health_check_id?: string } | undefined)?.health_check_id ?? '';
+
+    let checkType = 'business';
+    let title = 'Health Check Report';
+    if (healthCheckId) {
+      const { data: hc } = await supabase
+        .from('health_checks')
+        .select('slug, name')
+        .eq('id', healthCheckId)
+        .maybeSingle();
+      if (hc) {
+        checkType = (hc as { slug?: string })?.slug?.startsWith('professional') ? 'professional' : 'business';
+        title = (hc as { name?: string })?.name ?? title;
+      }
+    }
+
     const { data: prompt } = await supabase
       .from('health_check_report_prompts')
       .select('header_lexical, footer_lexical')
-      .eq('health_check_id', (session as { health_check_id?: string } | undefined)?.health_check_id ?? '')
+      .eq('health_check_id', healthCheckId)
       .eq('report_type', report.report_type)
       .maybeSingle();
 
@@ -58,10 +69,10 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
       buffer = await renderToBuffer(HealthReportDocument({ model }));
     } catch (renderError) {
       console.error('PDF render failed:', renderError);
-      return NextResponse.json({ error: 'Failed to render PDF. The report may be too large.' }, { status: 500 });
+      const detail = renderError instanceof Error ? renderError.message : String(renderError);
+      return NextResponse.json({ error: 'Failed to render PDF.', detail }, { status: 500 });
     }
 
-    // Filename = "<business> - <full name>" (falls back to a generic name).
     const business = (session as { business_name?: string | null } | undefined)?.business_name ?? '';
     const fullName = (session as { full_name?: string | null } | undefined)?.full_name ?? '';
     const fileBase = [business, fullName].filter(Boolean).join(' - ') || 'deni-sawa-health-report';
