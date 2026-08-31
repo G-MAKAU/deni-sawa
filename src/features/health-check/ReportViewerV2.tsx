@@ -74,23 +74,93 @@ export function ReportViewerV2({ token }: { token: string }) {
     };
   }, []);
 
+  const reportRef = React.useRef<HTMLDivElement>(null);
+
   const handleExport = async (kind: 'pdf' | 'word') => {
     setDownloading(kind);
     try {
-      const res = await fetch(`/api/reports/export/${kind}/${token}`, { method: 'POST' });
-      if (!res.ok) {
-        const body = await res.json().catch(() => null);
-        throw new Error(body?.error ?? body?.detail ?? `Export failed (${res.status}).`);
+      if (kind === 'word') {
+        const res = await fetch(`/api/reports/export/word/${token}`, { method: 'POST' });
+        if (!res.ok) {
+          const body = await res.json().catch(() => null);
+          throw new Error(body?.error ?? body?.detail ?? `Export failed (${res.status}).`);
+        }
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'deni-sawa-report.docx';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        return;
       }
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `deni-sawa-${kind === 'pdf' ? 'report.pdf' : 'report.docx'}`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
+
+      // PDF: client-side capture using html2canvas + jsPDF
+      const el = reportRef.current;
+      if (!el) throw new Error('Report content not found.');
+
+      const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
+        import('html2canvas'),
+        import('jspdf'),
+      ]);
+
+      const canvas = await html2canvas(el, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+      });
+
+      const imgData = canvas.toDataURL('image/jpeg', 0.95);
+      const imgW = canvas.width;
+      const imgH = canvas.height;
+
+      // A4 dimensions in points (1pt = 1/72 inch, 1px ≈ 0.75pt at 96dpi)
+      const pdfW = 595.28;
+      const pdfH = 841.89;
+      const margin = 36; // 0.5 inch
+      const contentW = pdfW - margin * 2;
+      const ratio = contentW / imgW;
+      const scaledH = imgH * ratio;
+
+      const pdf = new jsPDF('p', 'pt', 'a4');
+
+      // If content fits on one page
+      if (scaledH <= pdfH - margin * 2) {
+        pdf.addImage(imgData, 'JPEG', margin, margin, contentW, scaledH);
+      } else {
+        // Split across pages
+        const pageContentH = (pdfH - margin * 2);
+        let yOffset = 0;
+        let page = 0;
+
+        while (yOffset < imgH) {
+          if (page > 0) pdf.addPage();
+
+          // Calculate source region
+          const srcH = Math.min(pageContentH / ratio, imgH - yOffset);
+          const destH = srcH * ratio;
+
+          // Create a temporary canvas for this page slice
+          const pageCanvas = document.createElement('canvas');
+          pageCanvas.width = imgW;
+          pageCanvas.height = srcH;
+          const ctx = pageCanvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(canvas, 0, yOffset, imgW, srcH, 0, 0, imgW, srcH);
+            const pageData = pageCanvas.toDataURL('image/jpeg', 0.95);
+            pdf.addImage(pageData, 'JPEG', margin, margin, contentW, destH);
+          }
+
+          yOffset += srcH;
+          page++;
+        }
+      }
+
+      const baseName = report?.session_name ? `${report.session_name.replace(/[^\w\- ]+/g, '').trim()}` : 'deni-sawa';
+      pdf.save(`${baseName}-health-report.pdf`);
     } catch {
       setError('Export failed. Please try again.');
     } finally {
@@ -292,7 +362,7 @@ export function ReportViewerV2({ token }: { token: string }) {
       )}
 
       {/* Report body — forced light mode */}
-      <div className="report-doc rounded-lg border border-[#E5E5E5] bg-white p-6 text-[#1A1A1A] shadow-card sm:p-8" style={{ colorScheme: 'light' }}>
+      <div ref={reportRef} className="report-doc rounded-lg border border-[#E5E5E5] bg-white p-6 text-[#1A1A1A] shadow-card sm:p-8" style={{ colorScheme: 'light' }}>
         {report.header_lexical && (
           <div className="mb-6 border-b border-card-border pb-6">
             <LexicalRenderer state={report.header_lexical} />
