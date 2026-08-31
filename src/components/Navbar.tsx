@@ -113,18 +113,12 @@ export function Navbar() {
     <>
       <ScrollProgress />
 
-      <header
-        className={cn(
-          'sticky top-0 z-[80] w-full transition-colors duration-300',
-          compact
-          ? 'border-b border-card-border bg-nav shadow-[0_1px_40px_rgba(0,0,0,0.06)]'
-          : 'border-b border-transparent bg-nav/0'
-        )}
-      >
-        {/* Contact bar — absolute so it never changes header height (no layout shift). */}
+      {/* Non-sticky wrapper — contact bar sits here, sticky nav sits below. */}
+      <div className="relative z-[80]">
+        {/* Contact bar — relative positioned, never changes header height (no layout shift). */}
         <div
           className={cn(
-            'absolute bottom-full left-0 right-0 overflow-hidden transition-all duration-300 ease-out',
+            'overflow-hidden transition-all duration-300 ease-out',
             compact ? 'max-h-0 -translate-y-4 opacity-0 pointer-events-none' : 'max-h-14 translate-y-0 opacity-100'
           )}
         >
@@ -171,6 +165,15 @@ export function Navbar() {
             </div>
           </div>
         </div>
+
+        <header
+          className={cn(
+            'sticky top-0 z-[80] w-full transition-colors duration-300',
+            compact
+            ? 'border-b border-card-border bg-nav shadow-[0_1px_40px_rgba(0,0,0,0.06)]'
+            : 'border-b border-transparent bg-nav/0'
+          )}
+        >
 
         <div className="w-full px-4 sm:px-6 lg:px-8">
           <nav className="flex h-20 items-center justify-between gap-6 lg:h-[76px]">
@@ -374,6 +377,7 @@ href="/business-health-checks#choose-your-assessment"
           </nav>
         </div>
       </header>
+      </div>
 
       {/* Mobile drawer */}
       <div
