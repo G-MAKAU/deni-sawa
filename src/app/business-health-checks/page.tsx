@@ -33,7 +33,7 @@ const comparison = [
   { label: 'Prioritised recommendation list', basic: false, full: true },
   { label: 'Action plan with next steps', basic: false, full: true },
   { label: 'Advisor commentary section', basic: false, full: true },
-  { label: 'PDF export', basic: false, full: true },
+  { label: 'PDF export', basic: true, full: true },
   { label: 'Word export', basic: false, full: true },
   { label: 'Private report link (view online)', basic: true, full: true },
   { label: 'Emailed / WhatsApp delivery', basic: true, full: true },
@@ -240,7 +240,7 @@ export default async function HealthChecksPage() {
                 </div>
               ))}
               <p className="px-6 py-4 text-xs leading-relaxed text-muted-foreground">
-                The free summary report gives you scores, an executive summary, and your top 3 priorities — delivered by email or WhatsApp with a private link, valid for 30 days. The full diagnostic adds category-by-category findings, recommendations, an action plan, advisor commentary, and PDF/Word export — valid for 12 months.
+                The free summary report gives you scores, an executive summary, your top 3 priorities, and PDF export — delivered by email or WhatsApp with a private link, valid for 30 days. The full diagnostic adds category-by-category findings, recommendations, an action plan, advisor commentary, and Word export — valid for 12 months.
               </p>
             </div>
           </Reveal>
