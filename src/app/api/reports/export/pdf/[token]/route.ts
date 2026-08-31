@@ -70,7 +70,28 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
     } catch (renderError) {
       console.error('PDF render failed:', renderError);
       const detail = renderError instanceof Error ? renderError.message : String(renderError);
-      return NextResponse.json({ error: 'Failed to render PDF.', detail }, { status: 500 });
+
+      // Diagnostic: search raw lexical_state for the offending number
+      const stateStr = JSON.stringify(report.lexical_state);
+      const numMatch = stateStr.match(/-?2\.1773591117569993e\+?21/);
+      let context = 'not found in raw state';
+      if (numMatch && numMatch.index !== undefined) {
+        const start = Math.max(0, numMatch.index - 80);
+        const end = Math.min(stateStr.length, numMatch.index + numMatch[0].length + 80);
+        context = stateStr.slice(start, end);
+      }
+
+      // Also search the serialized model
+      const modelStr = JSON.stringify(model);
+      const modelMatch = modelStr.match(/-?2\.1773591117569993e\+?21/);
+      let modelContext = 'not found in model';
+      if (modelMatch && modelMatch.index !== undefined) {
+        const start = Math.max(0, modelMatch.index - 80);
+        const end = Math.min(modelStr.length, modelMatch.index + modelMatch[0].length + 80);
+        modelContext = modelStr.slice(start, end);
+      }
+
+      return NextResponse.json({ error: 'Failed to render PDF.', detail, stateContext: context, modelContext }, { status: 500 });
     }
 
     const business = (session as { business_name?: string | null } | undefined)?.business_name ?? '';
