@@ -606,6 +606,16 @@
 }
 
 /* ── Premium report document styling (web report viewer) ─────────────────── */
+/* Force light mode inside report body regardless of system/app preference */
+.report-doc {
+  color-scheme: light;
+  --text: #1A1A1A;
+  --muted: #6B7280;
+  --card: #FFFFFF;
+  --card-border: #E5E5E5;
+  background: #FFFFFF;
+  color: #1A1A1A;
+}
 .report-doc .ds-lexical h1 {
   font-family: var(--font-playfair), Georgia, serif;
   font-size: 1.9rem;

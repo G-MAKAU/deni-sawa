@@ -251,32 +251,25 @@ export function ReportViewerV2({ token }: { token: string }) {
         </div>
         <div className="flex items-center gap-2">
           <ShareMenu title={`${report.check_name} — Diagnostic Report`} />
-          {report.report_type === 'detailed' ? (
-            <>
-              <button
-                type="button"
-                onClick={() => handleExport('pdf')}
-                disabled={downloading !== null}
-                className="inline-flex items-center gap-1.5 rounded-btn border border-card-border bg-background px-3.5 py-2 text-[13px] font-semibold text-foreground transition-colors hover:border-brand/40 hover:text-brand disabled:opacity-50"
-              >
-                {downloading === 'pdf' ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
-                PDF
-              </button>
-              <button
-                type="button"
-                onClick={() => handleExport('word')}
-                disabled={downloading !== null}
-                className="inline-flex items-center gap-1.5 rounded-btn border border-card-border bg-background px-3.5 py-2 text-[13px] font-semibold text-foreground transition-colors hover:border-brand/40 hover:text-brand disabled:opacity-50"
-              >
-                {downloading === 'word' ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
-                Word
-              </button>
-            </>
-          ) : (
-            <span className="inline-flex items-center gap-1.5 rounded-btn border border-card-border bg-background px-3.5 py-2 text-[13px] font-medium text-muted-foreground">
-              <Lock className="h-3.5 w-3.5" />
-              PDF &amp; Word available in Full Report
-            </span>
+          <button
+            type="button"
+            onClick={() => handleExport('pdf')}
+            disabled={downloading !== null}
+            className="inline-flex items-center gap-1.5 rounded-btn border border-card-border bg-background px-3.5 py-2 text-[13px] font-semibold text-foreground transition-colors hover:border-brand/40 hover:text-brand disabled:opacity-50"
+          >
+            {downloading === 'pdf' ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
+            PDF
+          </button>
+          {report.report_type === 'detailed' && (
+            <button
+              type="button"
+              onClick={() => handleExport('word')}
+              disabled={downloading !== null}
+              className="inline-flex items-center gap-1.5 rounded-btn border border-card-border bg-background px-3.5 py-2 text-[13px] font-semibold text-foreground transition-colors hover:border-brand/40 hover:text-brand disabled:opacity-50"
+            >
+              {downloading === 'word' ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
+              Word
+            </button>
           )}
         </div>
       </div>
@@ -295,8 +288,8 @@ export function ReportViewerV2({ token }: { token: string }) {
         </div>
       )}
 
-      {/* Report body */}
-      <div className="report-doc rounded-lg border border-card-border bg-card p-6 shadow-card sm:p-8">
+      {/* Report body — forced light mode */}
+      <div className="report-doc rounded-lg border border-[#E5E5E5] bg-white p-6 text-[#1A1A1A] shadow-card sm:p-8" style={{ colorScheme: 'light' }}>
         {report.header_lexical && (
           <div className="mb-6 border-b border-card-border pb-6">
             <LexicalRenderer state={report.header_lexical} />

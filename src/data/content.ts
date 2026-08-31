@@ -338,6 +338,16 @@ HOW TO TALK
 
 export const faqAnswers = [
   {
+    title: 'What is debt management?',
+    keywords: ['what is debt management', 'debt management', 'define debt', 'meaning of debt'],
+    answer: `Debt management is the process of organising, reducing and systematically paying off debt — typically through a structured plan that consolidates payments, negotiates better terms with creditors, and builds a clear timeline to becoming debt-free. At Deni Sawa, we offer professional debt management as part of our pathway for professionals and individuals: start with the Professional Financial Health Check, then move into a tailored debt and cashflow recovery plan. Shall I open the Health Check for you?`,
+  },
+  {
+    title: 'I have a problem with debt',
+    keywords: ['debt problem', 'struggling with debt', 'debt stress', 'too much debt', 'overwhelmed by debt', 'i have debt', 'my debt', 'debt management'],
+    answer: `Debt pressure is one of the most common reasons people reach out to us. The first step is the Professional Financial Health Check — a free, confidential review of your debt, cashflow, savings and the patterns behind them. From that diagnostic, we build a clear repayment and recovery plan. Would you like to open the Health Check?`,
+  },
+  {
     title: 'What is the Business Health Check?',
     keywords: ['business health check', 'business assessment', 'business check', 'health check business'],
     answer: `The Business Health Check is a free, AI-powered assessment of your business across financial health, operations, governance, cashflow and growth readiness. It takes about 20 minutes, and your answers are turned into a personalised diagnostic report with prioritised recommendations.`,
