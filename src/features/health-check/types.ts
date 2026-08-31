@@ -1,4 +1,4 @@
-export type CheckType = 'business' | 'professional';
+export type CheckType = string;
 
 export type QuestionInputType = 'choice' | 'multi' | 'scale' | 'text';
 

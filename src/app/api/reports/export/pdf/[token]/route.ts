@@ -29,7 +29,7 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
     const session = Array.isArray(report.session) ? report.session[0] : report.session;
     const healthCheckId = (session as { health_check_id?: string } | undefined)?.health_check_id ?? '';
 
-    let checkType: 'business' | 'professional' = 'business';
+    let checkType = 'business';
     let title = 'Health Check Report';
     if (healthCheckId) {
       const { data: hc } = await supabase
