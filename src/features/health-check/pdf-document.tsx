@@ -171,7 +171,7 @@ function TableRenderer({ rows }: { rows: ReportTableRow[] }) {
         return (
           <View
             key={i}
-            style={[styles.tableRow, i === rows.length - 1 ? { borderBottomWidth: 0 } : undefined]}
+            style={[styles.tableRow, i === rows.length - 1 ? { borderBottomWidth: 0 } : null].filter(Boolean) as typeof styles.tableRow[]}
           >
             {Array.from({ length: colCount }).map((_, c) => {
               const cell = row.cells[c];
@@ -181,10 +181,10 @@ function TableRenderer({ rows }: { rows: ReportTableRow[] }) {
                   key={c}
                   style={[
                     styles.tableCell,
-                    c === 0 ? styles.tableCellFirst : undefined,
-                    c === colCount - 1 ? styles.tableCellLast : undefined,
-                    headerCell ? styles.tableCellHeader : undefined,
-                  ]}
+                    c === 0 ? styles.tableCellFirst : null,
+                    c === colCount - 1 ? styles.tableCellLast : null,
+                    headerCell ? styles.tableCellHeader : null,
+                  ].filter(Boolean) as typeof styles.tableCell[]}
                 >
                   <Text
                     style={headerCell ? { fontWeight: 700, color: ORANGE } : undefined}
@@ -274,8 +274,8 @@ export function HealthReportDocument({ model }: { model: ExportModel }) {
                     headingStyle,
                     block.backgroundColor
                       ? { backgroundColor: block.backgroundColor, paddingHorizontal: 4, paddingVertical: 2 }
-                      : undefined,
-                  ]}
+                      : null,
+                  ].filter(Boolean) as typeof headingStyle[]}
                 >
                   {block.runs?.map((run, j) => (
                     <Text key={j} style={runStyle(run)}>
@@ -293,8 +293,8 @@ export function HealthReportDocument({ model }: { model: ExportModel }) {
                     styles.paragraph,
                     block.backgroundColor
                       ? { backgroundColor: block.backgroundColor, paddingHorizontal: 4 }
-                      : undefined,
-                  ]}
+                      : null,
+                  ].filter(Boolean) as typeof styles.paragraph[]}
                 >
                   {block.runs?.map((run, j) => (
                     <Text key={j} style={runStyle(run)}>
