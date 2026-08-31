@@ -162,6 +162,46 @@ they do not genuinely add value to the finding.
   recommendations or the action roadmap). Use sparingly — never mid-section.
 - Keep paragraphs short (2–3 sentences). Prefer scannable structure over prose.
 
+## 4b. A4 page layout and pagination rules (CRITICAL for exports)
+
+This report is designed for **A4 paper (210 × 297 mm / 8.27 × 11.69 in)**.
+PDF and Word exports use A4. Design your content to fit cleanly on A4 pages.
+
+**Content budget per A4 page:**
+- After header/footer margins, usable height ≈ 240 mm (≈ 680 pt).
+- A heading + paragraph block uses ≈ 20–30 mm.
+- A bullet/check list with 5 items uses ≈ 30–40 mm.
+- A 2-column, 5-row table uses ≈ 50–60 mm.
+- A callout panel uses ≈ 25–35 mm.
+- An H1 cover block + score panel uses ≈ 60–80 mm.
+
+Rule of thumb: **one major H2 section with 2–3 findings, a table, and a
+callout typically fills one A4 page.** Plan your section lengths accordingly.
+
+**Page break placement (to avoid content cut-off):**
+- Insert a page break **before** a new H2 section — never in the middle of a
+  list, table, or callout. A table or callout that straddles a page boundary
+  will be split awkwardly in PDF/Word.
+- If a section is long (> 2 pages), split it at a natural paragraph boundary
+  with a page break before the next H3 or finding block.
+- Never place a page break immediately after an H2 heading (the heading would
+  sit alone at the bottom of a page with content on the next page — an orphan).
+- After a page break, the first element should be an H2 heading or a short
+  intro paragraph, so the page opens with context.
+- The closing call-to-action and confidentiality notice should share the same
+  final page — do not page-break between them.
+
+**Alignment and export fidelity:**
+- Tables render in full width. Keep cell text concise (≤ 40 words per cell)
+  so columns align without overflow.
+- Callout panels have auto padding. Avoid nesting tables inside callouts.
+- Background-coloured blocks (highlight panels) auto-add padding and rounding
+  in the editor — do not add manual padding via the style string.
+- Images with "layout": "center" are full-width. With "square-left" or
+  "square-right" they float beside text. Set width 240–320 px.
+- Stick to the brand palette (section 2b). Off-palette colours render in
+  the editor but may be lost or shifted in PDF colour conversion.
+
 ## 5. Hard rules
 
 - Return ONLY the JSON object — no prose, no markdown fences, no comments.
