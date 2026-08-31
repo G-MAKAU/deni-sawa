@@ -357,6 +357,9 @@ export function HealthReportDocument({ model }: { model: ExportModel }) {
                 </View>
               );
             case 'divider':
+              return <View key={i} style={styles.divider} />;
+            case 'pagebreak':
+              return <View key={i} style={styles.divider} break />;
             default:
               return <View key={i} style={styles.divider} />;
           }

@@ -106,57 +106,87 @@ export function ReportViewerV2({ token }: { token: string }) {
         import('jspdf'),
       ]);
 
-      const canvas = await html2canvas(el, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: '#ffffff',
-        logging: false,
-      });
-
-      const imgData = canvas.toDataURL('image/jpeg', 0.95);
-      const imgW = canvas.width;
-      const imgH = canvas.height;
-
-      // A4 dimensions in points (1pt = 1/72 inch, 1px ≈ 0.75pt at 96dpi)
+      // A4 dimensions in points
       const pdfW = 595.28;
       const pdfH = 841.89;
-      const margin = 36; // 0.5 inch
+      const margin = 36;
       const contentW = pdfW - margin * 2;
-      const ratio = contentW / imgW;
-      const scaledH = imgH * ratio;
+      const pageContentH = pdfH - margin * 2;
+
+      // Split content at .ds-page-break markers
+      const segments: HTMLElement[] = [];
+      let currentSegment = document.createElement('div');
+      currentSegment.style.cssText = 'background:#fff;padding:0;margin:0;width:' + el.offsetWidth + 'px;position:absolute;left:-9999px;top:0;';
+      document.body.appendChild(currentSegment);
+
+      for (const child of Array.from(el.children)) {
+        if (child.classList.contains('ds-page-break')) {
+          if (currentSegment.childNodes.length > 0) {
+            segments.push(currentSegment);
+            currentSegment = document.createElement('div');
+            currentSegment.style.cssText = currentSegment.style.cssText;
+            document.body.appendChild(currentSegment);
+          }
+        } else {
+          currentSegment.appendChild(child.cloneNode(true));
+        }
+      }
+      if (currentSegment.childNodes.length > 0) segments.push(currentSegment);
+
+      // If no pagebreaks found, capture the whole thing as one segment
+      if (segments.length === 0) {
+        currentSegment.remove();
+        segments.push(el);
+      } else {
+        // Clean up — the last temp div may be empty
+        if (currentSegment.childNodes.length === 0) currentSegment.remove();
+      }
 
       const pdf = new jsPDF('p', 'pt', 'a4');
 
-      // If content fits on one page
-      if (scaledH <= pdfH - margin * 2) {
-        pdf.addImage(imgData, 'JPEG', margin, margin, contentW, scaledH);
-      } else {
-        // Split across pages
-        const pageContentH = (pdfH - margin * 2);
-        let yOffset = 0;
-        let page = 0;
+      for (let s = 0; s < segments.length; s++) {
+        if (s > 0) pdf.addPage();
 
-        while (yOffset < imgH) {
-          if (page > 0) pdf.addPage();
+        const seg = segments[s];
+        const canvas = await html2canvas(seg, {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: '#ffffff',
+          logging: false,
+        });
 
-          // Calculate source region
-          const srcH = Math.min(pageContentH / ratio, imgH - yOffset);
-          const destH = srcH * ratio;
+        const imgData = canvas.toDataURL('image/jpeg', 0.95);
+        const imgW = canvas.width;
+        const imgH = canvas.height;
+        const ratio = contentW / imgW;
+        const scaledH = imgH * ratio;
 
-          // Create a temporary canvas for this page slice
-          const pageCanvas = document.createElement('canvas');
-          pageCanvas.width = imgW;
-          pageCanvas.height = srcH;
-          const ctx = pageCanvas.getContext('2d');
-          if (ctx) {
-            ctx.drawImage(canvas, 0, yOffset, imgW, srcH, 0, 0, imgW, srcH);
-            const pageData = pageCanvas.toDataURL('image/jpeg', 0.95);
-            pdf.addImage(pageData, 'JPEG', margin, margin, contentW, destH);
+        if (scaledH <= pageContentH) {
+          pdf.addImage(imgData, 'JPEG', margin, margin, contentW, scaledH);
+        } else {
+          // Segment still too tall — paginate by pixel height
+          let yOffset = 0;
+          let firstPage = true;
+          while (yOffset < imgH) {
+            if (!firstPage) pdf.addPage();
+            firstPage = false;
+
+            const srcH = Math.min(pageContentH / ratio, imgH - yOffset);
+            const destH = srcH * ratio;
+            const pageCanvas = document.createElement('canvas');
+            pageCanvas.width = imgW;
+            pageCanvas.height = srcH;
+            const ctx = pageCanvas.getContext('2d');
+            if (ctx) {
+              ctx.drawImage(canvas, 0, yOffset, imgW, srcH, 0, 0, imgW, srcH);
+              pdf.addImage(pageCanvas.toDataURL('image/jpeg', 0.95), 'JPEG', margin, margin, contentW, destH);
+            }
+            yOffset += srcH;
           }
-
-          yOffset += srcH;
-          page++;
         }
+
+        // Clean up temp elements
+        if (seg !== el) seg.remove();
       }
 
       const baseName = report?.session_name ? `${report.session_name.replace(/[^\w\- ]+/g, '').trim()}` : 'deni-sawa';

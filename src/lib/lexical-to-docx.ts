@@ -335,6 +335,14 @@ export function lexicalStateToDocx(
           );
           break;
         }
+        case 'pagebreak':
+          children.push(
+            new Paragraph({
+              pageBreakBefore: true,
+              children: [],
+            })
+          );
+          break;
         case 'divider':
         default:
           children.push(

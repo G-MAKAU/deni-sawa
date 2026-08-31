@@ -24,7 +24,7 @@ export interface ReportTableRow {
 }
 
 export interface ReportBlock {
-  kind: 'heading' | 'paragraph' | 'quote' | 'callout' | 'list' | 'divider' | 'table';
+  kind: 'heading' | 'paragraph' | 'quote' | 'callout' | 'list' | 'divider' | 'pagebreak' | 'table';
   level?: 1 | 2 | 3;
   text?: string;
   runs?: ReportTextRun[];
@@ -161,8 +161,10 @@ export function lexicalStateToModel(
         items: items.map((item) => textString(item)),
         checked: items.map((item) => (item.checked as boolean | undefined) ?? false),
       });
-    } else if (type === 'divider' || type === 'horizontalrule' || type === 'pagebreak') {
+    } else if (type === 'divider' || type === 'horizontalrule') {
       blocks.push({ kind: 'divider' });
+    } else if (type === 'pagebreak') {
+      blocks.push({ kind: 'pagebreak' });
     } else if (type === 'table') {
       const rows: ReportTableRow[] = ((node.children as Record<string, unknown>[] | undefined) ?? []).map((row) => {
         const cells: ReportTableCell[] = ((row.children as Record<string, unknown>[] | undefined) ?? []).map((cell) => ({
