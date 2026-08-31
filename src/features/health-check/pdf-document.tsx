@@ -214,7 +214,10 @@ function runStyle(run: ReportTextRun): Record<string, string | number> {
   if (run.strike) style.textDecoration = 'line-through';
   if (run.color) style.color = run.color;
   // react-pdf expects a numeric fontSize (in pt) — a string like "14px" breaks layout.
-  if (run.fontSize) style.fontSize = run.fontSize * 0.75;
+  if (run.fontSize) {
+    const pt = run.fontSize * 0.75;
+    if (pt > 0 && pt < 150) style.fontSize = pt;
+  }
   // react-pdf only ships Helvetica/Times/Courier — map the known families so a
   // custom family degrades gracefully instead of breaking.
   if (run.fontFamily) {

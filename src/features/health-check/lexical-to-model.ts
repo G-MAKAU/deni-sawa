@@ -80,8 +80,8 @@ function collectText(node: Record<string, unknown> | null | undefined): ReportTe
     const color = cssColorToHex(parseCssProperty(String(node.style ?? ''), 'color') ?? '');
     if (color) run.color = color;
 
-    const fontSize = Number(parseCssProperty(String(node.style ?? ''), 'font-size')?.replace('px', ''));
-    if (fontSize) run.fontSize = fontSize;
+    const rawFontSize = Number(parseCssProperty(String(node.style ?? ''), 'font-size')?.replace('px', ''));
+    if (rawFontSize && Number.isFinite(rawFontSize) && rawFontSize > 0 && rawFontSize < 200) run.fontSize = rawFontSize;
 
     const family = parseCssProperty(String(node.style ?? ''), 'font-family');
     if (family) run.fontFamily = family.split(',')[0].trim().replace(/['"]/g, '');
