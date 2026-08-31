@@ -18,6 +18,7 @@ interface ReportDetail {
   is_paid: boolean;
   delivery_status: string;
   created_at: string;
+  expires_at: string | null;
   edited_at: string | null;
   report_url_token: string;
   session_name: string;
@@ -183,6 +184,11 @@ export function ReportEditor({ reportId }: ReportEditorProps) {
         )}
         <span className="text-[var(--a-muted)]">·</span>
         <span className="text-[var(--a-muted)]">{format(new Date(report.created_at), 'd MMM yyyy, HH:mm')}</span>
+        {report.expires_at && (
+          <span className={new Date(report.expires_at) < new Date() ? 'text-xs font-semibold text-red-600' : 'text-xs text-[var(--a-muted)]'}>
+            · Expires {format(new Date(report.expires_at), 'dd MMM yyyy')}
+          </span>
+        )}
         <StatusPill tone={report.report_type === 'summary' ? 'blue' : 'orange'}>{reportTypeLabel}</StatusPill>
         <StatusPill tone={report.is_paid ? 'green' : 'grey'}>{report.is_paid ? 'Paid' : 'Unpaid'}</StatusPill>
         <StatusPill

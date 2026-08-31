@@ -7,9 +7,10 @@ export const dynamic = 'force-dynamic';
 
 const paramsSchema = z.object({ reportId: z.string().uuid() });
 
-// Editable fields: payment status (restricted to super_admin/admin) and the
-// report content itself (lexical_state), which any editor may change.
+// Editable fields: payment status (restricted to super_admin/admin), the
+// report content itself (lexical_state), and report expiry (expires_at).
 const paidSchema = z.object({ is_paid: z.boolean() });
+const expirySchema = z.object({ expires_at: z.string().nullable() });
 const contentSchema = z.object({
   lexical_state: z.record(z.string(), z.unknown()),
   updated_by: z.string().uuid().optional(),
@@ -80,6 +81,19 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     // Paid toggle restricted to super_admin + admin.
     if (currentAdmin.role !== 'super_admin' && currentAdmin.role !== 'admin') {
       throw new AdminApiError('Only super admins and admins can toggle report payment status.', 403);
+    }
+
+    // Expiry date update — accepts ISO date string or null to clear.
+    const expiry = expirySchema.safeParse(body);
+    if (expiry.success) {
+      const { data, error } = await supabase
+        .from('health_check_reports')
+        .update({ expires_at: expiry.data.expires_at })
+        .eq('id', reportId)
+        .select()
+        .single();
+      if (error) throw error;
+      return NextResponse.json({ report: data });
     }
 
     const parsed = paidSchema.safeParse(body);

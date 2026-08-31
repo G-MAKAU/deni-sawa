@@ -21,6 +21,7 @@ interface ReportRow {
   is_paid: boolean;
   delivery_status: 'pending' | 'sent' | 'failed' | 'skipped';
   created_at: string;
+  expires_at: string | null;
   session_name: string;
   check_name: string;
   report_url_token: string;
@@ -37,6 +38,7 @@ interface ReportDetail {
   is_paid: boolean;
   delivery_status: string;
   created_at: string;
+  expires_at: string | null;
   session_name: string;
   check_name: string;
   report_url_token?: string | null;
@@ -244,6 +246,63 @@ export function ReportsViewer() {
         cell: ({ getValue }) => format(new Date(getValue() as string), 'dd MMM yyyy, HH:mm'),
       },
       {
+        accessorKey: 'expires_at',
+        header: 'Expires',
+        cell: ({ row }) => {
+          const report = row.original;
+          const [editing, setEditing] = React.useState(false);
+          const [draft, setDraft] = React.useState(report.expires_at ? report.expires_at.slice(0, 10) : '');
+          const [saving, setSaving] = React.useState(false);
+
+          const save = async () => {
+            setSaving(true);
+            try {
+              const isoDate = draft ? `${draft}T23:59:59.000Z` : null;
+              await adminPut(`/api/admin/health-checks/reports/${report.id}`, { expires_at: isoDate });
+              setReports((prev) => prev.map((r) => (r.id === report.id ? { ...r, expires_at: isoDate } : r)));
+              setEditing(false);
+              toast.success('Expiry updated');
+            } catch {
+              toast.error('Failed to update expiry');
+            } finally {
+              setSaving(false);
+            }
+          };
+
+          if (editing) {
+            return (
+              <div className="flex items-center gap-1">
+                <input
+                  type="date"
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value)}
+                  className="w-[130px] rounded border border-[var(--a-border)] bg-[var(--a-card)] px-1.5 py-0.5 text-[11px]"
+                />
+                <button type="button" onClick={save} disabled={saving} className="text-[11px] font-semibold text-[#5A9E28] hover:underline">
+                  {saving ? '…' : 'Save'}
+                </button>
+                <button type="button" onClick={() => setEditing(false)} className="text-[11px] text-[var(--a-muted)] hover:underline">
+                  Cancel
+                </button>
+              </div>
+            );
+          }
+
+          const isExpired = report.expires_at && new Date(report.expires_at) < new Date();
+          const expiryDate = report.expires_at ? format(new Date(report.expires_at), 'dd MMM yyyy') : '—';
+          return (
+            <button
+              type="button"
+              onClick={() => { setDraft(report.expires_at ? report.expires_at.slice(0, 10) : ''); setEditing(true); }}
+              className={`text-[11px] hover:underline ${isExpired ? 'font-semibold text-red-600' : 'text-[var(--a-muted)]'}`}
+              title="Click to edit expiry"
+            >
+              {isExpired ? `Expired ${expiryDate}` : expiryDate}
+            </button>
+          );
+        },
+      },
+      {
         accessorKey: 'is_paid',
         header: 'Paid',
         cell: ({ row }) => (
@@ -417,7 +476,7 @@ export function ReportsViewer() {
   });
 
   const toggleableColumns = React.useMemo(
-    () => ['session_name', 'check_name', 'report_type', 'created_at', 'is_paid', 'delivery_status', 'gen_status'],
+    () => ['session_name', 'check_name', 'report_type', 'created_at', 'expires_at', 'is_paid', 'delivery_status', 'gen_status'],
     []
   );
 
@@ -473,6 +532,7 @@ export function ReportsViewer() {
                         check_name: 'Check',
                         report_type: 'Type',
                         created_at: 'Generated',
+                        expires_at: 'Expires',
                         is_paid: 'Paid',
                         delivery_status: 'Delivery',
                         gen_status: 'Gen Status',
@@ -622,6 +682,11 @@ export function ReportsViewer() {
               <span className="font-semibold text-[var(--a-ink2)]">{detail.session_name}</span>
               · {detail.check_name}
               · {format(new Date(detail.created_at), 'd MMM yyyy')}
+              {detail.expires_at && (
+                <span className={new Date(detail.expires_at) < new Date() ? 'font-semibold text-red-600' : ''}>
+                  · Expires {format(new Date(detail.expires_at), 'dd MMM yyyy')}
+                </span>
+              )}
               <StatusPill tone={detail.is_paid ? 'green' : 'grey'}>{detail.is_paid ? 'Paid' : 'Unpaid'}</StatusPill>
               <StatusPill tone={DELIVERY_TONE[detail.delivery_status as ReportRow['delivery_status']] ?? 'amber'}>{detail.delivery_status}</StatusPill>
               {detail.model_used === 'fallback' && (
@@ -721,6 +786,11 @@ export function ReportsViewer() {
               <span className="font-semibold text-[var(--a-ink2)]">{errorViewReport.session_name}</span>
               · {errorViewReport.check_name}
               · {format(new Date(errorViewReport.created_at), 'd MMM yyyy')}
+              {errorViewReport.expires_at && (
+                <span className={new Date(errorViewReport.expires_at) < new Date() ? 'font-semibold text-red-600' : ''}>
+                  · Expires {format(new Date(errorViewReport.expires_at), 'dd MMM yyyy')}
+                </span>
+              )}
               <StatusPill tone={errorViewReport.is_paid ? 'green' : 'grey'}>{errorViewReport.is_paid ? 'Paid' : 'Unpaid'}</StatusPill>
               <StatusPill tone={DELIVERY_TONE[errorViewReport.delivery_status]}>{errorViewReport.delivery_status}</StatusPill>
               {errorViewReport.model_used === 'fallback' && (
