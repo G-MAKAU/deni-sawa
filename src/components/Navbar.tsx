@@ -20,15 +20,11 @@ function isActive(href: string | undefined, pathname: string): boolean {
 }
 
 function useScrollDirection(pathname?: string) {
-  const [hidden, setHidden] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
+  const [compact, setCompact] = useState(false);
   const lastY = useRef(0);
 
-  // On page navigation the scroll position resets to the top, so the contact
-  // bar and navbar must re-appear even though this component persists across routes.
   useEffect(() => {
-    setHidden(false);
-    setScrolled(false);
+    setCompact(false);
     lastY.current = window.scrollY;
   }, [pathname]);
 
@@ -40,21 +36,15 @@ function useScrollDirection(pathname?: string) {
       window.requestAnimationFrame(() => {
         const y = window.scrollY;
 
-        // At/near the very top everything is always fully shown — this guarantees
-        // the contact bar and navbar reappear on scroll-to-top regardless of
-        // scroll-event timing (previously the cooldown could strand them hidden).
-        if (y <= 24) {
-          setScrolled(false);
-          setHidden(false);
+        // Near the top: always full navbar (no compact).
+        if (y <= 60) {
+          setCompact(false);
         } else {
-          // Hysteresis band (24–48px) so the compact/normal nav does not flicker
-          // when hovering around the threshold.
-          if (y > 48) setScrolled(true);
-
-          // Hide only on a meaningful downward scroll; show on any upward scroll.
           const delta = y - lastY.current;
-          if (delta > 4 && y > 140) setHidden(true);
-          else if (delta < -4) setHidden(false);
+          // Compact on meaningful downward scroll past 80px.
+          if (delta > 6 && y > 80) setCompact(true);
+          // Expand on any upward scroll.
+          else if (delta < -6) setCompact(false);
         }
 
         lastY.current = y;
@@ -66,7 +56,7 @@ function useScrollDirection(pathname?: string) {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  return { hidden, scrolled };
+  return compact;
 }
 
 function ScrollProgress() {
@@ -83,7 +73,7 @@ function ScrollProgress() {
 
 export function Navbar() {
   const pathname = usePathname();
-  const { hidden, scrolled } = useScrollDirection(pathname);
+  const compact = useScrollDirection(pathname);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [mobileOpen, setMobileOpen] = useState<string | null>(null);
@@ -125,21 +115,20 @@ export function Navbar() {
 
       <motion.header
         className={cn(
-          'sticky top-0 z-[80] w-full transition-colors duration-500',
-          scrolled
+          'sticky top-0 z-[80] w-full transition-all duration-300 ease-out',
+          compact
           ? 'border-b border-card-border bg-nav shadow-[0_1px_40px_rgba(0,0,0,0.06)]'
           : 'border-b border-transparent bg-nav/0'
         )}
         animate={{
-          y: hidden ? -100 : 0,
+          y: 0,
         }}
-        transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
       >
         {/* Top contact bar — collapses on scroll */}
         <div
           className={cn(
             'overflow-hidden transition-all duration-300 ease-out',
-            scrolled ? 'max-h-0 -translate-y-full opacity-0' : 'max-h-14 translate-y-0 opacity-100'
+            compact ? 'max-h-0 -translate-y-full opacity-0' : 'max-h-14 translate-y-0 opacity-100'
           )}
         >
           <div className="border-b border-card-border bg-background/95">
@@ -188,7 +177,7 @@ export function Navbar() {
 
         <div className="w-full px-4 sm:px-6 lg:px-8">
           <nav className="flex h-20 items-center justify-between gap-6 lg:h-[76px]">
-            <Logo size="lg" center fill={scrolled} tagline="Partners" showTagline={!scrolled} className="shrink-0" />
+            <Logo size="lg" center fill={compact} tagline="Partners" showTagline={!compact} className="shrink-0" />
 
             <div className="hidden items-center gap-0.5 lg:flex">
               {navItems.map((item) => {

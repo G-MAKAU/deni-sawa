@@ -21,6 +21,10 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
     if (error) throw error;
     if (!report) return NextResponse.json({ error: 'Report not found.' }, { status: 404 });
 
+    if (!report.lexical_state) {
+      return NextResponse.json({ error: 'Report has no content to export.' }, { status: 400 });
+    }
+
     const checks = Array.isArray(report.checks) ? report.checks : [];
     const check = (checks[0] as { health_checks?: { name?: string } } | undefined)?.health_checks;
     const title = check?.name ?? 'Health Check Report';
@@ -33,13 +37,26 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
       .eq('report_type', report.report_type)
       .maybeSingle();
 
-    const document = lexicalStateToDocx(
-      report.lexical_state,
-      title,
-      (prompt as { header_lexical?: unknown } | null)?.header_lexical as Record<string, unknown> | null | undefined,
-      (prompt as { footer_lexical?: unknown } | null)?.footer_lexical as Record<string, unknown> | null | undefined
-    );
-    const buffer = await Packer.toBuffer(document);
+    let document;
+    try {
+      document = lexicalStateToDocx(
+        report.lexical_state,
+        title,
+        (prompt as { header_lexical?: unknown } | null)?.header_lexical as Record<string, unknown> | null | undefined,
+        (prompt as { footer_lexical?: unknown } | null)?.footer_lexical as Record<string, unknown> | null | undefined
+      );
+    } catch (docError) {
+      console.error('Word model conversion failed:', docError);
+      return NextResponse.json({ error: 'Failed to process report content for Word.' }, { status: 500 });
+    }
+
+    let buffer: Buffer;
+    try {
+      buffer = await Packer.toBuffer(document);
+    } catch (packError) {
+      console.error('Word pack failed:', packError);
+      return NextResponse.json({ error: 'Failed to generate Word document.' }, { status: 500 });
+    }
 
     // Filename = "<business> - <full name>" (falls back to a generic name).
     const business = (session as { business_name?: string | null } | undefined)?.business_name ?? '';

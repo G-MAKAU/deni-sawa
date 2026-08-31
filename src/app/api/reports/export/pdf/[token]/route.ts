@@ -22,6 +22,10 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
     if (error) throw error;
     if (!report) return NextResponse.json({ error: 'Report not found.' }, { status: 404 });
 
+    if (!report.lexical_state) {
+      return NextResponse.json({ error: 'Report has no content to export.' }, { status: 400 });
+    }
+
     const checks = Array.isArray(report.checks) ? report.checks : [];
     const check = (checks[0] as { health_checks?: { slug?: string; name?: string } } | undefined)?.health_checks;
     const checkType = check?.slug?.startsWith('professional') ? 'professional' : 'business';
@@ -35,15 +39,27 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
       .eq('report_type', report.report_type)
       .maybeSingle();
 
-    const model = lexicalStateToModel(
-      report.lexical_state,
-      checkType,
-      title,
-      (prompt as { header_lexical?: unknown } | null)?.header_lexical as Record<string, unknown> | string | null | undefined,
-      (prompt as { footer_lexical?: unknown } | null)?.footer_lexical as Record<string, unknown> | string | null | undefined
-    );
+    let model;
+    try {
+      model = lexicalStateToModel(
+        report.lexical_state,
+        checkType,
+        title,
+        (prompt as { header_lexical?: unknown } | null)?.header_lexical as Record<string, unknown> | string | null | undefined,
+        (prompt as { footer_lexical?: unknown } | null)?.footer_lexical as Record<string, unknown> | string | null | undefined
+      );
+    } catch (modelError) {
+      console.error('PDF model conversion failed:', modelError);
+      return NextResponse.json({ error: 'Failed to process report content for PDF.' }, { status: 500 });
+    }
 
-    const buffer = await renderToBuffer(HealthReportDocument({ model }));
+    let buffer: Buffer;
+    try {
+      buffer = await renderToBuffer(HealthReportDocument({ model }));
+    } catch (renderError) {
+      console.error('PDF render failed:', renderError);
+      return NextResponse.json({ error: 'Failed to render PDF. The report may be too large.' }, { status: 500 });
+    }
 
     // Filename = "<business> - <full name>" (falls back to a generic name).
     const business = (session as { business_name?: string | null } | undefined)?.business_name ?? '';
@@ -60,6 +76,7 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
     });
   } catch (error) {
     console.error('PDF export failed:', error);
-    return NextResponse.json({ error: 'PDF generation failed.' }, { status: 500 });
+    const detail = error instanceof Error ? error.message : 'Unknown error';
+    return NextResponse.json({ error: 'PDF generation failed.', detail }, { status: 500 });
   }
 }
