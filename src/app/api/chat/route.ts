@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { faqAnswers } from '@/data/content';
-import { getSetting } from '@/lib/settings';
+import { generateChatReply } from '@/lib/report-generator';
 
 interface ChatRequest {
   message?: string;
@@ -71,59 +71,15 @@ export async function POST(req: NextRequest) {
       return Response.json({ reply: fallbackReply('') }, { status: 200 });
     }
 
-    const [dbGeminiKey, dbOpenaiKey, dbGeminiModel] = await Promise.all([
-      getSetting('GEMINI_API_KEY'),
-      getSetting('OPENAI_API_KEY'),
-      getSetting('GEMINI_MODEL'),
-    ]);
-    const apiKey = (dbGeminiKey || dbOpenaiKey || process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY) as string;
-    const model = dbGeminiModel || process.env.GEMINI_MODEL || 'gemini-flash-latest';
-
-    if (!apiKey) {
-      return Response.json({ reply: fallbackReply(message) }, { status: 200 });
-    }
-
     const system = `${body.systemPrompt || DEFAULT_SYSTEM_PROMPT}${FAQ_CONTEXT}`;
+    const history = (body.history || []).filter(
+      (h) => h && (h.role === 'user' || h.role === 'assistant') && typeof h.content === 'string'
+    );
 
-    const contents: { role: 'user' | 'model'; parts: { text: string }[] }[] = [];
-    for (const h of body.history || []) {
-      if (h && (h.role === 'user' || h.role === 'assistant') && typeof h.content === 'string') {
-        contents.push({ role: h.role === 'assistant' ? 'model' : 'user', parts: [{ text: h.content }] });
-      }
-    }
-    contents.push({ role: 'user', parts: [{ text: message }] });
-
-    const payload = {
-      systemInstruction: { parts: [{ text: system }] },
-      contents,
-      generationConfig: { maxOutputTokens: 1000, temperature: 0.7 },
-    };
-
-    async function callGemini(m: string) {
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${encodeURIComponent(apiKey)}`,
-        { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }
-      );
-      if (!res.ok) return null;
-      const data = await res.json();
-      return data?.candidates?.[0]?.content?.parts?.map((p: { text?: string }) => p.text || '').join('').trim() || null;
-    }
-
-    // 1. Try DB model → 2. Try .env model → 3. Try gemini-flash-latest
-    const envModel = process.env.GEMINI_MODEL || 'gemini-flash-latest';
-    const candidates = [model, envModel, 'gemini-flash-latest'].filter((v, i, a) => v && a.indexOf(v) === i);
-
-    let reply: string | null = null;
-    let lastError = '';
-    for (const m of candidates) {
-      reply = await callGemini(m);
-      if (reply) break;
-      lastError = m;
-    }
+    const reply = await generateChatReply(system, history, message, 1000);
 
     if (reply) return Response.json({ reply }, { status: 200 });
 
-    console.error('All Gemini models failed:', lastError);
     return Response.json({ reply: 'I was unable to process that just now. Please try again, or reach us at advisory@denisawa.co.ke or +254 702 448 601.', retry: true }, { status: 200 });
   } catch (err) {
     console.error('Chat route error:', err);

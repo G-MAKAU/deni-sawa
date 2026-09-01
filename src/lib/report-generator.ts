@@ -854,3 +854,87 @@ export async function generateModelText(
   };
   return (data.choices?.[0]?.message?.content ?? '').trim();
 }
+
+/** Multi-turn chat reply using the admin-configured AI provider with Gemini fallback. */
+export async function generateChatReply(
+  system: string,
+  history: { role: 'user' | 'assistant'; content: string }[],
+  message: string,
+  maxTokens = 1000
+): Promise<string> {
+  let config: (ProviderConfig & { label: string }) | null = null;
+  try {
+    config = await resolveProviderConfig('google');
+  } catch {
+    // No admin config and no legacy key — fall through to canned reply.
+  }
+  if (!config) throw new Error('No AI provider configured');
+
+  const tryGenerate = async (cfg: ProviderConfig & { label: string }): Promise<string> => {
+    if (cfg.type === 'anthropic') {
+      const anthropic = new Anthropic({ apiKey: cfg.apiKey });
+      const messages: { role: 'user' | 'assistant'; content: string }[] = [];
+      for (const h of history) {
+        if (h.role === 'user' || h.role === 'assistant') messages.push({ role: h.role, content: h.content });
+      }
+      messages.push({ role: 'user', content: message });
+      const res = await anthropic.messages.create({
+        model: cfg.model,
+        max_tokens: maxTokens,
+        system,
+        messages,
+      });
+      return res.content.filter((b) => b.type === 'text').map((b) => b.text).join('');
+    }
+
+    if (cfg.type === 'google') {
+      const contents: { role: 'user' | 'model'; parts: { text: string }[] }[] = [];
+      for (const h of history) {
+        if (h.role === 'user' || h.role === 'assistant') {
+          contents.push({ role: h.role === 'assistant' ? 'model' : 'user', parts: [{ text: h.content }] });
+        }
+      }
+      contents.push({ role: 'user', parts: [{ text: message }] });
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(cfg.model)}:generateContent?key=${encodeURIComponent(cfg.apiKey)}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            systemInstruction: { parts: [{ text: system }] },
+            contents,
+            generationConfig: { maxOutputTokens: maxTokens, temperature: 0.7 },
+          }),
+        }
+      );
+      if (!res.ok) throw new Error(`Gemini request failed (${res.status})`);
+      const data = (await res.json()) as { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> };
+      return (data.candidates?.[0]?.content?.parts ?? []).map((p) => p.text || '').join('').trim();
+    }
+
+    // OpenAI-compatible (OpenAI, OpenRouter, DeepSeek, Qwen, Groq, etc.)
+    const baseUrl = (cfg.baseUrl ?? 'https://api.openai.com/v1').replace(/\/+$/, '');
+    const messages: { role: 'system' | 'user' | 'assistant'; content: string }[] = [{ role: 'system', content: system }];
+    for (const h of history) {
+      if (h.role === 'user' || h.role === 'assistant') messages.push({ role: h.role, content: h.content });
+    }
+    messages.push({ role: 'user', content: message });
+    const res = await fetch(`${baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${cfg.apiKey}` },
+      body: JSON.stringify({ model: cfg.model, messages, max_tokens: maxTokens, temperature: 0.7 }),
+    });
+    if (!res.ok) throw new Error(`Provider request failed (${res.status})`);
+    const data = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
+    return (data.choices?.[0]?.message?.content ?? '').trim();
+  };
+
+  try {
+    return await tryGenerate(config);
+  } catch (primaryError) {
+    const fallback = await resolveFallbackConfig();
+    if (!fallback) throw primaryError;
+    console.warn(`Chat AI primary failed (${config.label}), trying fallback (${fallback.label})`, primaryError);
+    return await tryGenerate(fallback);
+  }
+}
