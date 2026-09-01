@@ -186,7 +186,7 @@ export function Navbar() {
                   return (
                     <div
                       key={item.label}
-                      className="relative"
+                      className="flex"
                       onMouseEnter={() => handleDropdownEnter(item.label)}
                       onMouseLeave={handleDropdownLeave}
                     >
