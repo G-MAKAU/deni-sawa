@@ -48,7 +48,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </a>
         <ScrollToHash />
         {!isAdmin && <Navbar />}
-        <main id="main-content" className="flex-1">
+        <main id="main-content" className="flex-1 mt-14">
           {children}
         </main>
         {!isAdmin && <Footer />}
