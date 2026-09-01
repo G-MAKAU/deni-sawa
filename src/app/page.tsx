@@ -3,31 +3,20 @@ import Link from 'next/link';
 import Image from 'next/image';
 import {
   ArrowRight,
-  Check,
   LineChart,
   Briefcase,
   ShieldCheck,
   LifeBuoy,
   TrendingUp,
-  GraduationCap,
-  Users,
-  Network,
 } from 'lucide-react';
-import { site, services, audiences, healthChecks, networkBenefits } from '@/data/site';
+import { site, audiences, healthChecks } from '@/data/site';
 import { getActiveHealthChecks } from '@/lib/health-checks';
-import { stats, testimonials } from '@/data/content';
 import { cn } from '@/lib/utils';
 import { Reveal } from '@/components/Reveal';
 import { HealthScoreCard } from '@/components/HealthScoreCard';
 import { AudienceRouter } from '@/components/AudienceRouter';
-import { MethodSignature } from '@/components/MethodSignature';
-import { JourneyProgression } from '@/components/JourneyProgression';
 import { SectionHeading } from '@/components/SectionHeading';
 import { CTASection } from '@/components/CTASection';
-import { MediaBand } from '@/components/MediaBand';
-import { EditorialRow } from '@/components/EditorialRow';
-import { StatBand } from '@/components/StatBand';
-import { PullQuote } from '@/components/PullQuote';
 import { BlogCoverImage } from '@/components/blog/BlogCoverImage';
 import { HomepageSectionNav } from '@/components/homepage/HomepageSectionNav';
 import { getBlogPosts } from '@/lib/supabase/queries';
@@ -152,8 +141,8 @@ export default async function HomePage() {
 
               <div className="relative aspect-[3/2] lg:aspect-auto lg:h-full lg:w-full">
                 <Image
-                  src="/images/hero-homepage.webp"
-                  alt="Senior business advisor in a modern Nairobi office"
+                  src="/images/Deni-sawa-contact.webp"
+                  alt="Senior advisors and fractional executives delivering Business Development Services (BDS) that help organisations recover, stabilise, grow and become Best-in-Class."
                   fill
                   priority
                   quality={90}
