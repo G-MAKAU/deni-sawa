@@ -62,7 +62,7 @@ export async function middleware(request: NextRequest) {
   if (verifiedAt && Date.now() - parseInt(verifiedAt, 10) < ADMIN_VERIFIED_MAX_AGE * 1000) {
     // Refresh activity timestamp and serve.
     response.cookies.set(LAST_ACTIVITY_COOKIE, Date.now().toString(), {
-      httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', maxAge: 60 * 60 * 24,
+      httpOnly: false, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', maxAge: 60 * 60 * 24,
     });
     return response;
   }
@@ -78,7 +78,7 @@ export async function middleware(request: NextRequest) {
     // Env vars missing — can't authenticate. Let request through; page-level
     // routes will show proper errors.
     response.cookies.set(LAST_ACTIVITY_COOKIE, Date.now().toString(), {
-      httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', maxAge: 60 * 60 * 24,
+      httpOnly: false, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', maxAge: 60 * 60 * 24,
     });
     return response;
   }
@@ -121,7 +121,7 @@ export async function middleware(request: NextRequest) {
       httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', maxAge: ADMIN_VERIFIED_MAX_AGE,
     });
     response.cookies.set(LAST_ACTIVITY_COOKIE, Date.now().toString(), {
-      httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', maxAge: 60 * 60 * 24,
+      httpOnly: false, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', maxAge: 60 * 60 * 24,
     });
 
     return response;
