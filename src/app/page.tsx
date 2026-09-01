@@ -141,7 +141,7 @@ export default async function HomePage() {
 
               <div className="relative aspect-[3/2] lg:aspect-auto lg:h-full lg:w-full">
                 <Image
-                  src="/images/Deni-sawa-contact.webp"
+                  src="/images/Deni-sawa-Home-Hero.webp"
                   alt="Senior advisors and fractional executives delivering Business Development Services (BDS) that help organisations recover, stabilise, grow and become Best-in-Class."
                   fill
                   priority
