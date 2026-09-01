@@ -147,7 +147,7 @@ export default async function HomePage() {
                   priority
                   quality={90}
                   sizes="(min-width: 1024px) 50vw, 100vw"
-                  className="object-contain object-center"
+                  className="object-cover object-center"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-charcoal/75 via-transparent to-transparent" />
                 <div className="absolute inset-0 bg-gradient-to-t from-transparent via-transparent to-charcoal/25" />
