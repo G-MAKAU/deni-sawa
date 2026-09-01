@@ -82,6 +82,7 @@ const SECTIONS: DocSection[] = [
             <ul className="space-y-1.5">
               <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>Use the <strong>dark / light</strong> toggle and your <strong>account</strong> modal to update your display name or change your password.</span></li>
               <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>The mobile menu (top-left) exposes the same navigation in a drawer.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Session timer</strong> — a countdown timer is displayed in the top bar on large screens. It shows the remaining time before automatic logout due to inactivity (10 minutes). The timer turns amber below 2 minutes and red below 1 minute. You are logged out automatically when it reaches zero.</span></li>
             </ul>
           </div>
         ),
@@ -118,6 +119,7 @@ const SECTIONS: DocSection[] = [
     tips: [
       { tone: 'info', text: 'All changes are saved against your admin account and shown as \u201cUpdated by\u201d in most modules.' },
       { tone: 'success', text: 'There is no separate \u201cconfiguration required\u201d step — the console works as soon as you log in.' },
+      { tone: 'warning', text: 'Your session times out after 10 minutes of inactivity. The countdown timer in the top bar shows remaining time. Any click or keypress resets the timer. At zero, you are redirected to the login page.' },
     ],
   },
   {
@@ -231,18 +233,38 @@ const SECTIONS: DocSection[] = [
         icon: Upload,
         body: (
           <div className="space-y-3 text-sm leading-relaxed text-[var(--a-text2)]">
-            <p>Bulk-import questions from Google Forms, spreadsheets or any structured text. Export your questions as PDF or Word for offline review.</p>
+            <p>Bulk-import questions from Google Forms, spreadsheets or any structured text. The Import button is always visible on the Questions page — you do not need to create sections or subsections first. The import creates all sections, subsections and questions from your pasted content.</p>
             <p className="font-semibold text-[var(--a-ink2)]">Import modes:</p>
             <ul className="space-y-1.5">
               <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>JSON format</strong> — paste a structured JSON object with sections, subsections and questions. Use the &ldquo;Load template&rdquo; button to see the expected structure.</span></li>
               <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Plain text format</strong> — paste content copied from Google Forms or any text editor. Use <Code>## Title</Code> for sections, <Code>### Heading</Code> for subsections, and <Code>[radio]</Code> / <Code>[checkbox]</Code> / <Code>[text]</Code> prefixes for question types.</span></li>
-              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Preview first</strong> — the dialog shows a tree view of sections, subsections and questions with type badges before you confirm the import.</span></li>
-              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>Indented <Code>- Option</Code> lines under a <Code>[radio]</Code> or <Code>[checkbox]</Code> question become the answer options.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Preview first</strong> — the dialog shows a tree view of sections, subsections and questions with type badges before you confirm the import. You can edit section titles, subsection headings and question text inline.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Partial import</strong> — select or deselect individual sections before importing. Only checked sections are created.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Deduplication</strong> — sections with the same title as an existing section are skipped automatically.</span></li>
+            </ul>
+            <p className="font-semibold text-[var(--a-ink2)]">Plain text format — detailed rules:</p>
+            <ul className="space-y-1.5">
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><Code>## Title</Code> creates a <strong>section</strong>. Lines immediately after a section heading (before any question) become the section description.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><Code>### Heading</Code> creates a <strong>subsection</strong> within the current section. Lines immediately after become the subsection description.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><Code>[radio] Question text</Code> creates a <strong>single select</strong> question. <Code>[checkbox] Question text</Code> creates a <strong>multi select</strong> question. <Code>[text] Question text</Code> creates a <strong>paragraph</strong> (open text) question.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Options for select questions:</strong> each option must start with <Code>- </Code> (hyphen + space) or <Code>* </Code> (asterisk + space) on its own line, directly below the <Code>[radio]</Code> or <Code>[checkbox]</Code> question. Options only attach to the most recent select question — a blank line or new question ends the option list.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><Code>&gt; Helper text</Code> on the line after a question attaches as helper_text.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>Plain text without any prefix is treated as a <strong>paragraph</strong> question.</span></li>
+            </ul>
+            <p className="font-semibold text-[var(--a-ink2)]">JSON format — key points:</p>
+            <ul className="space-y-1.5">
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>Select questions (<Code>single_select</Code> / <Code>multi_select</Code>) <strong>must</strong> include an <Code>options</Code> array of strings.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>Optional fields: <Code>description</Code> (on sections/subsections), <Code>helper_text</Code> and <Code>required</Code> (on questions).</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>If <Code>type</Code> is omitted it defaults to <Code>paragraph</Code>. If <Code>required</Code> is omitted it defaults to <Code>true</Code>.</span></li>
             </ul>
             <p className="font-semibold text-[var(--a-ink2)]">Export:</p>
             <ul className="space-y-1.5">
               <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>Export all questions as a <strong>PDF</strong> or <strong>Word</strong> document for offline review or client sharing.</span></li>
               <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>The export includes section headings, question text, type labels and options.</span></li>
+            </ul>
+            <p className="font-semibold text-[var(--a-ink2)]">Limits:</p>
+            <ul className="space-y-1.5">
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>Maximum 25 sections, 500 questions, and 1,500 options per import.</span></li>
             </ul>
             <div className="space-y-2">
               <Endpoint method="POST" path="/api/admin/health-checks/:id/import" />
@@ -335,6 +357,7 @@ const SECTIONS: DocSection[] = [
       { tone: 'warning', text: 'Reports are generated with the configured AI provider — generation can take 30–60 seconds depending on model and section count.' },
       { tone: 'info', text: 'Reserved slugs (business-health-check, professional-financial-health-check) are locked both server-side and in the admin UI.' },
       { tone: 'success', text: 'The report editor auto-saves your work. Use Ctrl+S to save manually at any time.' },
+      { tone: 'info', text: 'The Import button is always visible — you do not need to create sections or subsections before importing. The import creates everything from your pasted content.' },
     ],
   },
   {

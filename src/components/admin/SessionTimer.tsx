@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Clock, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -8,15 +8,19 @@ import { createBrowserClient } from '@/lib/supabase/browser';
 
 const TIMEOUT_MS = 10 * 60 * 1000;
 const COOKIE_NAME = 'ds_admin_last_active';
+const HEARTBEAT_INTERVAL_MS = 60 * 1000; // send heartbeat every 60s while active
+const ACTIVITY_DEBOUNCE_MS = 5000; // debounce activity events
 
-function getRemainingMs(): number {
-  if (typeof document === 'undefined') return TIMEOUT_MS;
+function readCookie(): number {
+  if (typeof document === 'undefined') return Date.now();
   const match = document.cookie.split('; ').find((c) => c.startsWith(`${COOKIE_NAME}=`));
-  if (!match) return TIMEOUT_MS;
-  const lastActive = parseInt(match.split('=')[1], 10);
-  if (isNaN(lastActive)) return TIMEOUT_MS;
-  const elapsed = Date.now() - lastActive;
-  return Math.max(0, TIMEOUT_MS - elapsed);
+  if (!match) return Date.now();
+  const ts = parseInt(match.split('=')[1], 10);
+  return isNaN(ts) ? Date.now() : ts;
+}
+
+function writeCookie(ts: number) {
+  document.cookie = `${COOKIE_NAME}=${ts}; path=/admin; max-age=${60 * 60 * 24}; SameSite=Lax`;
 }
 
 function formatTime(ms: number): string {
@@ -26,9 +30,22 @@ function formatTime(ms: number): string {
   return `${m}:${String(s).padStart(2, '0')}`;
 }
 
+/**
+ * Send a heartbeat to the server to refresh the session cookie.
+ * Also updates the client-side cookie for immediate timer feedback.
+ */
+async function sendHeartbeat() {
+  try {
+    await fetch('/api/admin/heartbeat', { method: 'GET', credentials: 'same-origin' });
+  } catch { /* offline or network error — middleware will still refresh on next real request */ }
+}
+
 export function SessionTimer() {
   const router = useRouter();
   const [remaining, setRemaining] = useState(TIMEOUT_MS);
+  const lastActivityRef = useRef(readCookie());
+  const heartbeatTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const activityTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const logout = useCallback(async () => {
     try {
@@ -40,11 +57,26 @@ export function SessionTimer() {
     router.replace('/admin/login?reason=timeout');
   }, [router]);
 
+  /** Bump the local timer and send a heartbeat to the server. */
+  const bump = useCallback(() => {
+    const now = Date.now();
+    lastActivityRef.current = now;
+    writeCookie(now);
+    setRemaining(TIMEOUT_MS);
+
+    // Debounce heartbeats — don't spam the server on every keystroke.
+    if (activityTimerRef.current) clearTimeout(activityTimerRef.current);
+    activityTimerRef.current = setTimeout(() => {
+      sendHeartbeat();
+    }, ACTIVITY_DEBOUNCE_MS);
+  }, []);
+
+  // Tick every second — check remaining time from the cookie.
   useEffect(() => {
-    setRemaining(getRemainingMs());
+    setRemaining(Math.max(0, TIMEOUT_MS - (Date.now() - lastActivityRef.current)));
 
     const interval = setInterval(() => {
-      const left = getRemainingMs();
+      const left = Math.max(0, TIMEOUT_MS - (Date.now() - lastActivityRef.current));
       setRemaining(left);
       if (left <= 0) {
         clearInterval(interval);
@@ -55,16 +87,48 @@ export function SessionTimer() {
     return () => clearInterval(interval);
   }, [logout]);
 
-  // Update on any user activity (click/keypress) by re-reading the cookie.
+  // Send periodic heartbeats while the page is active.
   useEffect(() => {
-    const bump = () => setRemaining(getRemainingMs());
-    window.addEventListener('click', bump, { passive: true });
-    window.addEventListener('keydown', bump, { passive: true });
+    heartbeatTimerRef.current = setInterval(() => {
+      // Only send heartbeat if user was active recently (within the last 2 minutes).
+      const inactive = Date.now() - lastActivityRef.current;
+      if (inactive < 2 * 60 * 1000) {
+        sendHeartbeat();
+        // Also bump the local cookie so the timer resets.
+        const now = Date.now();
+        lastActivityRef.current = now;
+        writeCookie(now);
+      }
+    }, HEARTBEAT_INTERVAL_MS);
+
     return () => {
-      window.removeEventListener('click', bump);
-      window.removeEventListener('keydown', bump);
+      if (heartbeatTimerRef.current) clearInterval(heartbeatTimerRef.current);
     };
   }, []);
+
+  // Listen for real user activity events.
+  useEffect(() => {
+    const events = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart', 'focus'] as const;
+    const handler = () => bump();
+
+    for (const event of events) {
+      window.addEventListener(event, handler, { passive: true, capture: event === 'focus' });
+    }
+
+    // Also bump on visibility change (user returns to tab).
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') bump();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+
+    return () => {
+      for (const event of events) {
+        window.removeEventListener(event, handler, event === 'focus');
+      }
+      document.removeEventListener('visibilitychange', onVisible);
+      if (activityTimerRef.current) clearTimeout(activityTimerRef.current);
+    };
+  }, [bump]);
 
   const isLow = remaining <= 2 * 60 * 1000;
   const isCritical = remaining <= 60 * 1000;
@@ -79,7 +143,7 @@ export function SessionTimer() {
           ? 'border-amber-500/40 bg-amber-500/10 text-amber-600'
           : 'border-[var(--a-border)] bg-[var(--a-subtle)] text-[var(--a-muted)]'
       )}
-      title="Session timeout — auto-logout on expiry"
+      title="Session timeout — auto-logout on inactivity"
     >
       <Clock className={cn('h-3.5 w-3.5', isCritical && 'animate-pulse')} />
       <span>{formatTime(remaining)}</span>
