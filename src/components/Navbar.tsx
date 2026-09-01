@@ -222,7 +222,7 @@ export function Navbar() {
                       <AnimatePresence>
                         {open && (
                           <motion.div
-                            className="absolute left-1/2 top-full -translate-x-1/2 pt-4"
+                            className="absolute left-1/2 top-full -translate-x-1/2 pt-4 z-[100]"
                             initial={{ opacity: 0, y: -8, scale: 0.97 }}
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, y: -8, scale: 0.97 }}
