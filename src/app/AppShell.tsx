@@ -6,6 +6,7 @@ import { ThemeProvider } from '@/components/theme/ThemeProvider';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { AIChatWidget } from '@/components/AIChatWidget';
+import { cn } from '@/lib/utils';
 
 function ScrollToHash() {
   const pathname = usePathname();
@@ -48,7 +49,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </a>
         <ScrollToHash />
         {!isAdmin && <Navbar />}
-        <main id="main-content" className="flex-1 mt-14">
+        <main id="main-content" className={cn('flex-1', !isAdmin && 'mt-14')}>
           {children}
         </main>
         {!isAdmin && <Footer />}

@@ -9,6 +9,7 @@ import { getAdminToken, adminFetch } from '@/lib/admin-client';
 import { Toaster } from 'sonner';
 import { cn } from '@/lib/utils';
 import { AccountModal } from '@/components/admin/AccountModal';
+import { SessionTimer } from '@/components/admin/SessionTimer';
 
 type RoleTone = 'orange' | 'green' | 'blue' | 'grey';
 
@@ -306,6 +307,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           </div>
 
           <div className="flex items-center gap-3">
+            <SessionTimer />
             <button
               type="button"
               onClick={toggleTheme}
