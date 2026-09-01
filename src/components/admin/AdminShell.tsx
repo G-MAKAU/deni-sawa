@@ -10,6 +10,7 @@ import { Toaster } from 'sonner';
 import { cn } from '@/lib/utils';
 import { AccountModal } from '@/components/admin/AccountModal';
 import { SessionTimer } from '@/components/admin/SessionTimer';
+import { site } from '@/data/site';
 
 type RoleTone = 'orange' | 'green' | 'blue' | 'grey';
 
