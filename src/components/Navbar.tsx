@@ -36,15 +36,12 @@ function useScrollDirection(pathname?: string) {
       window.requestAnimationFrame(() => {
         const y = window.scrollY;
 
-        // Near the top: always full navbar (no compact).
+        // Only reset compact at the very top.
         if (y <= 60) {
           setCompact(false);
-        } else {
-          const delta = y - lastY.current;
-          // Compact on meaningful downward scroll past 80px.
-          if (delta > 6 && y > 80) setCompact(true);
-          // Expand on any upward scroll.
-          else if (delta < -6) setCompact(false);
+        } else if (y > 80) {
+          // Past the threshold: always compact. Stays compact until top.
+          setCompact(true);
         }
 
         lastY.current = y;
@@ -76,6 +73,8 @@ export function Navbar() {
   const compact = useScrollDirection(pathname);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [dropdownPos, setDropdownPos] = useState<{ x: number; y: number } | null>(null);
+  const triggerRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
   const [mobileOpen, setMobileOpen] = useState<string | null>(null);
   const [lmsTip, setLmsTip] = useState(false);
   const lmsTipTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -100,8 +99,21 @@ export function Navbar() {
     lmsTipTimer.current = setTimeout(() => setLmsTip(false), 2500);
   }, []);
 
+  // Close dropdown on scroll (position becomes stale).
+  useEffect(() => {
+    if (!openDropdown) return;
+    const close = () => setOpenDropdown(null);
+    window.addEventListener('scroll', close, { passive: true });
+    return () => window.removeEventListener('scroll', close);
+  }, [openDropdown]);
+
   const handleDropdownEnter = useCallback((label: string) => {
     if (dropdownTimeout.current) clearTimeout(dropdownTimeout.current);
+    const btn = triggerRefs.current.get(label);
+    if (btn) {
+      const rect = btn.getBoundingClientRect();
+      setDropdownPos({ x: rect.left + rect.width / 2, y: rect.bottom });
+    }
     setOpenDropdown(label);
   }, []);
 
@@ -191,9 +203,16 @@ export function Navbar() {
                       onMouseLeave={handleDropdownLeave}
                     >
                       <button
+                        ref={(el) => { if (el) triggerRefs.current.set(item.label, el); }}
                         type="button"
-                        onClick={() => setOpenDropdown(open ? null : item.label)}
-                        aria-expanded={open}
+                        onClick={() => {
+                          if (openDropdown === item.label) {
+                            setOpenDropdown(null);
+                          } else {
+                            handleDropdownEnter(item.label);
+                          }
+                        }}
+                        aria-expanded={openDropdown === item.label}
                         className={cn(
                           'group relative flex items-center gap-1.5 rounded-full px-4 py-2 text-[14px] font-medium tracking-[-0.01em] transition-all duration-300',
                           active || open
@@ -220,9 +239,10 @@ export function Navbar() {
                       </button>
 
                       <AnimatePresence>
-                        {open && (
+                        {open && dropdownPos && (
                           <motion.div
-                            className="absolute left-1/2 top-full -translate-x-1/2 pt-4 z-[100]"
+                            className="fixed z-[100] pt-4"
+                            style={{ left: dropdownPos.x, top: dropdownPos.y, transform: 'translateX(-50%)' }}
                             initial={{ opacity: 0, y: -8, scale: 0.97 }}
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, y: -8, scale: 0.97 }}
