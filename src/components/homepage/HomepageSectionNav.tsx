@@ -59,8 +59,8 @@ export function HomepageSectionNav() {
   return (
     <div
       className={cn(
-        'sticky top-0 z-30 border-b border-card-border bg-nav transition-all duration-300',
-        visible ? 'translate-y-0 opacity-100' : 'pointer-events-none -translate-y-full opacity-0'
+        'sticky z-[70] border-b border-card-border bg-nav transition-all duration-300',
+        visible ? 'top-[76px] translate-y-0 opacity-100' : 'top-[76px] pointer-events-none -translate-y-full opacity-0'
       )}
     >
       <div className="container-lux">
