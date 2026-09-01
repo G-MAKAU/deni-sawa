@@ -140,14 +140,13 @@ export default async function HomePage() {
               <div className="absolute -bottom-5 -left-5 h-28 w-28 rounded-lg bg-growth/10" />
 
               <div className="relative aspect-[3/2] lg:aspect-auto lg:h-full lg:w-full">
-                <Image
+                <img
                   src="/images/Deni-sawa-Home-Hero.webp"
                   alt="Senior advisors & fractional executives delivering Business Development Services (BDS) that help organisations recover, stabilise, grow and become Best-in-Class."
-                  fill
-                  priority
-                  quality={90}
-                  sizes="(min-width: 1024px) 50vw, 100vw"
+                  loading="eager"
                   className="object-cover object-center"
+                  width="800"
+                  height="533"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-charcoal/75 via-transparent to-transparent" />
                 <div className="absolute inset-0 bg-gradient-to-t from-transparent via-transparent to-charcoal/25" />
