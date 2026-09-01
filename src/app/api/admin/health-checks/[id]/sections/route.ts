@@ -122,18 +122,3 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     return jsonAdminError(error, 'Failed to reorder sections');
   }
 }
-
-/** Deletes a section (cascades to subsections, questions, options, answers). */
-export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  try {
-    const { supabase } = await requireAdmin(request, 'delete');
-    const { id } = checkParamsSchema.parse(await params);
-
-    const { error } = await supabase.from('health_check_sections').delete().eq('health_check_id', id);
-    if (error) throw error;
-
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    return jsonAdminError(error, 'Failed to delete sections');
-  }
-}
