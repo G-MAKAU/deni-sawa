@@ -231,7 +231,7 @@ export const audiences = [
     description:
       'Personal financial health is the foundation of professional performance. Build resilience, clarity and the confidence to lead.',
     cta: 'Professional Financial Health Check',
-    href: '/business-health-checks/professional-health-check',
+    href: '/business-health-checks/professional-financial-health-check',
     servicesHref: '/services/professionals',
     pathway: [
       {
