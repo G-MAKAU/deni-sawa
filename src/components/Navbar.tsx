@@ -113,67 +113,66 @@ export function Navbar() {
     <>
       <ScrollProgress />
 
-      {/* Non-sticky wrapper — contact bar sits here, sticky nav sits below. */}
-      <div className="relative z-[80]">
-        {/* Contact bar — relative positioned, never changes header height (no layout shift). */}
-        <div
-          className={cn(
-            'overflow-hidden transition-all duration-300 ease-out',
-            compact ? 'max-h-0 -translate-y-4 opacity-0 pointer-events-none' : 'max-h-14 translate-y-0 opacity-100'
-          )}
-        >
-          <div className="border-b border-card-border bg-background/95">
-            <div className="w-full px-4 sm:px-6 lg:px-8">
-              <div className="flex items-center justify-between py-2.5 text-sm text-muted-foreground">
-                <div className="flex min-w-0 items-center gap-4 sm:gap-6">
+      {/* Fixed contact bar — sits at viewport top, collapses on scroll down. */}
+      <div
+        className={cn(
+          'fixed top-0 left-0 right-0 z-[90] overflow-hidden transition-all duration-300 ease-out',
+          compact ? 'max-h-0 -translate-y-2 opacity-0 pointer-events-none' : 'max-h-14 translate-y-0 opacity-100'
+        )}
+      >
+        <div className="border-b border-card-border bg-background/95">
+          <div className="w-full px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between py-2.5 text-sm text-muted-foreground">
+              <div className="flex min-w-0 items-center gap-4 sm:gap-6">
+                <a
+                  href={`tel:${site.phone.replace(/\s/g, '')}`}
+                  className="flex items-center gap-2 whitespace-nowrap transition-colors hover:text-brand"
+                >
+                  <Phone className="h-4 w-4 flex-shrink-0" />
+                  <span className="sm:inline">{site.phone}</span>
+                </a>
+                <span className="hidden h-4 w-px flex-shrink-0 bg-card-border sm:block" />
+                <a
+                  href={`mailto:${business.email}`}
+                  className="hidden min-w-0 items-center gap-2 transition-colors hover:text-brand sm:flex"
+                >
+                  <Mail className="h-4 w-4 flex-shrink-0" />
+                  <span className="truncate">{business.email}</span>
+                </a>
+                <span className="hidden h-4 w-px flex-shrink-0 bg-card-border md:block" />
+                <span className="hidden items-center gap-2 whitespace-nowrap md:flex">
+                  <Clock className="h-4 w-4 flex-shrink-0" />
+                  Mon–Fri 8am–5pm
+                </span>
+              </div>
+              <div className="flex flex-shrink-0 items-center gap-3 sm:gap-4">
+                {socialLinks.map(({ name, href, icon: Icon, ariaLabel, hoverTextClass }) => (
                   <a
-                    href={`tel:${site.phone.replace(/\s/g, '')}`}
-                    className="flex items-center gap-2 whitespace-nowrap transition-colors hover:text-brand"
+                    key={name}
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={ariaLabel}
+                    className={cn('text-muted-foreground transition-colors', hoverTextClass)}
                   >
-                    <Phone className="h-4 w-4 flex-shrink-0" />
-                    <span className="sm:inline">{site.phone}</span>
+                    <Icon className="h-5 w-5" />
                   </a>
-                  <span className="hidden h-4 w-px flex-shrink-0 bg-card-border sm:block" />
-                  <a
-                    href={`mailto:${business.email}`}
-                    className="hidden min-w-0 items-center gap-2 transition-colors hover:text-brand sm:flex"
-                  >
-                    <Mail className="h-4 w-4 flex-shrink-0" />
-                    <span className="truncate">{business.email}</span>
-                  </a>
-                  <span className="hidden h-4 w-px flex-shrink-0 bg-card-border md:block" />
-                  <span className="hidden items-center gap-2 whitespace-nowrap md:flex">
-                    <Clock className="h-4 w-4 flex-shrink-0" />
-                    Mon–Fri 8am–5pm
-                  </span>
-                </div>
-                <div className="flex flex-shrink-0 items-center gap-3 sm:gap-4">
-                  {socialLinks.map(({ name, href, icon: Icon, ariaLabel, hoverTextClass }) => (
-                    <a
-                      key={name}
-                      href={href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      aria-label={ariaLabel}
-                      className={cn('text-muted-foreground transition-colors', hoverTextClass)}
-                    >
-                      <Icon className="h-5 w-5" />
-                    </a>
-                  ))}
-                </div>
+                ))}
               </div>
             </div>
           </div>
         </div>
+      </div>
 
-        <header
-          className={cn(
-            'sticky top-0 z-[80] w-full transition-colors duration-300',
-            compact
-            ? 'border-b border-card-border bg-nav shadow-[0_1px_40px_rgba(0,0,0,0.06)]'
-            : 'border-b border-transparent bg-nav/0'
-          )}
-        >
+      {/* Sticky nav — sits below the contact bar when expanded, at top when collapsed. */}
+      <header
+        className={cn(
+          'sticky z-[80] w-full transition-all duration-300',
+          compact
+          ? 'top-0 border-b border-card-border bg-nav shadow-[0_1px_40px_rgba(0,0,0,0.06)]'
+          : 'top-[52px] border-b border-transparent bg-nav/0'
+        )}
+      >
 
         <div className="w-full px-4 sm:px-6 lg:px-8">
           <nav className="flex h-20 items-center justify-between gap-6 lg:h-[76px]">
@@ -377,7 +376,6 @@ href="/business-health-checks#choose-your-assessment"
           </nav>
         </div>
       </header>
-      </div>
 
       {/* Mobile drawer */}
       <div
