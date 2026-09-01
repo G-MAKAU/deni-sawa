@@ -426,20 +426,87 @@ What tools do you use for project management?`;
             {mode === 'json' ? (
               <div className="space-y-1.5">
                 <p className="font-semibold text-[var(--a-text2)]">JSON structure:</p>
-                <p>Each section contains subsections. Each subsection contains questions. Select questions need a <code className="rounded bg-[var(--a-hover)] px-1">options</code> array.</p>
+                <p>Each section contains subsections. Each subsection contains questions.</p>
                 <p>
                   Types: <code className="rounded bg-[var(--a-hover)] px-1">paragraph</code>, <code className="rounded bg-[var(--a-hover)] px-1">single_select</code>, <code className="rounded bg-[var(--a-hover)] px-1">multi_select</code>
                 </p>
-                <p>Optional fields: <code className="rounded bg-[var(--a-hover)] px-1">description</code> (on sections/subsections), <code className="rounded bg-[var(--a-hover)] px-1">helper_text</code> (on questions).</p>
+                <p>Select questions <strong>must</strong> include an <code className="rounded bg-[var(--a-hover)] px-1">options</code> array of strings.</p>
+                <p>Optional fields: <code className="rounded bg-[var(--a-hover)] px-1">description</code> (on sections/subsections), <code className="rounded bg-[var(--a-hover)] px-1">helper_text</code> and <code className="rounded bg-[var(--a-hover)] px-1">required</code> (on questions).</p>
+                <p className="mt-2 font-semibold text-[var(--a-text2)]">Example — single select:</p>
+                <pre className="overflow-x-auto rounded bg-[var(--a-card)] p-2 text-[10px] leading-relaxed">{`{
+  "text": "What is your primary revenue source?",
+  "type": "single_select",
+  "options": ["Product sales", "Services", "Subscription"]
+}`}</pre>
+                <p className="mt-2 font-semibold text-[var(--a-text2)]">Example — multi select:</p>
+                <pre className="overflow-x-auto rounded bg-[var(--a-card)] p-2 text-[10px] leading-relaxed">{`{
+  "text": "Which expenses do you track?",
+  "type": "multi_select",
+  "options": ["Rent", "Salaries", "Marketing", "Utilities"]
+}`}</pre>
               </div>
             ) : (
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 <p className="font-semibold text-[var(--a-text2)]">Text format rules:</p>
-                <p><code className="rounded bg-[var(--a-hover)] px-1">## Title</code> → Section &nbsp;|&nbsp; <code className="rounded bg-[var(--a-hover)] px-1">### Heading</code> → Subsection</p>
-                <p><code className="rounded bg-[var(--a-hover)] px-1">[radio] Question</code> → Single select &nbsp;|&nbsp; <code className="rounded bg-[var(--a-hover)] px-1">[checkbox] Question</code> → Multi select</p>
-                <p><code className="rounded bg-[var(--a-hover)] px-1">[text] Question</code> → Paragraph &nbsp;|&nbsp; <code className="rounded bg-[var(--a-hover)] px-1">- Option</code> lines = options for select questions</p>
-                <p><code className="rounded bg-[var(--a-hover)] px-1">&gt; Helper text</code> after a question → helper_text &nbsp;|&nbsp; Lines after headings → section/subsection description</p>
-                <p>Plain text without a prefix = paragraph question.</p>
+
+                <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+                  <div>
+                    <p className="font-semibold text-[var(--a-text2)]">Headings</p>
+                    <p><code className="rounded bg-[var(--a-hover)] px-1">## Title</code> → Section</p>
+                    <p><code className="rounded bg-[var(--a-hover)] px-1">### Heading</code> → Subsection</p>
+                    <p>Lines immediately after a heading (before any question) become the section/subsection description.</p>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-[var(--a-text2)]">Question types</p>
+                    <p><code className="rounded bg-[var(--a-hover)] px-1">[radio] Question</code> → Single select</p>
+                    <p><code className="rounded bg-[var(--a-hover)] px-1">[checkbox] Question</code> → Multi select</p>
+                    <p><code className="rounded bg-[var(--a-hover)] px-1">[text] Question</code> → Paragraph (open text)</p>
+                    <p>Plain text without a prefix → Paragraph question</p>
+                  </div>
+                </div>
+
+                <div>
+                  <p className="font-semibold text-[var(--a-text2)]">Options (for [radio] and [checkbox] questions)</p>
+                  <p>Each option <strong>must</strong> start with <code className="rounded bg-[var(--a-hover)] px-1">- </code> (hyphen + space) or <code className="rounded bg-[var(--a-hover)] px-1">* </code> (asterisk + space) on its own line, directly below the question.</p>
+                  <p><strong>Options only attach to the most recent [radio] or [checkbox] question.</strong> A blank line or new question ends the option list.</p>
+                </div>
+
+                <div>
+                  <p className="font-semibold text-[var(--a-text2)]">Other</p>
+                  <p><code className="rounded bg-[var(--a-hover)] px-1">&gt; Helper text</code> on the line after a question → attached as helper_text.</p>
+                  <p><code className="rounded bg-[var(--a-hover)] px-1">required</code> defaults to true. Add <code className="rounded bg-[var(--a-hover)] px-1">[optional]</code> before a question to make it optional.</p>
+                </div>
+
+                <div className="rounded-lg border border-[var(--a-border-soft)] bg-[var(--a-card)] p-3">
+                  <p className="mb-1.5 font-semibold text-[var(--a-text2)]">Full example — copy & paste:</p>
+                  <pre className="overflow-x-auto text-[10px] leading-relaxed">{`## Financial Management
+Revenue and cash flow assessment
+
+### Revenue Sources
+[radio] What is your primary revenue source?
+- Product sales
+- Services
+- Subscription
+- Other
+
+[checkbox] Which revenue streams do you have?
+- Product sales
+- Consulting
+- Training
+- Licensing
+
+> Select all that apply
+
+### Cash Flow
+[text] Describe your monthly cash flow process
+> Include budgeting, forecasting, and monitoring
+
+[radio] How often do you review cash flow?
+- Daily
+- Weekly
+- Monthly
+- Quarterly`}</pre>
+                </div>
               </div>
             )}
           </div>

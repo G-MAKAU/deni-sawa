@@ -229,7 +229,6 @@ export function QuestionsManager() {
         subtitle="Select a subsection on the left to manage its questions."
         crumbs={[{ label: 'Health Checks', href: '/admin/health-checks' }, { label: 'Questions' }]}
         actions={
-          selectedSubsection ? (
             <div className="flex items-center gap-2">
               <button
                 type="button"
@@ -238,15 +237,16 @@ export function QuestionsManager() {
               >
                 <Upload className="h-4 w-4" /> Import
               </button>
-              <button
-                type="button"
-                onClick={openNew}
-                className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-[#E8510A] px-3.5 text-[13px] font-bold text-white hover:bg-[#c94508]"
-              >
-                <Plus className="h-4 w-4" /> Add question
-              </button>
+              {selectedSubsection && (
+                <button
+                  type="button"
+                  onClick={openNew}
+                  className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-[#E8510A] px-3.5 text-[13px] font-bold text-white hover:bg-[#c94508]"
+                >
+                  <Plus className="h-4 w-4" /> Add question
+                </button>
+              )}
             </div>
-          ) : null
         }
       />
 
