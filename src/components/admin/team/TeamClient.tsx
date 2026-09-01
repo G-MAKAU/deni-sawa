@@ -15,6 +15,7 @@ interface TeamMember {
   role: 'super_admin' | 'admin' | 'manager' | 'support';
   is_active: boolean;
   created_at: string;
+  lastLogin?: string | null;
 }
 
 const ROLE_TONE: Record<TeamMember['role'], 'orange' | 'green' | 'blue' | 'grey'> = {
