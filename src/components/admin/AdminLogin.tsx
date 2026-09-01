@@ -61,12 +61,17 @@ export function AdminLogin() {
           }).catch(() => {});
         }
       }).catch(() => {});
-      // Keep submitting=true so the button stays in "Redirecting…" state
-      // until the navigation completes.
+      // Navigate to dashboard — use push with noRedirect to avoid
+      // a double-navigate when the page already routes on auth state.
       router.replace('/admin/dashboard');
     } catch {
       setError('Something went wrong signing you in. Please try again.');
       setSubmitting(false);
+    } finally {
+      // Allow the button to reset after a short delay so the redirect
+      // can complete. The dashboard page will set submitting=false once
+      // its own data is ready.
+      setTimeout(() => setSubmitting(false), 1500);
     }
   };
 
