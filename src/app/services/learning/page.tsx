@@ -155,7 +155,7 @@ export default function LearningPage() {
       </section>
 
       {/* Anchor navigation */}
-      <section className="sticky top-0 z-30 border-b border-card-border bg-background/95 backdrop-blur-md">
+      <section className="sticky top-[76px] z-[70] border-b border-card-border bg-background/95 backdrop-blur-md">
         <div className="container-lux">
           <div className="scrollbar-hide flex items-center gap-2 overflow-x-auto py-3">
             {programs.map((p) => (

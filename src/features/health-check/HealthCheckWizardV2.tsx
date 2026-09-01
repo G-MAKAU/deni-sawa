@@ -790,7 +790,7 @@ export function HealthCheckWizardV2({ slug }: { slug: string }) {
         {/* Floating section header — full-width bar, sticks to the top while scrolling
             down and lets the main navbar return on scroll up (same pattern as the
             Business Support quick-nav). */}
-        <section className="sticky top-0 z-30 w-[100vw] border-b border-card-border bg-background/95 backdrop-blur-md mx-[calc(50%-50vw)]">
+        <section className="sticky top-[76px] z-[70] w-[100vw] border-b border-card-border bg-background/95 backdrop-blur-md mx-[calc(50%-50vw)]">
           <div className="mx-auto flex w-full max-w-2xl items-center justify-between gap-4 px-5 py-3.5">
             <p className="min-w-0 truncate font-mono text-[11px] uppercase tracking-[0.2em] text-brand">
               Section {sectionIndex + 1} of {totalSections} ·{' '}
