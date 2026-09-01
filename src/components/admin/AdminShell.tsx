@@ -32,6 +32,7 @@ interface AdminIdentity {
   email: string;
   full_name: string;
   role: string;
+  lastLogin?: string | null;
 }
 
 interface NavItem {
@@ -330,6 +331,14 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                     <p className="text-[13px] font-semibold leading-tight text-[var(--a-ink2)]">{admin.full_name}</p>
                     <p className="text-[11px] text-[var(--a-muted)]">{admin.email}</p>
                   </div>
+                  <Link
+                    href={site.url}
+                    className="hidden sm:inline-flex items-center gap-1.5 rounded-lg border border-[var(--a-border)] bg-[var(--a-subtle)] px-3 py-1 text-xs font-semibold text-[var(--a-muted)] hover:text-[var(--a-ink2)]"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    ← View public site
+                  </Link>
                   <span
                     className={cn(
                       'rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider',
