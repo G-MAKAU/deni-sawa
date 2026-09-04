@@ -16,6 +16,8 @@ import { HealthScoreCard } from '@/components/HealthScoreCard';
 import { AudienceRouter } from '@/components/AudienceRouter';
 import { SectionHeading } from '@/components/SectionHeading';
 import { CTASection } from '@/components/CTASection';
+import { HeroCarousel } from '@/components/HeroCarousel';
+import type { HeroImage } from '@/components/HeroCarousel';
 import { BlogCoverImage } from '@/components/blog/BlogCoverImage';
 import { HomepageSectionNav } from '@/components/homepage/HomepageSectionNav';
 import { getBlogPosts } from '@/lib/supabase/queries';
@@ -42,6 +44,39 @@ const serviceIcons = {
   'growth-support': TrendingUp,
   'special-situations': LifeBuoy,
 } as const;
+
+const heroImages: HeroImage[] = [
+  {
+    src: '/images/Deni-sawa-Home-Hero.webp',
+    alt: 'Senior advisors & fractional executives delivering Business Development Services (BDS) that help organisations recover, stabilise, grow and become Best-in-Class.',
+    width: 800,
+    height: 635,
+  },
+  {
+    src: '/images/Deni-sawa-Home-Hero-2.webp',
+    alt: 'Senior advisors & fractional executives delivering Business Development Services (BDS) that help organisations recover, stabilise, grow and become Best-in-Class.',
+    width: 800,
+    height: 635,
+  },
+  {
+    src: '/images/Deni-sawa-Home-Hero-3.webp',
+    alt: 'Senior advisors & fractional executives delivering Business Development Services (BDS) that help organisations recover, stabilise, grow and become Best-in-Class.',
+    width: 800,
+    height: 635,
+  },
+  {
+    src: '/images/Deni-sawa-Home-Hero-4.webp',
+    alt: 'Senior advisors & fractional executives delivering Business Development Services (BDS) that help organisations recover, stabilise, grow and become Best-in-Class.',
+    width: 800,
+    height: 635,
+  },
+  {
+    src: '/images/Deni-sawa-Home-Hero-5.webp',
+    alt: 'Senior advisors & fractional executives delivering Business Development Services (BDS) that help organisations recover, stabilise, grow and become Best-in-Class.',
+    width: 800,
+    height: 635,
+  },
+];
 
 export default async function HomePage() {
   // Featured articles first, falling back to the most recent if none are featured yet.
@@ -80,7 +115,7 @@ export default async function HomePage() {
     <>
       {/* ── 01. Hero ────────────────────────────────────────── */}
       <section id="overview" className="hero-pattern relative overflow-hidden bg-charcoal text-white scroll-mt-20">
-        <div className="container-lux section-pad">
+        <div className="container-lux pb-12 pt-8 md:pb-16 md:pt-8 lg:pb-18 lg:pt-10">
           <div className="grid items-center gap-5  lg:grid-cols-[1fr_1fr] lg:gap-16">
             <div className="max-w-4xl">
               <Reveal>
@@ -138,14 +173,10 @@ export default async function HomePage() {
               <div className="absolute -right-6 top-10 h-36 w-36 rounded-full border border-brand/25" />
               <div className="absolute -bottom-5 -left-5 h-28 w-28 rounded-lg bg-growth/10" />
 
-              <div className="relative aspect-[3/2] lg:aspect-auto lg:h-full lg:w-full">
-                <img
-                  src="/images/Deni-sawa-Home-Hero.webp"
-                  alt="Senior advisors & fractional executives delivering Business Development Services (BDS) that help organisations recover, stabilise, grow and become Best-in-Class."
-                  loading="eager"
-                  className="h-full w-full object-contain object-center"
-                  width="800"
-                  height="635"
+              <div className="relative h-[50vh] min-h-[320px] lg:h-[90%] lg:w-full">
+                <HeroCarousel
+                  images={heroImages}
+                  className="h-full w-full overflow-hidden rounded-2xl"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-charcoal/75 via-transparent to-transparent" />
                 <div className="absolute inset-0 bg-gradient-to-t from-transparent via-transparent to-charcoal/25" />
