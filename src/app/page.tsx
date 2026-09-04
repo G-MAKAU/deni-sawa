@@ -64,18 +64,6 @@ const heroImages: HeroImage[] = [
     width: 800,
     height: 635,
   },
-  {
-    src: '/images/Deni-sawa-Home-Hero-4.webp',
-    alt: 'Senior advisors & fractional executives delivering Business Development Services (BDS) that help organisations recover, stabilise, grow and become Best-in-Class.',
-    width: 800,
-    height: 635,
-  },
-  {
-    src: '/images/Deni-sawa-Home-Hero-5.webp',
-    alt: 'Senior advisors & fractional executives delivering Business Development Services (BDS) that help organisations recover, stabilise, grow and become Best-in-Class.',
-    width: 800,
-    height: 635,
-  },
 ];
 
 export default async function HomePage() {
@@ -170,10 +158,10 @@ export default async function HomePage() {
 
             {/* Hero image — full-width after the text on small screens; starts at the centre of the page on large screens */}
             <Reveal delay={200} className="relative lg:absolute lg:inset-y-0 lg:left-1/2 lg:right-0">
-              <div className="absolute -right-6 top-10 h-36 w-36 rounded-full border border-brand/25" />
+              <div className="absolute -right-6 h-36 w-36 rounded-full border border-brand/25" />
               <div className="absolute -bottom-5 -left-5 h-28 w-28 rounded-lg bg-growth/10" />
 
-              <div className="relative h-[50vh] min-h-[320px] lg:h-[90%] lg:w-full">
+              <div className="relative h-[50vh] mt-5 min-h-[320px] lg:h-[90%] lg:w-full">
                 <HeroCarousel
                   images={heroImages}
                   className="h-full w-full overflow-hidden rounded-2xl"
