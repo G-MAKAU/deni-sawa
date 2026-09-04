@@ -253,6 +253,7 @@ export function Navbar() {
                             <div className="relative w-[420px] overflow-hidden rounded-2xl border border-card-border bg-card shadow-[0_32px_80px_rgba(0,0,0,0.12),0_0_0_1px_rgba(0,0,0,0.02)]">
                               <div className="h-[2px] w-full bg-gradient-to-r from-brand via-brand/80 to-growth" />
                               <div className="p-2">
+                                {item.label !== 'About' && (
                                 <Link
                                   href="/services"
                                   onClick={() => setOpenDropdown(null)}
@@ -268,6 +269,7 @@ export function Navbar() {
                                     <ArrowUpRight className="h-3.5 w-3.5" />
                                   </span>
                                 </Link>
+                                )}
                                 {item.children.map((child, i) => {
                                   const childActive = isActive(child.href, pathname);
                                   return (
@@ -460,6 +462,7 @@ href="/business-health-checks#choose-your-assessment"
                           expanded ? 'max-h-[400px] pb-2 opacity-100' : 'max-h-0 opacity-0'
                         )}
                       >
+                        {item.label !== 'About' && (
                         <Link
                           href="/services"
                           onClick={() => setDrawerOpen(false)}
@@ -468,6 +471,7 @@ href="/business-health-checks#choose-your-assessment"
                           All Services
                           <ArrowRight className="h-3.5 w-3.5 text-brand" />
                         </Link>
+                        )}
                         {item.children.map((child) => (
                           <Link
                             key={child.href}
