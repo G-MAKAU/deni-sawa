@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import Image from 'next/image';
 import {
   ArrowRight,
   LineChart,
@@ -82,7 +81,7 @@ export default async function HomePage() {
       {/* ── 01. Hero ────────────────────────────────────────── */}
       <section id="overview" className="hero-pattern relative overflow-hidden bg-charcoal text-white scroll-mt-20">
         <div className="container-lux section-pad">
-          <div className="grid items-center gap-14 lg:grid-cols-[1fr_1fr] lg:gap-16">
+          <div className="grid items-center gap-5  lg:grid-cols-[1fr_1fr] lg:gap-16">
             <div className="max-w-4xl">
               <Reveal>
                 <span className="eyebrow mb-6 items-start gap-2 text-brand">
@@ -144,9 +143,9 @@ export default async function HomePage() {
                   src="/images/Deni-sawa-Home-Hero.webp"
                   alt="Senior advisors & fractional executives delivering Business Development Services (BDS) that help organisations recover, stabilise, grow and become Best-in-Class."
                   loading="eager"
-                  className="object-cover object-center"
+                  className="h-full w-full object-contain object-center"
                   width="800"
-                  height="533"
+                  height="635"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-charcoal/75 via-transparent to-transparent" />
                 <div className="absolute inset-0 bg-gradient-to-t from-transparent via-transparent to-charcoal/25" />

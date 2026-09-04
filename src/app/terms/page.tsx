@@ -57,7 +57,7 @@ export default function TermsPage() {
   return (
     <>
       <section className="section-pad bg-background">
-        <div className="mx-auto w-full max-w-[800px]">
+        <div className="mx-auto w-full max-w-[800px] px-5 sm:px-8">
           {/* Header — no hero image, date + PDF download prominent */}
           <div className="no-print mb-10">
             <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-brand">Legal</p>

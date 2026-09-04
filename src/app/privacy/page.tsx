@@ -80,7 +80,7 @@ export default function PrivacyPage() {
   return (
     <>
       <section className="section-pad bg-background">
-        <div className="mx-auto w-full max-w-[800px]">
+        <div className="mx-auto w-full max-w-[800px] px-5 sm:px-8">
           {/* Header — no hero image, date + PDF download prominent */}
           <div className="no-print mb-10">
             <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-brand">Legal</p>
@@ -361,7 +361,6 @@ export default function PrivacyPage() {
               <P>We use the following cookies:</P>
               <DataTable
                 rows={[
-                  { label: 'ds_admin_last_active', value: 'Admin session inactivity timeout — Session' },
                   { label: '_ga, _ga_*', value: 'Google Analytics 4 — 2 years' },
                   { label: 'sb-*', value: 'Supabase authentication — Session' },
                   { label: 'Cookie consent preference', value: 'Remembers your consent choice — 12 months' },
