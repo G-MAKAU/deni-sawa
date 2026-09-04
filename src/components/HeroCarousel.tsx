@@ -53,7 +53,7 @@ export function HeroCarousel({ images, interval = 5000, className }: HeroCarouse
       </div>
 
       {images.length > 1 && (
-        <div className="absolute -ml-16 bg-brand p-2 rounded-sm bottom-4 left-1/4 z-10 flex -translate-x-1/2 gap-2">
+        <div className="absolute -ml-16 bg-brand p-2 rounded-sm sm:bottom-12 md:bottom-4 left-1/4 z-10 flex -translate-x-1/2 gap-2">
           {images.map((_, i) => (
             <button
               key={i}
