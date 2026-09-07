@@ -21,6 +21,17 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
     if (error) throw error;
     if (!report) return NextResponse.json({ error: 'Report not found.' }, { status: 404 });
 
+    // Block access to reports whose public view has been revoked by an admin.
+    if (report.is_public === false) {
+      return NextResponse.json(
+        {
+          error: 'revoked',
+          message: 'Public access to this report has been revoked. Please contact the report owner.',
+        },
+        { status: 403 },
+      );
+    }
+
     // Block access to expired reports (summary = 30 days).
     if (report.expires_at && new Date(report.expires_at) < new Date()) {
       return NextResponse.json(

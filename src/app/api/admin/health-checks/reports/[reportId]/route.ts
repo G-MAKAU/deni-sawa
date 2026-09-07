@@ -8,8 +8,10 @@ export const dynamic = 'force-dynamic';
 const paramsSchema = z.object({ reportId: z.string().uuid() });
 
 // Editable fields: payment status (restricted to super_admin/admin), the
-// report content itself (lexical_state), and report expiry (expires_at).
+// report content itself (lexical_state), report expiry (expires_at),
+// and public visibility (is_public).
 const paidSchema = z.object({ is_paid: z.boolean() });
+const visibilitySchema = z.object({ is_public: z.boolean() });
 const expirySchema = z.object({ expires_at: z.string().nullable() });
 const contentSchema = z.object({
   lexical_state: z.record(z.string(), z.unknown()),
@@ -89,6 +91,19 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       const { data, error } = await supabase
         .from('health_check_reports')
         .update({ expires_at: expiry.data.expires_at })
+        .eq('id', reportId)
+        .select()
+        .single();
+      if (error) throw error;
+      return NextResponse.json({ report: data });
+    }
+
+    // Public visibility toggle (is_public) — revokes or re-enables public access.
+    const visibility = visibilitySchema.safeParse(body);
+    if (visibility.success) {
+      const { data, error } = await supabase
+        .from('health_check_reports')
+        .update({ is_public: visibility.data.is_public })
         .eq('id', reportId)
         .select()
         .single();

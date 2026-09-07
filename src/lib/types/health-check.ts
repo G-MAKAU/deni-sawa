@@ -89,6 +89,7 @@ export interface HealthCheckReport {
   generation_seconds: string | number | null;
   report_url_token: string;
   is_paid: boolean;
+  is_public: boolean;
   delivery_status: 'pending' | 'sent' | 'failed' | 'skipped';
   accessed_at: string | null;
   created_at: string;

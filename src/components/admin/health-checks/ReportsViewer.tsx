@@ -20,6 +20,7 @@ interface ReportRow {
   id: string;
   report_type: 'summary' | 'detailed';
   is_paid: boolean;
+  is_public: boolean;
   delivery_status: 'pending' | 'sent' | 'failed' | 'skipped';
   created_at: string;
   expires_at: string | null;
@@ -150,6 +151,16 @@ export function ReportsViewer() {
       setReports((prev) => prev.map((r) => (r.id === report.id ? { ...r, is_paid: !r.is_paid } : r)));
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to update payment status.');
+    }
+  };
+
+  const togglePublic = async (report: ReportRow) => {
+    try {
+      await adminPut(`/api/admin/health-checks/reports/${report.id}`, { is_public: !report.is_public });
+      setReports((prev) => prev.map((r) => (r.id === report.id ? { ...r, is_public: !r.is_public } : r)));
+      toast.success(report.is_public ? 'Public access revoked' : 'Public access restored');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to update visibility.');
     }
   };
 
@@ -325,6 +336,13 @@ export function ReportsViewer() {
         header: 'Paid',
         cell: ({ row }) => (
           <Toggle checked={row.original.is_paid} onChange={() => togglePaid(row.original)} disabled={!canTogglePaid} label="Paid" />
+        ),
+      },
+      {
+        accessorKey: 'is_public',
+        header: 'Public',
+        cell: ({ row }) => (
+          <Toggle checked={row.original.is_public} onChange={() => togglePublic(row.original)} label="Public" />
         ),
       },
       {

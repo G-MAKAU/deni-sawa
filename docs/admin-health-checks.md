@@ -178,3 +178,94 @@ You can go back to edit the content before committing the import.
 - Go to **Admin → Health Checks → [Your Check] → Export**
 - Choose PDF or Word format
 - The full question bank is exported with sections, subsections, and all questions
+
+---
+
+## Managing Reports
+
+### Reports Viewer
+
+Navigate to **Admin → Health Checks → Reports** to see all generated reports.
+
+Each report row shows:
+
+| Column | Description |
+|---|---|
+| **Type** | Summary or Detailed |
+| **Client** | Client name from the session |
+| **Health Check** | Which health check this belongs to |
+| **Paid** | Toggle — whether the report has been paid for |
+| **Public** | Toggle — whether the report is publicly accessible via its token link |
+| **Delivery** | pending / sent / failed / skipped |
+| **Gen Status** | Whether AI generation succeeded or had errors |
+| **Created** | When the report was generated |
+| **Expires** | When the report link expires (summaries = 30 days, detailed = 12 months) |
+
+### Revoking / Re-enabling Public Access
+
+Every report has a **Public** toggle in the Reports table.
+
+- **ON (green)** — the report is accessible to anyone with the token link
+- **OFF (grey)** — public access is revoked; anyone visiting the link sees a "revoked" message
+
+To revoke or re-enable:
+1. Go to **Admin → Health Checks → Reports**
+2. Find the report in the table
+3. Click the **Public** toggle to switch it off (revoke) or on (re-enable)
+
+**What happens when revoked:**
+- The public endpoint (`/api/health-check/report/[token]`) returns HTTP 403 with `"error": "revoked"`
+- The user sees: "Public access to this report has been revoked. Please contact the report owner."
+- Admin access via the admin panel is unaffected — admins can still view and edit the report
+- Re-enabling restores full public access immediately
+
+**Note:** This is separate from report expiry. A report can be expired (past `expires_at`) AND have public access revoked — both must be cleared for the link to work.
+
+### Editing Report Expiry
+
+Each report has an inline **Expires** date picker in the table:
+- Click the date to set a new expiry
+- Click **Never** to clear the expiry (report never expires)
+- Summaries default to 30 days; detailed reports default to 12 months
+
+### Regenerating Reports
+
+- Click the **Regenerate** action on any report row
+- Choose whether to send the updated report via email
+- The report content is re-generated using the same AI model and prompt
+- Previous content is overwritten
+
+### Viewing Report Content
+
+- Click the **View** (eye) icon on any report row
+- Opens a full-page viewer with the rendered report
+- Admins can click **Edit** to open the Lexical editor and make changes
+- Changes are saved with `edited_by` and `edited_at` tracking
+
+### Report API Endpoints
+
+| Endpoint | Method | Purpose |
+|---|---|---|
+| `/api/admin/health-checks/reports` | GET | List reports (paginated, filterable) |
+| `/api/admin/health-checks/reports/[id]` | GET | Get report detail |
+| `/api/admin/health-checks/reports/[id]` | PUT | Update report (content, expiry, paid, visibility) |
+| `/api/admin/health-checks/reports/[id]/regenerate` | POST | Regenerate report content |
+| `/api/admin/health-checks/reports/[id]/resend` | POST | Re-send report email |
+| `/api/admin/health-checks/reports/[id]/upgrade` | POST | Upgrade summary → detailed |
+
+### PUT Body Options
+
+```json
+// Toggle paid status
+{ "is_paid": true }
+
+// Toggle public visibility (revoke / re-enable)
+{ "is_public": false }
+
+// Update expiry (ISO string or null to clear)
+{ "expires_at": "2026-12-31T23:59:59Z" }
+{ "expires_at": null }
+
+// Update report content (Lexical editor state)
+{ "lexical_state": { "root": { ... } } }
+```
