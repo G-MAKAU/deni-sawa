@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { Bot, Check, ChevronDown, Loader2, RefreshCw } from 'lucide-react';
+import { Bot, Check, ChevronDown, Loader2, RefreshCw, Zap } from 'lucide-react';
 import { adminPut, adminFetch } from '@/lib/admin-client';
 import { AdminCard, Field, StatusPill } from '@/components/admin/ui';
 import { cn } from '@/lib/utils';
@@ -81,6 +81,12 @@ export function AiSettingsEditor({ ai, onSaved }: AiSettingsEditorProps) {
   const [error, setError] = React.useState<string | null>(null);
   const [saved, setSaved] = React.useState(false);
 
+  const [testing, setTesting] = React.useState(false);
+  const [testResult, setTestResult] = React.useState<{
+    primary: { ok: boolean; label: string; type: string; model: string; latencyMs: number; error?: string };
+    fallback: { ok: boolean; label: string; type: string; model: string; latencyMs: number; error?: string } | null;
+  } | null>(null);
+
   const pickProvider = (id: string) => {
     const preset = PRESETS.find((p) => p.id === id) ?? PRESETS[8];
     setProviderId(id);
@@ -140,6 +146,24 @@ export function AiSettingsEditor({ ai, onSaved }: AiSettingsEditorProps) {
       setError(e instanceof Error ? e.message : 'Failed to save AI settings.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const testProviders = async () => {
+    setTesting(true);
+    setError(null);
+    setTestResult(null);
+    try {
+      const result = await adminFetch<{
+        ok: boolean;
+        primary: { ok: boolean; label: string; type: string; model: string; latencyMs: number; error?: string };
+        fallback: { ok: boolean; label: string; type: string; model: string; latencyMs: number; error?: string } | null;
+      }>('/api/admin/ai/test', { method: 'POST' });
+      setTestResult(result);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to test AI providers.');
+    } finally {
+      setTesting(false);
     }
   };
 
@@ -252,7 +276,44 @@ export function AiSettingsEditor({ ai, onSaved }: AiSettingsEditorProps) {
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Bot className="h-4 w-4" />}
           {saving ? 'Saving…' : 'Save AI Settings'}
         </button>
+        <button
+          type="button"
+          onClick={testProviders}
+          disabled={testing}
+          className="inline-flex h-10 items-center gap-2 rounded-lg border border-[var(--a-border)] px-5 text-[13px] font-semibold text-[var(--a-ink2)] transition-colors hover:bg-[var(--a-hover)] disabled:opacity-60"
+        >
+          {testing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
+          {testing ? 'Testing…' : 'Test Connection'}
+        </button>
       </div>
+
+      {testResult && (
+        <div className="mt-4 space-y-2">
+          <ProviderTestRow result={testResult.primary} />
+          {testResult.fallback && <ProviderTestRow result={testResult.fallback} />}
+        </div>
+      )}
     </AdminCard>
+  );
+}
+
+function ProviderTestRow({ result }: {
+  result: { ok: boolean; label: string; type: string; model: string; latencyMs: number; error?: string };
+}) {
+  return (
+    <div className={cn(
+      'flex items-center gap-3 rounded-lg border px-3 py-2 text-xs',
+      result.ok
+        ? 'border-[#5A9E28]/30 bg-[#5A9E28]/5 text-[#3D7A15]'
+        : 'border-red-500/30 bg-red-500/5 text-red-600'
+    )}>
+      <StatusPill tone={result.ok ? 'green' : 'red'}>
+        {result.ok ? 'OK' : 'FAIL'}
+      </StatusPill>
+      <span className="font-semibold">{result.label}</span>
+      <span className="text-[var(--a-muted)]">{result.type} / {result.model}</span>
+      <span className="ml-auto text-[var(--a-muted)]">{result.latencyMs}ms</span>
+      {result.error && <span className="ml-2 max-w-xs truncate text-red-500" title={result.error}>{result.error}</span>}
+    </div>
   );
 }
