@@ -106,6 +106,8 @@ async function sendPaymentConfirmation(
       to: session.email,
       subject: `Your ${checkName} report is ready`,
       html: buildBrandedEmailHtml(bodyHtml),
+      fromName: 'Deni Sawa Partners',
+      fromEmail: 'advisory@denisawa.co.ke',
     });
   } catch (error) {
     console.error('Payment confirmation email failed:', error);
@@ -141,6 +143,8 @@ async function sendCallScheduledEmail(
       to: session.email,
       subject: 'Your advisory call is being scheduled',
       html: buildBrandedEmailHtml(bodyHtml),
+      fromName: 'Deni Sawa Partners',
+      fromEmail: 'advisory@denisawa.co.ke',
     });
   } catch (error) {
     console.error('Call scheduled email failed:', error);
@@ -185,6 +189,8 @@ async function notifyAdminOfCall(
         to: adminEmail,
         subject: `Advisory call requested — ${checkName}`,
         html: buildBrandedEmailHtml(bodyHtml),
+        fromName: 'Deni Sawa Partners',
+        fromEmail: 'advisory@denisawa.co.ke',
       });
     } catch (error) {
       console.error('Admin call-request email failed:', error);

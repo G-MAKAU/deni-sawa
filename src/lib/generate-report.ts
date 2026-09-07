@@ -209,6 +209,8 @@ export async function runReportGeneration(
           to: adminEmail,
           subject: `[Alert] Report generation failed — ${checkName} (${reportType})`,
           html: buildBrandedEmailHtml(adminBody),
+          fromName: 'Deni Sawa Partners',
+          fromEmail: 'advisory@denisawa.co.ke',
         });
       } catch (emailErr) {
         console.error('Admin fallback notification email failed:', emailErr);

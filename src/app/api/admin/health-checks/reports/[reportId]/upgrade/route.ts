@@ -93,6 +93,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           to: session.email,
           subject: `Your ${checkName} report has been upgraded`,
           html: buildBrandedEmailHtml(bodyHtml),
+          fromName: 'Deni Sawa Partners',
+          fromEmail: 'advisory@denisawa.co.ke',
         });
       } catch (error) {
         console.error('Admin upgrade confirmation email failed:', error);

@@ -150,6 +150,8 @@ async function sendFollowups(
         toName: session.full_name,
         subject,
         html,
+        fromName: 'Deni Sawa Partners',
+        fromEmail: 'advisory@denisawa.co.ke',
         sessionId: session.id,
       });
 
