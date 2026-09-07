@@ -269,3 +269,62 @@ Each report has an inline **Expires** date picker in the table:
 // Update report content (Lexical editor state)
 { "lexical_state": { "root": { ... } } }
 ```
+
+---
+
+## Email Configuration
+
+### From Address
+
+All health check emails send from `advisory@denisawa.co.ke` with the display name "Deni Sawa Partners".
+
+| Email type | Source of from address |
+|---|---|
+| Report delivery (summary/detailed) | `email_templates` table → `from_email` column |
+| Session started | `email_templates` table → `from_email` column |
+| Follow-up reminders | Hardcoded `advisory@denisawa.co.ke` in `health-check-followups.ts` |
+| Payment confirmation | Hardcoded `advisory@denisawa.co.ke` in `payment.ts` |
+| Report upgrade confirmation | Hardcoded `advisory@denisawa.co.ke` in `upgrade/route.ts` |
+| Admin alerts (generation failure) | Hardcoded `advisory@denisawa.co.ke` in `generate-report.ts` |
+
+### SMTP Profiles
+
+The system supports two SMTP profiles:
+
+**Primary** (Gmail — `smtp.gmail.com:587`):
+- Used for all emails by default
+- From address: `mgworkset@gmail.com` (Gmail rewrites the From to the authenticated user)
+
+**Secondary** (Domain server — currently disabled):
+- Required to send from `@denisawa.co.ke` addresses
+- Configure in `.env`:
+
+```
+EMAIL2_HOST=mail.teti.ac.ke
+EMAIL2_PORT=465
+EMAIL2_SECURE=true
+EMAIL2_USER=advisory@denisawa.co.ke
+EMAIL2_PASS=your-domain-password
+EMAIL2_SENDER_DOMAINS=denisawa.co.ke
+```
+
+**Important:** Without the secondary profile configured, all emails are sent via Gmail. Gmail may rewrite the From address to `mgworkset@gmail.com` depending on the email client. To ensure `advisory@denisawa.co.ke` appears as the sender, the secondary SMTP profile must be active.
+
+### Updating Email Templates
+
+Templated emails (report delivery, session started) pull their from address from the `email_templates` table. To update:
+
+1. Go to **Admin → Email Templates**
+2. Edit the template (e.g., `health_check_report_summary`, `health_check_report_detailed`, `health_check_started`)
+3. Set `from_email` to `advisory@denisawa.co.ke`
+4. Set `from_name` to `Deni Sawa Partners`
+
+### Email Logging
+
+All sent emails are logged to the `email_log` table with:
+- `from_email` — the address the email was sent from
+- `smtp_message_id` — the message ID from the SMTP server
+- `status` — `sent`, `failed`, or `pending`
+- `template_key` — which template was used (if any)
+
+View logs at **Admin → Email Log**.

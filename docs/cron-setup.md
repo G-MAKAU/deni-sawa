@@ -151,6 +151,7 @@ Sends up to 4 reminder emails for incomplete health check sessions, then deletes
 - Checks `health_check_followups` table to avoid sending duplicates
 - Each email uses the branded Deni Sawa email template with a resume link
 - Sessions that have `payment_status = 'paid'` are **never deleted**
+- All follow-up emails send from `advisory@denisawa.co.ke` (requires secondary SMTP profile for true domain delivery)
 
 **Session cleanup (day 8):**
 - Deletes incomplete sessions older than 8 days (excluding paid sessions)
