@@ -8,8 +8,8 @@ import { createBrowserClient } from '@/lib/supabase/browser';
 
 const TIMEOUT_MS = 10 * 60 * 1000;
 const COOKIE_NAME = 'ds_admin_last_active';
-const HEARTBEAT_INTERVAL_MS = 60 * 1000; // send heartbeat every 60s while active
-const ACTIVITY_DEBOUNCE_MS = 5000; // debounce activity events
+const HEARTBEAT_INTERVAL_MS = 60 * 1000;
+const ACTIVITY_DEBOUNCE_MS = 5000;
 
 function readCookie(): number {
   if (typeof document === 'undefined') return Date.now();
@@ -30,14 +30,11 @@ function formatTime(ms: number): string {
   return `${m}:${String(s).padStart(2, '0')}`;
 }
 
-/**
- * Send a heartbeat to the server to refresh the session cookie.
- * Also updates the client-side cookie for immediate timer feedback.
- */
+/** Send heartbeat to server — does NOT touch the local timer or cookie. */
 async function sendHeartbeat() {
   try {
     await fetch('/api/admin/heartbeat', { method: 'GET', credentials: 'same-origin' });
-  } catch { /* offline or network error — middleware will still refresh on next real request */ }
+  } catch { /* offline or network error */ }
 }
 
 export function SessionTimer() {
@@ -57,7 +54,7 @@ export function SessionTimer() {
     router.replace('/admin/login?reason=timeout');
   }, [router]);
 
-  /** Bump the local timer and send a heartbeat to the server. */
+  /** Bump the local timer — called ONLY by real user activity. */
   const bump = useCallback(() => {
     const now = Date.now();
     lastActivityRef.current = now;
@@ -71,7 +68,7 @@ export function SessionTimer() {
     }, ACTIVITY_DEBOUNCE_MS);
   }, []);
 
-  // Tick every second — check remaining time from the cookie.
+  // Tick every second — countdown based on last real activity.
   useEffect(() => {
     setRemaining(Math.max(0, TIMEOUT_MS - (Date.now() - lastActivityRef.current)));
 
@@ -87,14 +84,11 @@ export function SessionTimer() {
     return () => clearInterval(interval);
   }, [logout]);
 
-  // Send periodic heartbeats to keep the server session alive.
+  // Heartbeat — fires every 60s to keep server session alive.
+  // Does NOT reset the timer or cookie — only sends to server.
   useEffect(() => {
     heartbeatTimerRef.current = setInterval(() => {
       sendHeartbeat();
-      // Also bump the local cookie so the timer resets.
-      const now = Date.now();
-      lastActivityRef.current = now;
-      writeCookie(now);
     }, HEARTBEAT_INTERVAL_MS);
 
     return () => {
@@ -102,7 +96,7 @@ export function SessionTimer() {
     };
   }, []);
 
-  // Listen for real user activity events.
+  // Real user activity — bumps timer + debounced heartbeat.
   useEffect(() => {
     const events = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart'] as const;
     const handler = () => bump();
@@ -111,8 +105,7 @@ export function SessionTimer() {
       window.addEventListener(event, handler, { passive: true });
     }
 
-    // On visibility change: if returning to tab, bump + send heartbeat immediately
-    // to keep the server session alive even after being away.
+    // Returning to tab: bump timer + immediate heartbeat to refresh server session.
     const onVisible = () => {
       if (document.visibilityState === 'visible') {
         bump();
@@ -121,7 +114,6 @@ export function SessionTimer() {
     };
     document.addEventListener('visibilitychange', onVisible);
 
-    // On focus (window regains focus): same — bump + heartbeat.
     const onFocus = () => {
       bump();
       sendHeartbeat();
