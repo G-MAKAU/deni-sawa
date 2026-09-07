@@ -87,18 +87,14 @@ export function SessionTimer() {
     return () => clearInterval(interval);
   }, [logout]);
 
-  // Send periodic heartbeats while the page is active.
+  // Send periodic heartbeats to keep the server session alive.
   useEffect(() => {
     heartbeatTimerRef.current = setInterval(() => {
-      // Only send heartbeat if user was active recently (within the last 2 minutes).
-      const inactive = Date.now() - lastActivityRef.current;
-      if (inactive < 2 * 60 * 1000) {
-        sendHeartbeat();
-        // Also bump the local cookie so the timer resets.
-        const now = Date.now();
-        lastActivityRef.current = now;
-        writeCookie(now);
-      }
+      sendHeartbeat();
+      // Also bump the local cookie so the timer resets.
+      const now = Date.now();
+      lastActivityRef.current = now;
+      writeCookie(now);
     }, HEARTBEAT_INTERVAL_MS);
 
     return () => {
@@ -108,24 +104,36 @@ export function SessionTimer() {
 
   // Listen for real user activity events.
   useEffect(() => {
-    const events = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart', 'focus'] as const;
+    const events = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart'] as const;
     const handler = () => bump();
 
     for (const event of events) {
-      window.addEventListener(event, handler, { passive: true, capture: event === 'focus' });
+      window.addEventListener(event, handler, { passive: true });
     }
 
-    // Also bump on visibility change (user returns to tab).
+    // On visibility change: if returning to tab, bump + send heartbeat immediately
+    // to keep the server session alive even after being away.
     const onVisible = () => {
-      if (document.visibilityState === 'visible') bump();
+      if (document.visibilityState === 'visible') {
+        bump();
+        sendHeartbeat();
+      }
     };
     document.addEventListener('visibilitychange', onVisible);
 
+    // On focus (window regains focus): same — bump + heartbeat.
+    const onFocus = () => {
+      bump();
+      sendHeartbeat();
+    };
+    window.addEventListener('focus', onFocus);
+
     return () => {
       for (const event of events) {
-        window.removeEventListener(event, handler, event === 'focus');
+        window.removeEventListener(event, handler);
       }
       document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('focus', onFocus);
       if (activityTimerRef.current) clearTimeout(activityTimerRef.current);
     };
   }, [bump]);
