@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { Bot, Check, ChevronDown, Loader2, RefreshCw, Zap } from 'lucide-react';
+import { Bot, Check, ChevronDown, Clipboard, ClipboardCheck, Loader2, RefreshCw, Zap } from 'lucide-react';
 import { adminPut, adminFetch } from '@/lib/admin-client';
 import { AdminCard, Field, StatusPill } from '@/components/admin/ui';
 import { cn } from '@/lib/utils';
@@ -83,8 +83,8 @@ export function AiSettingsEditor({ ai, onSaved }: AiSettingsEditorProps) {
 
   const [testing, setTesting] = React.useState(false);
   const [testResult, setTestResult] = React.useState<{
-    primary: { ok: boolean; label: string; type: string; model: string; latencyMs: number; error?: string };
-    fallback: { ok: boolean; label: string; type: string; model: string; latencyMs: number; error?: string } | null;
+    primary: { ok: boolean; label: string; type: string; model: string; baseUrl: string; latencyMs: number; error?: string };
+    fallback: { ok: boolean; label: string; type: string; model: string; baseUrl: string; latencyMs: number; error?: string } | null;
   } | null>(null);
 
   const pickProvider = (id: string) => {
@@ -298,11 +298,44 @@ export function AiSettingsEditor({ ai, onSaved }: AiSettingsEditorProps) {
 }
 
 function ProviderTestRow({ result }: {
-  result: { ok: boolean; label: string; type: string; model: string; latencyMs: number; error?: string };
+  result: { ok: boolean; label: string; type: string; model: string; baseUrl: string; latencyMs: number; error?: string };
 }) {
+  const [copied, setCopied] = React.useState(false);
+
+  const copyText = React.useMemo(() => {
+    const parts = [
+      `Provider: ${result.label}`,
+      `Type: ${result.type}`,
+      `Model: ${result.model}`,
+      `Base URL: ${result.baseUrl}`,
+      `Latency: ${result.latencyMs}ms`,
+      `Status: ${result.ok ? 'OK' : 'FAIL'}`,
+    ];
+    if (result.error) parts.push(`Error: ${result.error}`);
+    return parts.join('\n');
+  }, [result]);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(copyText);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // fallback
+      const ta = document.createElement('textarea');
+      ta.value = copyText;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
   return (
     <div className={cn(
-      'flex items-center gap-3 rounded-lg border px-3 py-2 text-xs',
+      'group flex items-center gap-3 rounded-lg border px-3 py-2 text-xs',
       result.ok
         ? 'border-[#5A9E28]/30 bg-[#5A9E28]/5 text-[#3D7A15]'
         : 'border-red-500/30 bg-red-500/5 text-red-600'
@@ -314,6 +347,14 @@ function ProviderTestRow({ result }: {
       <span className="text-[var(--a-muted)]">{result.type} / {result.model}</span>
       <span className="ml-auto text-[var(--a-muted)]">{result.latencyMs}ms</span>
       {result.error && <span className="ml-2 max-w-xs truncate text-red-500" title={result.error}>{result.error}</span>}
+      <button
+        type="button"
+        onClick={handleCopy}
+        title="Copy details"
+        className="ml-1 shrink-0 rounded p-1 opacity-0 transition-opacity hover:bg-black/5 group-hover:opacity-100"
+      >
+        {copied ? <ClipboardCheck className="h-3.5 w-3.5 text-[#5A9E28]" /> : <Clipboard className="h-3.5 w-3.5 text-[var(--a-muted)]" />}
+      </button>
     </div>
   );
 }
