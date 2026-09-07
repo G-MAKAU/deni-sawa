@@ -165,7 +165,7 @@ function TableRenderer({ rows }: { rows: ReportTableRow[] }) {
   const firstRow = rows[0];
   const colCount = Math.max(1, firstRow?.cells.length ?? 1);
   return (
-    <View style={styles.table}>
+    <View style={styles.table} wrap={false}>
       {rows.map((row, i) => {
         const isHeader = row.cells.every((c) => c.header) || (i === 0 && row.cells.length > 1);
         return (
@@ -270,6 +270,7 @@ export function HealthReportDocument({ model }: { model: ExportModel }) {
               return (
                 <Text
                   key={i}
+                  wrap={false}
                   style={[
                     headingStyle,
                     block.backgroundColor
@@ -289,6 +290,7 @@ export function HealthReportDocument({ model }: { model: ExportModel }) {
               return (
                 <Text
                   key={i}
+                  wrap={false}
                   style={[
                     styles.paragraph,
                     block.backgroundColor
@@ -313,6 +315,7 @@ export function HealthReportDocument({ model }: { model: ExportModel }) {
               return (
                 <View
                   key={i}
+                  wrap={false}
                   style={[
                     styles.callout,
                     ...(block.tone === 'growth' ? [styles.calloutGrowth] : []),
@@ -339,7 +342,7 @@ export function HealthReportDocument({ model }: { model: ExportModel }) {
               return <TableRenderer key={i} rows={block.rows ?? []} />;
             case 'list':
               return (
-                <View key={i} style={styles.list}>
+                <View key={i} wrap={false} style={styles.list}>
                   {block.items?.map((item, j) => {
                     const marker =
                       block.listType === 'number'

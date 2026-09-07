@@ -94,6 +94,10 @@ function nodeToHtml(node: JsonNode, isListItemChild = false): string {
       const tone = node.tone === 'growth' || node.tone === 'dark' ? String(node.tone) : 'brand';
       return `<div class="ds-callout ds-callout--${tone}">${childrenOf(node).map((child) => nodeToHtml(child)).join('')}</div>`;
     }
+    case 'stickynote': {
+      const color = typeof node.color === 'string' ? node.color : 'yellow';
+      return `<div class="ds-sticky-note ds-sticky-note--${escapeHtml(color)}">${childrenOf(node).map((child) => nodeToHtml(child)).join('')}</div>`;
+    }
     case 'divider':
     case 'horizontalrule':
       return '<hr />';

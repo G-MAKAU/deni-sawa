@@ -44,6 +44,7 @@ interface Node {
   listType?: string;
   tone?: string;
   url?: string;
+  color?: string;
   children?: Node[];
 }
 
@@ -343,6 +344,29 @@ export function lexicalStateToDocx(
             })
           );
           break;
+        case 'stickynote': {
+          const noteColor = typeof node.color === 'string' ? node.color : 'yellow';
+          const noteFills: Record<string, string> = { yellow: 'FFF7C4', green: 'E8F4D6', blue: 'DDEFFB' };
+          const noteBorders: Record<string, string> = { yellow: 'E8C84A', green: '5A9E28', blue: '4A90D9' };
+          const noteFill = noteFills[noteColor] ?? noteFills.yellow;
+          const noteBorder = noteBorders[noteColor] ?? noteBorders.yellow;
+          const noteRuns: (TextRun | ExternalHyperlink)[] = [
+            new TextRun({ text: '📌 ', font: 'Segoe UI Emoji', size: 22 }),
+          ];
+          runsFromChildren(node.children).forEach((c) => {
+            const withBreak = runFor(c, { break: 1 });
+            noteRuns.push(toDocxChild(withBreak));
+          });
+          children.push(
+            new Paragraph({
+              spacing: { before: 160, after: 160 },
+              shading: { type: ShadingType.CLEAR, color: 'auto', fill: noteFill },
+              border: { left: { style: BorderStyle.SINGLE, size: 24, color: noteBorder } },
+              children: noteRuns,
+            })
+          );
+          break;
+        }
         case 'divider':
         default:
           children.push(

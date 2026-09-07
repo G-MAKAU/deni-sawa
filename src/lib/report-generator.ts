@@ -262,6 +262,20 @@ function sanitizeNode(node: unknown): unknown | null {
       backgroundColor: typeof n.backgroundColor === 'string' ? n.backgroundColor : null,
     };
   }
+  if (nodeType === 'stickynote') {
+    return {
+      children,
+      color: ['yellow', 'green', 'blue'].includes(String(n.color)) ? n.color : 'yellow',
+      direction: 'ltr',
+      format: '',
+      indent: 0,
+      style: sanitizeStyle(n.style),
+      textFormat: 0,
+      textStyle: '',
+      type: 'stickynote',
+      version: 1,
+    };
+  }
   return {
     children,
     direction: 'ltr',
