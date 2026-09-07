@@ -1,6 +1,6 @@
 # Cron Job Setup Guide
 
-This project uses cron jobs for email maintenance tasks. You can run them via **Vercel Cron** (automatic) or **cron-job.org** (free, reliable alternative).
+This project uses cron jobs for email maintenance tasks and health check follow-ups. You can run them via **Vercel Cron** (automatic) or **cron-job.org** (free, reliable alternative).
 
 ## Environment Variables Required
 
@@ -21,6 +21,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 |---|---|---|---|
 | Email cleanup | `/api/cron/cleanup-email-logs` | Daily at 03:00 UTC | Deletes email logs older than 30 days |
 | Email retry | `/api/cron/retry-failed-emails` | Every 30 minutes | Retries failed emails (max 5 attempts), notifies admin after max retries |
+| Health check follow-ups | `/api/cron/health-check-followups` | Daily at 08:00 UTC | Sends up to 4 reminder emails for incomplete health checks, deletes sessions after 8 days |
 | Keep-alive | `/api/health-check/keep-alive` | Every 12 hours | Prevents Vercel cold starts |
 
 ## Option A: Vercel Cron (Automatic)
@@ -48,7 +49,7 @@ For each cron job, click **"Create cronjob"** and fill in:
 
 | Field | Value |
 |---|---|
-| **URL** | `https://your-domain.vercel.app/api/cron/cleanup-email-logs` |
+| **URL** | `https://www.denisawa.co.ke/api/cron/cleanup-email-logs` |
 | **Schedule** | `0 3 * * *` (daily at 03:00 UTC) |
 | **Request method** | `GET` |
 | **Timezone** | `UTC` |
@@ -62,7 +63,7 @@ For each cron job, click **"Create cronjob"** and fill in:
 
 | Field | Value |
 |---|---|
-| **URL** | `https://your-domain.vercel.app/api/cron/retry-failed-emails` |
+| **URL** | `https://www.denisawa.co.ke/api/cron/retry-failed-emails` |
 | **Schedule** | `*/30 * * * *` (every 30 minutes) |
 | **Request method** | `GET` |
 | **Timezone** | `UTC` |
@@ -72,11 +73,25 @@ For each cron job, click **"Create cronjob"** and fill in:
 |---|---|
 | `Authorization` | `Bearer YOUR_CRON_SECRET` |
 
-#### Job 3: Keep-Alive (Every 12 hours) — Optional
+#### Job 3: Health Check Follow-ups (Daily)
 
 | Field | Value |
 |---|---|
-| **URL** | `https://your-domain.vercel.app/api/health-check/keep-alive` |
+| **URL** | `https://www.denisawa.co.ke/api/cron/health-check-followups` |
+| **Schedule** | `0 8 * * *` (daily at 08:00 UTC / 11:00 EAT) |
+| **Request method** | `GET` |
+| **Timezone** | `UTC` |
+
+**Headers tab:**
+| Header | Value |
+|---|---|
+| `Authorization` | `Bearer YOUR_CRON_SECRET` |
+
+#### Job 4: Keep-Alive (Every 12 hours) — Optional
+
+| Field | Value |
+|---|---|
+| **URL** | `https://www.denisawa.co.ke/api/health-check/keep-alive` |
 | **Schedule** | `0 */12 * * *` (every 12 hours) |
 | **Request method** | `GET` |
 | **Timezone** | `UTC` |
@@ -118,6 +133,32 @@ Go to **Settings → Notifications** and configure as needed.
 - On failure: increments `attempts`; if `attempts >= 5`, marks as permanently `failed` and sends an admin notification email with details
 - Admin notification includes: recipient, subject, error message, link to email log
 
+### Health Check Follow-ups (`/api/cron/health-check-followups`)
+
+Sends up to 4 reminder emails for incomplete health check sessions, then deletes expired sessions.
+
+**Follow-up email schedule:**
+
+| Email | Timing | Subject | Tone |
+|---|---|---|---|
+| 1 | Day 2 | "Complete your Business Health Check" | Gentle nudge |
+| 2 | Day 4 | "Your Business Health Check is still open" | Reminder with benefits |
+| 3 | Day 6 | "2 days left to complete your assessment" | Urgency |
+| 4 | Day 7 | "Last chance — your assessment expires today" | Final notice |
+
+**Rules:**
+- Only sends to sessions with `is_complete = false`, an email address, and `comms_consent = true`
+- Checks `health_check_followups` table to avoid sending duplicates
+- Each email uses the branded Deni Sawa email template with a resume link
+- Sessions that have `payment_status = 'paid'` are **never deleted**
+
+**Session cleanup (day 8):**
+- Deletes incomplete sessions older than 8 days (excluding paid sessions)
+- CASCADE deletes all related data: answers, followups, reports
+- Runs after follow-up emails are sent
+
+**Database table:** `health_check_followups` tracks which emails were sent per session.
+
 ### Keep-Alive (`/api/health-check/keep-alive`)
 
 - Returns `{ ok: true, ts: <ISO timestamp> }`
@@ -141,6 +182,12 @@ Go to **Settings → Notifications** and configure as needed.
 - The cleanup only deletes rows older than 30 days (sent) or 7 days (stuck pending)
 - Check the `sent_at` timestamp — if it's NULL (email was never confirmed sent), the row won't be cleaned up by the sent filter
 
+### Follow-up emails not sending
+
+- Check that sessions have `comms_consent = true` and a valid `email` address
+- Check the `health_check_followups` table for existing records (duplicates are skipped)
+- Sessions with `payment_status = 'paid'` are excluded from cleanup but can still receive follow-ups
+
 ## Cron Schedule Reference
 
 ```
@@ -155,5 +202,6 @@ Go to **Settings → Notifications** and configure as needed.
 Examples:
 0 3 * * *      → Daily at 03:00 UTC
 */30 * * * *   → Every 30 minutes
+0 8 * * *      → Daily at 08:00 UTC (11:00 EAT)
 0 */12 * * *   → Every 12 hours (at minute 0)
 ```
