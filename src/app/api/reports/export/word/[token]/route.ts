@@ -68,8 +68,8 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
 
     const business = (session as { business_name?: string | null } | undefined)?.business_name ?? '';
     const fullName = (session as { full_name?: string | null } | undefined)?.full_name ?? '';
-    const fileBase = [business, fullName].filter(Boolean).join(' - ') || 'deni-sawa-health-report';
-    const fileName = `${fileBase.replace(/[^\w\- ]+/g, '').replace(/\s+/g, ' ').trim()}.docx`;
+    const namePart = fullName || business || 'Health Report';
+    const fileName = `${namePart.replace(/[^\w\- ]+/g, '').replace(/\s+/g, ' ').trim()} - Deni Sawa Partners.docx`;
 
     return new NextResponse(new Uint8Array(buffer), {
       headers: {
