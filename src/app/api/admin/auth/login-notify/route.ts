@@ -3,6 +3,7 @@ import type { NextRequest } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { sendEmail, buildBrandedEmailHtml } from '@/lib/email';
 import { site } from '@/data/site';
+import { getServiceClient } from '@/lib/supabase/service';
 
 export const dynamic = 'force-dynamic';
 
@@ -93,12 +94,29 @@ export async function POST(request: NextRequest) {
       timeStyle: 'short',
     });
 
+    // Look up admin name from admin_users table
+    const adminClient = getServiceClient();
+    const { data: adminRecord } = await adminClient
+      .from('admin_users')
+      .select('full_name')
+      .eq('email', email)
+      .maybeSingle();
+    const adminName = adminRecord?.full_name || email;
+
     const adminEmail = process.env.ADMIN_NOTIFY_EMAIL ?? site.email;
+
+    const greeting = adminName !== email
+      ? `<p>Hi ${adminName},</p><p>A successful login was recorded for your admin account on <strong>Deni Sawa Partners</strong>.</p>`
+      : `<p>A successful login was recorded for your admin account on <strong>Deni Sawa Partners</strong>.</p>`;
 
     const bodyHtml = `
       <h1>Admin login recorded</h1>
-      <p>A successful login was recorded for your admin account on <strong>Deni Sawa Partners</strong>.</p>
+      ${greeting}
       <table style="width:100%;border-collapse:collapse;margin:16px 0;">
+        <tr>
+          <td style="padding:8px 12px;font-weight:600;color:#555;border-bottom:1px solid #eee;">Admin</td>
+          <td style="padding:8px 12px;border-bottom:1px solid #eee;">${adminName}</td>
+        </tr>
         <tr>
           <td style="padding:8px 12px;font-weight:600;color:#555;border-bottom:1px solid #eee;">Time</td>
           <td style="padding:8px 12px;border-bottom:1px solid #eee;">${timeStr} EAT</td>
@@ -123,7 +141,7 @@ export async function POST(request: NextRequest) {
 
     await sendEmail({
       to: recipients.join(','),
-      subject: `Admin login — ${site.name}`,
+      subject: `Admin login — ${adminName} — ${site.name}`,
       html: buildBrandedEmailHtml(bodyHtml, 'Admin login recorded'),
     });
 
