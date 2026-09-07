@@ -156,8 +156,8 @@ export function AiSettingsEditor({ ai, onSaved }: AiSettingsEditorProps) {
     try {
       const result = await adminFetch<{
         ok: boolean;
-        primary: { ok: boolean; label: string; type: string; model: string; latencyMs: number; error?: string };
-        fallback: { ok: boolean; label: string; type: string; model: string; latencyMs: number; error?: string } | null;
+        primary: { ok: boolean; label: string; type: string; model: string; baseUrl: string; latencyMs: number; error?: string };
+        fallback: { ok: boolean; label: string; type: string; model: string; baseUrl: string; latencyMs: number; error?: string } | null;
       }>('/api/admin/ai/test', { method: 'POST' });
       setTestResult(result);
     } catch (e) {
