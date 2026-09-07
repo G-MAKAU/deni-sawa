@@ -301,10 +301,10 @@ export function lexicalStateToDocx(
               const cellBg = cssColorToHex(String((cell as { backgroundColor?: string }).backgroundColor ?? ''));
               return new TableCell({
                 width: { size: 100 / Math.max(1, (row.children ?? []).length), type: WidthType.PERCENTAGE },
-                shading: isHeader
-                  ? { type: ShadingType.CLEAR, color: 'auto', fill: 'F6F0E8' }
-                  : cellBg
-                    ? { type: ShadingType.CLEAR, color: 'auto', fill: docxHex(cellBg) }
+                shading: cellBg
+                  ? { type: ShadingType.CLEAR, color: 'auto', fill: docxHex(cellBg) }
+                  : isHeader
+                    ? { type: ShadingType.CLEAR, color: 'auto', fill: 'F6F0E8' }
                     : undefined,
                 verticalAlign: VerticalAlign.CENTER,
                 margins: { top: 80, bottom: 80, left: 120, right: 120 },
