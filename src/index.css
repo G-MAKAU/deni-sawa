@@ -636,7 +636,6 @@
   color: var(--text);
 }
 .report-doc .ds-lexical table th {
-  background: rgba(232, 81, 10, 0.1);
   color: var(--text);
   text-transform: uppercase;
   letter-spacing: 0.04em;
