@@ -16,6 +16,10 @@ import { $getSelection, $isRangeSelection, FORMAT_TEXT_COMMAND, EditorState } fr
 import { Bold, Italic, List, ListOrdered } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+// Register list nodes
+import { ListNode } from '@lexical/list';
+import { ListItemNode } from '@lexical/list';
+
 function ToolbarButton({
   onClick,
   active,
@@ -150,7 +154,7 @@ export function RichTextEditor({ onChange, placeholder, className, disabled }: R
     () => ({
       namespace: 'ContactMessageEditor',
       theme,
-      nodes: [],
+      nodes: [ListNode, ListItemNode],
       onError: (error: Error) => console.error('Lexical error:', error),
     }),
     []
