@@ -76,7 +76,7 @@ export function HeroCarousel({ images, interval = 5000, className }: HeroCarouse
             <ChevronRight className="h-5 w-5" />
           </button>
 
-          <div className="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 items-center gap-2 rounded-full bg-black/40 px-3 py-1.5 backdrop-blur-sm">
+          <div className="absolute sm:-ml-10 md:-ml-16 bg-brand p-2 rounded-sm sm:bottom-12 md:bottom-4 left-1/4 z-10 flex -translate-x-1/2 items-center gap-2">
             <button
               type="button"
               onClick={prev}
