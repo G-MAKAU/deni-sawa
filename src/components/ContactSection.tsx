@@ -11,7 +11,6 @@ import { SearchableSelect } from '@/components/ui/searchable-select';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import { ObfuscatedEmail } from '@/components/ObfuscatedEmail';
 import type { EditorState } from 'lexical';
-import { lexicalToHtml } from '@/lib/lexical-to-html';
 
 const serviceOptions = [
   ...new Set([
@@ -54,16 +53,18 @@ export function ContactForm() {
     setResult(null);
 
     let message = '';
+    let messageJson = null;
     if (editorState) {
-      const stateJson = editorState.toJSON();
-      const root = stateJson.root as Record<string, unknown>;
+      messageJson = editorState.toJSON();
+      const root = messageJson.root as Record<string, unknown>;
       const children = root?.children as Array<Record<string, unknown>> | undefined;
       const hasContent = children?.some((child) => {
         const childChildren = child.children as Array<Record<string, unknown>> | undefined;
         return childChildren?.some((gc) => typeof gc.text === 'string' && gc.text.trim());
       });
       if (hasContent) {
-        message = lexicalToHtml(stateJson as unknown as Record<string, unknown>);
+        // Send JSON; server will convert to HTML
+        message = JSON.stringify(messageJson);
       }
     }
 
@@ -71,7 +72,7 @@ export function ContactForm() {
       const res = await fetch('/api/book', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, contact, service, preferredDate, preferredTime, message }),
+        body: JSON.stringify({ name, contact, service, preferredDate, preferredTime, message, messageJson }),
       });
       const data: BookingResult = await res.json();
 

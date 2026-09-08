@@ -8,7 +8,6 @@ import { SearchableSelect } from '@/components/ui/searchable-select';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import { ObfuscatedEmail } from '@/components/ObfuscatedEmail';
 import type { EditorState } from 'lexical';
-import { lexicalToHtml } from '@/lib/lexical-to-html';
 
 interface BookResult {
   ok: boolean;
@@ -57,16 +56,17 @@ export function ContactFormNew({ initialSubject }: { initialSubject?: string }) 
     setResult(null);
 
     let message = '';
+    let messageJson = null;
     if (editorState) {
-      const stateJson = editorState.toJSON();
-      const root = stateJson.root as Record<string, unknown>;
+      messageJson = editorState.toJSON();
+      const root = messageJson.root as Record<string, unknown>;
       const children = root?.children as Array<Record<string, unknown>> | undefined;
       const hasContent = children?.some((child) => {
         const childChildren = child.children as Array<Record<string, unknown>> | undefined;
         return childChildren?.some((gc) => typeof gc.text === 'string' && gc.text.trim());
       });
       if (hasContent) {
-        message = lexicalToHtml(stateJson as unknown as Record<string, unknown>);
+        message = JSON.stringify(messageJson);
       }
     }
 
@@ -74,7 +74,7 @@ export function ContactFormNew({ initialSubject }: { initialSubject?: string }) 
       const res = await fetch('/api/book', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, contact, service, message }),
+        body: JSON.stringify({ name, contact, service, message, messageJson }),
       });
       const data: BookResult = await res.json();
       if (data.errors && data.errors.length > 0) {

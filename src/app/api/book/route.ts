@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { business } from '@/data/content';
 import { site } from '@/data/site';
 import { sendEmail, buildBrandedEmailHtml } from '@/lib/email';
+import { lexicalToHtml } from '@/lib/lexical-to-html';
 
 interface BookRequest {
   name?: string;
@@ -10,6 +11,7 @@ interface BookRequest {
   preferredDate?: string;
   preferredTime?: string;
   message?: string;
+  messageJson?: Record<string, unknown>;
 }
 
 const MAX_LEN = { name: 100, contact: 200, service: 200, preferredDate: 20, preferredTime: 20, message: 10000 };
@@ -152,7 +154,17 @@ export async function POST(req: NextRequest) {
   const service = clean(body.service, MAX_LEN.service);
   const preferredDate = clean(body.preferredDate, MAX_LEN.preferredDate);
   const preferredTime = clean(body.preferredTime, MAX_LEN.preferredTime);
-  const message = clean(body.message, MAX_LEN.message);
+
+  // Handle message: if messageJson (Lexical state) provided, convert to HTML
+  let message = clean(body.message, MAX_LEN.message);
+  if (body.messageJson) {
+    try {
+      const html = lexicalToHtml(body.messageJson);
+      if (html) message = html;
+    } catch {
+      // fallback to plain message
+    }
+  }
 
   const errors: string[] = [];
   if (!name) errors.push('Please provide your full name.');
