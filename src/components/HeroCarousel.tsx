@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import Image from 'next/image';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 export interface HeroImage {
@@ -19,6 +20,7 @@ interface HeroCarouselProps {
 export function HeroCarousel({ images, interval = 5000, className }: HeroCarouselProps) {
   const [current, setCurrent] = useState(0);
   const [paused, setPaused] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   const prev = useCallback(() => {
     setCurrent((i) => (i - 1 + images.length) % images.length);
@@ -27,6 +29,10 @@ export function HeroCarousel({ images, interval = 5000, className }: HeroCarouse
   const next = useCallback(() => {
     setCurrent((i) => (i + 1) % images.length);
   }, [images.length]);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (paused || images.length <= 1) return;
@@ -41,20 +47,30 @@ export function HeroCarousel({ images, interval = 5000, className }: HeroCarouse
       onMouseLeave={() => setPaused(false)}
     >
       <div className="relative h-full w-full">
-        {images.map((img, i) => (
-          <img
-            key={img.src}
-            src={img.src}
-            alt={img.alt}
-            width={img.width}
-            height={img.height}
-            loading={i < 3 ? 'eager' : 'lazy'}
-            decoding="async"
-            className={`absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-700 ease-in-out ${
-              i === current ? 'opacity-100' : 'opacity-0 pointer-events-none'
-            }`}
-          />
-        ))}
+        {images.map((img, i) => {
+          const isCurrent = i === current;
+          const shouldRender = mounted ? isCurrent || i <= 2 : i === 0;
+
+          if (!shouldRender) return null;
+
+          return (
+            <Image
+              key={img.src}
+              src={img.src}
+              alt={img.alt}
+              width={img.width}
+              height={img.height}
+              priority={i === 0}
+              loading={i === 0 ? 'eager' : 'lazy'}
+              placeholder="blur"
+              blurDataURL="data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA"
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 80vw, 50vw"
+              className={`absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-700 ease-in-out ${
+                isCurrent ? 'opacity-100' : 'opacity-0 pointer-events-none'
+              }`}
+            />
+          );
+        })}
       </div>
 
       {images.length > 1 && (

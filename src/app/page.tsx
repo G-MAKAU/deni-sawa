@@ -101,6 +101,9 @@ export default async function HomePage() {
 
   return (
     <>
+      {/* Preload LCP hero image */}
+      <link rel="preload" as="image" href="/images/Deni-sawa-Home-Hero.webp" />
+
       {/* ── 01. Hero ────────────────────────────────────────── */}
       <section id="overview" className="hero-pattern relative overflow-hidden bg-charcoal text-white scroll-mt-20">
         <div className="container-lux pb-12 pt-8 md:pb-16 md:pt-8 lg:pb-18 lg:pt-10">
