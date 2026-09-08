@@ -1,13 +1,17 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   Send, Loader2, CheckCircle2, MessageCircle, Mail, MapPin, Phone, Clock, ShieldCheck,
 } from 'lucide-react';
 import { services, business } from '@/data/content';
 import { DatePicker } from '@/components/ui/date-picker';
 import { TimePicker } from '@/components/ui/time-picker';
-import { Textarea } from '@/components/ui/textarea';
+import { SearchableSelect } from '@/components/ui/searchable-select';
+import { RichTextEditor } from '@/components/ui/rich-text-editor';
+import { ObfuscatedEmail } from '@/components/ObfuscatedEmail';
+import type { EditorState } from 'lexical';
+import { lexicalToHtml } from '@/lib/lexical-to-html';
 
 const serviceOptions = [
   ...new Set([
@@ -17,7 +21,7 @@ const serviceOptions = [
     'Solid Package (48 weeks)',
     'General Enquiry',
   ]),
-];
+].map((s) => ({ value: s, label: s }));
 
 interface BookingResult {
   ok: boolean;
@@ -34,16 +38,34 @@ export function ContactForm() {
   const [service, setService] = useState('');
   const [preferredDate, setPreferredDate] = useState('');
   const [preferredTime, setPreferredTime] = useState('');
-  const [message, setMessage] = useState('');
+  const [editorState, setEditorState] = useState<EditorState | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
   const [result, setResult] = useState<BookingResult | null>(null);
+
+  const handleEditorChange = useCallback((state: EditorState) => {
+    setEditorState(state);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
     setErrors([]);
     setResult(null);
+
+    let message = '';
+    if (editorState) {
+      const stateJson = editorState.toJSON();
+      const root = stateJson.root as Record<string, unknown>;
+      const children = root?.children as Array<Record<string, unknown>> | undefined;
+      const hasContent = children?.some((child) => {
+        const childChildren = child.children as Array<Record<string, unknown>> | undefined;
+        return childChildren?.some((gc) => typeof gc.text === 'string' && gc.text.trim());
+      });
+      if (hasContent) {
+        message = lexicalToHtml(stateJson as unknown as Record<string, unknown>);
+      }
+    }
 
     try {
       const res = await fetch('/api/book', {
@@ -104,7 +126,7 @@ export function ContactForm() {
           </div>
           <button
             type="button"
-            onClick={() => { setResult(null); setName(''); setContact(''); setService(''); setPreferredDate(''); setPreferredTime(''); setMessage(''); }}
+            onClick={() => { setResult(null); setName(''); setContact(''); setService(''); setPreferredDate(''); setPreferredTime(''); setEditorState(null); }}
             className="mt-6 text-xs font-semibold text-muted-foreground underline-offset-2 hover:text-brand hover:underline"
           >
             Book another consultation
@@ -147,18 +169,14 @@ export function ContactForm() {
             <label htmlFor="service" className="mb-1.5 block text-xs font-semibold text-muted-foreground">
               Service or Programme <span className="text-brand">*</span>
             </label>
-            <select
-              id="service"
-              required
+            <SearchableSelect
               value={service}
-              onChange={(e) => setService(e.target.value)}
-              className="w-full rounded-xl border border-input bg-background px-4 py-3 text-sm transition-colors focus:border-brand focus:outline-none"
-            >
-              <option value="" disabled>Select a service...</option>
-              {serviceOptions.map((s) => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
+              onValueChange={setService}
+              options={serviceOptions}
+              placeholder="Select a service..."
+              searchPlaceholder="Search services..."
+              required
+            />
           </div>
 
           <div className="mt-5 grid gap-5 sm:grid-cols-2">
@@ -180,13 +198,10 @@ export function ContactForm() {
             <label htmlFor="message" className="mb-1.5 block text-xs font-semibold text-muted-foreground">
               Your Message
             </label>
-            <Textarea
-              id="message"
-              rows={4}
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
+            <RichTextEditor
+              onChange={handleEditorChange}
               placeholder="Tell us a little about your situation (optional) — everything is strictly confidential."
-              className="resize-none rounded-xl border-input bg-background text-sm focus:border-brand"
+              className="w-full"
             />
           </div>
 
@@ -228,8 +243,8 @@ export function ContactInfoCards() {
     {
       icon: Mail,
       title: 'Email Us',
-      lines: [business.email, 'We reply within one business day'],
-      href: `mailto:${business.email}`,
+      lines: ['We reply within one business day'],
+      obfuscatedEmail: business.email,
     },
     {
       icon: MapPin,
@@ -253,6 +268,14 @@ export function ContactInfoCards() {
               <Icon className="h-6 w-6" strokeWidth={1.8} />
             </div>
             <h3 className="mb-2 font-heading text-base font-bold text-foreground">{card.title}</h3>
+            {'obfuscatedEmail' in card && card.obfuscatedEmail && (
+              <ObfuscatedEmail
+                email={card.obfuscatedEmail}
+                className="block text-sm leading-relaxed text-muted-foreground transition-colors hover:text-brand"
+              >
+                {card.obfuscatedEmail}
+              </ObfuscatedEmail>
+            )}
             {card.lines.map((line) => (
               <p key={line} className="text-sm leading-relaxed text-muted-foreground">{line}</p>
             ))}

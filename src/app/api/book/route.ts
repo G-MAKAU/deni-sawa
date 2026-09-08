@@ -12,7 +12,7 @@ interface BookRequest {
   message?: string;
 }
 
-const MAX_LEN = { name: 100, contact: 200, service: 200, preferredDate: 20, preferredTime: 20, message: 2000 };
+const MAX_LEN = { name: 100, contact: 200, service: 200, preferredDate: 20, preferredTime: 20, message: 10000 };
 
 function clean(v: unknown, max: number): string {
   if (typeof v !== 'string') return '';
@@ -215,7 +215,7 @@ export async function POST(req: NextRequest) {
     `Service: ${service}`,
     preferredDate ? `Preferred date: ${preferredDate}` : null,
     preferredTime ? `Preferred time: ${preferredTime}` : null,
-    message ? `Message: ${message}` : null,
+    message ? `Message: ${message.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()}` : null,
   ].filter(Boolean);
   const summary = summaryLines.join('\n');
 

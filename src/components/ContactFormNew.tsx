@@ -1,9 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Send, Loader2, CheckCircle2, MessageCircle, Phone, Mail, MapPin, Clock, ShieldCheck } from 'lucide-react';
 import { business } from '@/data/content';
 import { Button } from '@/components/ui/button';
+import { SearchableSelect } from '@/components/ui/searchable-select';
+import { RichTextEditor } from '@/components/ui/rich-text-editor';
+import { ObfuscatedEmail } from '@/components/ObfuscatedEmail';
+import type { EditorState } from 'lexical';
+import { lexicalToHtml } from '@/lib/lexical-to-html';
 
 interface BookResult {
   ok: boolean;
@@ -15,37 +20,56 @@ interface BookResult {
 }
 
 const serviceOptions = [
-  'General Enquiry',
-  'Business Support — Fractional CFO',
-  'Business Support — Fractional CEO',
-  'Business Support — Governance & Controls',
-  'Business Support — Growth & Development',
-  'Business Support — Special Situations',
-  'Business Health Check',
-  'Professional Financial Health Check',
-  'Learning — Executive Finance Programme',
-  'Learning Pathway — Business Recovery',
-  'Learning Pathway — Governance',
-  'Learning Pathway — Financial Resilience',
-  'Investor Services',
-  'SpecialSit Network Membership',
-  'Partnership / Media Enquiry',
+  { value: 'General Enquiry', label: 'General Enquiry' },
+  { value: 'Business Support — Fractional CFO', label: 'Business Support — Fractional CFO' },
+  { value: 'Business Support — Fractional CEO', label: 'Business Support — Fractional CEO' },
+  { value: 'Business Support — Governance & Controls', label: 'Business Support — Governance & Controls' },
+  { value: 'Business Support — Growth & Development', label: 'Business Support — Growth & Development' },
+  { value: 'Business Support — Special Situations', label: 'Business Support — Special Situations' },
+  { value: 'Business Health Check', label: 'Business Health Check' },
+  { value: 'Professional Financial Health Check', label: 'Professional Financial Health Check' },
+  { value: 'Learning — Executive Finance Programme', label: 'Learning — Executive Finance Programme' },
+  { value: 'Learning Pathway — Business Recovery', label: 'Learning Pathway — Business Recovery' },
+  { value: 'Learning Pathway — Governance', label: 'Learning Pathway — Governance' },
+  { value: 'Learning Pathway — Financial Resilience', label: 'Learning Pathway — Financial Resilience' },
+  { value: 'Investor Services', label: 'Investor Services' },
+  { value: 'SpecialSit Network Membership', label: 'SpecialSit Network Membership' },
+  { value: 'Partnership / Media Enquiry', label: 'Partnership / Media Enquiry' },
 ];
 
 export function ContactFormNew({ initialSubject }: { initialSubject?: string }) {
   const [name, setName] = useState('');
   const [contact, setContact] = useState('');
   const [service, setService] = useState(initialSubject ?? '');
-  const [message, setMessage] = useState('');
+  const [editorState, setEditorState] = useState<EditorState | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
   const [result, setResult] = useState<BookResult | null>(null);
+
+  const handleEditorChange = useCallback((state: EditorState) => {
+    setEditorState(state);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
     setErrors([]);
     setResult(null);
+
+    let message = '';
+    if (editorState) {
+      const stateJson = editorState.toJSON();
+      const root = stateJson.root as Record<string, unknown>;
+      const children = root?.children as Array<Record<string, unknown>> | undefined;
+      const hasContent = children?.some((child) => {
+        const childChildren = child.children as Array<Record<string, unknown>> | undefined;
+        return childChildren?.some((gc) => typeof gc.text === 'string' && gc.text.trim());
+      });
+      if (hasContent) {
+        message = lexicalToHtml(stateJson as unknown as Record<string, unknown>);
+      }
+    }
+
     try {
       const res = await fetch('/api/book', {
         method: 'POST',
@@ -99,7 +123,7 @@ export function ContactFormNew({ initialSubject }: { initialSubject?: string }) 
             setName('');
             setContact('');
             setService('');
-            setMessage('');
+            setEditorState(null);
           }}
           className="mt-6 text-xs font-semibold text-muted-foreground underline-offset-2 hover:text-brand hover:underline"
         >
@@ -153,27 +177,21 @@ export function ContactFormNew({ initialSubject }: { initialSubject?: string }) 
           <span className="mb-1.5 block text-sm font-medium text-foreground">
             Topic <span className="text-brand">*</span>
           </span>
-          <select
-            required
+          <SearchableSelect
             value={service}
-            onChange={(e) => setService(e.target.value)}
-            className="h-12 w-full rounded-btn border border-card-border bg-background px-4 text-foreground focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
-          >
-            <option value="" disabled>Select a topic…</option>
-            {serviceOptions.map((s) => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
+            onValueChange={setService}
+            options={serviceOptions}
+            placeholder="Select a topic…"
+            searchPlaceholder="Search topics…"
+            required
+          />
         </label>
 
         <label className="block">
           <span className="mb-1.5 block text-sm font-medium text-foreground">Your situation</span>
-          <textarea
-            rows={5}
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
+          <RichTextEditor
+            onChange={handleEditorChange}
             placeholder="A few lines about your situation (optional) — strictly confidential."
-            className="w-full resize-none rounded-btn border border-card-border bg-background px-4 py-3 text-[15px] leading-relaxed text-foreground placeholder:text-muted-foreground focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
           />
         </label>
 
@@ -211,8 +229,8 @@ const infoCards = [
   {
     icon: Mail,
     title: 'Email',
-    lines: [business.email, 'We reply within one business day'],
-    href: `mailto:${business.email}`,
+    lines: ['We reply within one business day'],
+    obfuscatedEmail: business.email,
   },
   {
     icon: MapPin,
@@ -237,6 +255,14 @@ export function ContactInfoNew() {
               <Icon className="h-6 w-6" strokeWidth={1.8} />
             </span>
             <h3 className="font-semibold text-foreground">{card.title}</h3>
+            {'obfuscatedEmail' in card && card.obfuscatedEmail && (
+              <ObfuscatedEmail
+                email={card.obfuscatedEmail}
+                className="mt-1 block text-sm leading-relaxed text-muted-foreground transition-colors hover:text-brand"
+              >
+                {card.obfuscatedEmail}
+              </ObfuscatedEmail>
+            )}
             {card.lines.map((line) => (
               <p key={line} className="mt-1 text-sm leading-relaxed text-muted-foreground">{line}</p>
             ))}

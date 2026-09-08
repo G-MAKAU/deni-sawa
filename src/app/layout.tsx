@@ -28,10 +28,83 @@ const jetbrains = JetBrains_Mono({
   weight: ['400', '500', '600', '700'],
 });
 
+const structuredData = {
+  '@context': 'https://schema.org',
+  '@type': 'ProfessionalService',
+  name: 'Deni Sawa Partners',
+  url: site.url,
+  description:
+    'Senior-level fractional business support — Fractional CFO, CEO, Governance & Special Situations advisory helping organisations move from Special Situations to Best-in-Class.',
+  telephone: site.phone,
+  email: site.email,
+  address: {
+    '@type': 'PostalAddress',
+    addressLocality: 'Nairobi',
+    addressRegion: 'Nairobi',
+    addressCountry: 'KE',
+  },
+  geo: {
+    '@type': 'GeoCoordinates',
+    latitude: -1.2921,
+    longitude: 36.8219,
+  },
+  areaServed: [
+    { '@type': 'Country', name: 'Kenya' },
+    { '@type': 'Continent', name: 'Africa' },
+  ],
+  hasOfferCatalog: {
+    '@type': 'OfferCatalog',
+    name: 'Business Advisory Services',
+    itemListElement: [
+      {
+        '@type': 'Offer',
+        itemOffered: {
+          '@type': 'Service',
+          name: 'Fractional CFO',
+          description: 'Part-time senior financial leadership for growing businesses.',
+        },
+      },
+      {
+        '@type': 'Offer',
+        itemOffered: {
+          '@type': 'Service',
+          name: 'Fractional CEO',
+          description: 'Interim executive leadership for transitions and turnarounds.',
+        },
+      },
+      {
+        '@type': 'Offer',
+        itemOffered: {
+          '@type': 'Service',
+          name: 'Business Health Check',
+          description: 'Structured diagnostic assessment with a prioritised action report.',
+        },
+      },
+      {
+        '@type': 'Offer',
+        itemOffered: {
+          '@type': 'Service',
+          name: 'Governance & Controls',
+          description: 'Board governance, risk management, and internal controls advisory.',
+        },
+      },
+      {
+        '@type': 'Offer',
+        itemOffered: {
+          '@type': 'Service',
+          name: 'Special Situations',
+          description: 'Turnaround, restructuring, and recovery advisory.',
+        },
+      },
+    ],
+  },
+  sameAs: Object.values(site.social ?? {}).filter(Boolean),
+};
+
 export const metadata: Metadata = {
   metadataBase: new URL(site.url),
   title: {
-    default: 'Deni Sawa Partners | Fractional CFO & Business Advisory | Special Situations',
+    default: 'Deni Sawa Partners — Fractional CFO & Advisory Kenya',
     template: '%s | Deni Sawa Partners',
   },
   description:
@@ -51,32 +124,25 @@ export const metadata: Metadata = {
     siteName: 'Deni Sawa Partners',
     locale: 'en_KE',
     url: site.url,
+    title: 'Deni Sawa Partners — Fractional CFO & Advisory Kenya',
+    description:
+      'Senior-level fractional business support — Fractional CFO, CEO, Governance & Special Situations advisory.',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Deni Sawa Partners | Fractional CFO & Business Advisory',
-    description: site.description,
+    title: 'Deni Sawa Partners — Fractional CFO & Advisory Kenya',
+    description:
+      'Senior-level fractional business support — Fractional CFO, CEO, Governance & Special Situations advisory.',
   },
   icons: {
-    icon: '/favicon.svg',
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/favicon-96x96.png', type: 'image/png', sizes: '96x96' },
+    ],
+    apple: '/apple-touch-icon.png',
   },
   other: {
-    'application/ld+json': JSON.stringify({
-      '@context': 'https://schema.org',
-      '@type': 'ProfessionalService',
-      name: 'Deni Sawa Partners',
-      url: site.url,
-      description:
-        'Senior-level advisory and fractional business support helping organisations move from Special Situations to Best-in-Class.',
-      telephone: site.phone,
-      address: {
-        '@type': 'PostalAddress',
-        addressLocality: 'Nairobi',
-        addressCountry: 'KE',
-      },
-      areaServed: ['KE', 'Africa'],
-      makesOffer: ['Fractional CFO', 'Fractional CEO', 'Governance', 'Health Checks', 'Special Situations'],
-    }),
+    'application/ld+json': JSON.stringify(structuredData),
   },
 };
 
@@ -112,4 +178,3 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     </html>
   );
 }
-

@@ -5,6 +5,7 @@ import { socialLinks } from '@/components/SocialLinks';
 import { cn } from '@/lib/utils';
 import { Logo } from '@/components/Logo';
 import { CookieSettingsButton } from '@/components/CookieSettingsButton';
+import { ObfuscatedEmail } from '@/components/ObfuscatedEmail';
 
 const columns = [
   {
@@ -86,15 +87,15 @@ export function Footer() {
 
             {/* Contact info */}
             <div className="mt-8 space-y-3">
-              <a
-                href={`mailto:${site.email}`}
+              <ObfuscatedEmail
+                email={site.email}
                 className="group flex items-center gap-3 text-sm text-white/50 transition-colors hover:text-white"
               >
                 <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/[0.08] bg-white/[0.02] transition-all group-hover:border-brand/40 group-hover:bg-brand/10">
                   <Mail className="h-4 w-4 text-brand" />
                 </div>
                 {site.email}
-              </a>
+              </ObfuscatedEmail>
               <a
                 href={`tel:${site.phone}`}
                 className="group flex items-center gap-3 text-sm text-white/50 transition-colors hover:text-white"

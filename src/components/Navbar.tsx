@@ -8,6 +8,7 @@ import { motion, AnimatePresence, useScroll, useTransform } from 'motion/react';
 import { navItems, site } from '@/data/site';
 import { business } from '@/data/content';
 import { socialLinks } from '@/components/SocialLinks';
+import { ObfuscatedEmail } from '@/components/ObfuscatedEmail';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
 import { Logo } from '@/components/Logo';
 import { Button } from '@/components/ui/button';
@@ -144,13 +145,13 @@ export function Navbar() {
                   <span className="sm:inline">{site.phone}</span>
                 </a>
                 <span className="hidden h-4 w-px flex-shrink-0 bg-card-border sm:block" />
-                <a
-                  href={`mailto:${business.email}`}
+                <ObfuscatedEmail
+                  email={business.email}
                   className="hidden min-w-0 items-center gap-2 transition-colors hover:text-brand sm:flex"
                 >
                   <Mail className="h-4 w-4 flex-shrink-0" />
                   <span className="truncate">{business.email}</span>
-                </a>
+                </ObfuscatedEmail>
                 <span className="hidden h-4 w-px flex-shrink-0 bg-card-border md:block" />
                 <span className="hidden items-center gap-2 whitespace-nowrap md:flex">
                   <Clock className="h-4 w-4 flex-shrink-0" />
@@ -510,13 +511,13 @@ href="/business-health-checks#choose-your-assessment"
 
           <div className="border-t border-white/10 px-6 py-5">
             <div className="mb-4 space-y-2.5">
-              <a
-                href={`mailto:${site.email}`}
+              <ObfuscatedEmail
+                email={site.email}
                 className="flex items-center gap-2.5 text-sm text-white/60 transition-colors hover:text-white"
               >
                 <Mail className="h-4 w-4 text-brand" />
                 {site.email}
-              </a>
+              </ObfuscatedEmail>
               <a
                 href={`tel:${site.phone}`}
                 className="flex items-center gap-2.5 text-sm text-white/60 transition-colors hover:text-white"

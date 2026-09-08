@@ -69,7 +69,9 @@ export function CookieConsent() {
   React.useEffect(() => {
     const prefs = readPrefs();
     if (!prefs || prefs.version !== COOKIE_CONSENT_VERSION) {
-      setVisible(true);
+      // Delay banner appearance to let LCP hero image render first
+      const timer = setTimeout(() => setVisible(true), 2000);
+      return () => clearTimeout(timer);
     } else {
       setAnalytics(prefs.analytics);
       setComms(prefs.comms);
