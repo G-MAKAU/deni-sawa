@@ -2,10 +2,8 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { getServiceClient } from '@/lib/supabase/service';
-import { runReportGeneration, type ReportType } from '@/lib/generate-report';
+import { createReportStub, completeReportGeneration } from '@/lib/generate-report';
 import { notifyReportFailed } from '@/lib/delivery';
-
-export const maxDuration = 120;
 
 const generateSchema = z.object({
   report_type: z.enum(['summary', 'detailed']).default('summary'),
@@ -26,9 +24,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   const supabase = getServiceClient();
   const { id: sessionId } = await params;
-  const requestedType = parsed.data.report_type as ReportType;
 
-  // Load the session up-front so we can notify the user if generation fails.
   const { data: session, error: sessionError } = await supabase
     .from('health_check_sessions')
     .select(
@@ -45,17 +41,38 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json({ error: 'Session must be completed before generating a report.' }, { status: 422 });
   }
 
-  // Resolve the report type from the user's selection at start.
   const selection = (session.report_selection as 'summary' | 'detailed' | 'detailed_call' | null | undefined) ?? 'summary';
-  const reportType = selection === 'detailed' || selection === 'detailed_call' ? 'detailed' : requestedType;
+  const reportType = selection === 'detailed' || selection === 'detailed_call' ? 'detailed' : parsed.data.report_type;
 
-  // Paid reports (detailed / detailed+call) must be paid before delivery.
   const requiresPayment = reportType === 'detailed';
   const paid = session.payment_status === 'paid';
   const skipDelivery = requiresPayment && !paid;
 
   try {
-    const { report, regenerated } = await runReportGeneration(supabase, session, reportType, { skipDelivery });
+    // Create stub immediately.
+    const { report, alreadyComplete } = await createReportStub(supabase, session, reportType);
+
+    if (alreadyComplete) {
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.denisawa.co.ke';
+      return NextResponse.json({
+        report_id: report.id,
+        report_url_token: report.report_url_token,
+        report_url: `${siteUrl}/business-health-checks/report/${report.report_url_token}`,
+        report_type: reportType,
+        generating: false,
+        requires_payment: requiresPayment && !paid,
+        payment_status: session.payment_status,
+        payment_amount: requiresPayment ? Number(session.payment_amount ?? 0) : 0,
+        session_id: sessionId,
+      });
+    }
+
+    // Fire background generation — not awaited.
+    completeReportGeneration(supabase, session, reportType, report.id, { skipDelivery })
+      .catch(async (err) => {
+        console.error(`Background generation failed for report ${report.id}:`, err);
+        await notifyReportFailed(supabase, session);
+      });
 
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.denisawa.co.ke';
     return NextResponse.json({
@@ -63,15 +80,14 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       report_url_token: report.report_url_token,
       report_url: `${siteUrl}/business-health-checks/report/${report.report_url_token}`,
       report_type: reportType,
-      regenerated,
+      generating: true,
       requires_payment: requiresPayment && !paid,
       payment_status: session.payment_status,
       payment_amount: requiresPayment ? Number(session.payment_amount ?? 0) : 0,
       session_id: sessionId,
-    });
+    }, { status: 202 });
   } catch (error) {
     console.error('Failed to generate report:', error);
-    // Notify the user that their report could not be generated.
     await notifyReportFailed(supabase, session);
     return NextResponse.json({ error: 'Failed to generate report.' }, { status: 500 });
   }

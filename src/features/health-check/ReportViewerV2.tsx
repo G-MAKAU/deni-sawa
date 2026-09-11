@@ -43,11 +43,14 @@ export function ReportViewerV2({ token }: { token: string }) {
   const [upgradeAmount, setUpgradeAmount] = React.useState(0);
   const [upgradeError, setUpgradeError] = React.useState<string | null>(null);
   const [paidReportUrl, setPaidReportUrl] = React.useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = React.useState(false);
   const pollRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
 
   React.useEffect(() => {
     let cancelled = false;
-    (async () => {
+    let pollInterval: ReturnType<typeof setInterval> | null = null;
+
+    const fetchReport = async () => {
       try {
         const res = await fetch(`/api/health-check/report/${token}`, { cache: 'no-store' });
         const body = await res.json();
@@ -58,13 +61,35 @@ export function ReportViewerV2({ token }: { token: string }) {
           }
           throw new Error(body.error ?? 'Report not found.');
         }
+        if (body.generating && !cancelled) {
+          setIsGenerating(true);
+          // Poll every 3 seconds until generation completes.
+          pollInterval = setInterval(async () => {
+            try {
+              const pollRes = await fetch(`/api/health-check/report/${token}`, { cache: 'no-store' });
+              const pollBody = await pollRes.json();
+              if (!pollRes.ok) throw new Error(pollBody.error);
+              if (!pollBody.generating && !cancelled) {
+                if (pollInterval) clearInterval(pollInterval);
+                setIsGenerating(false);
+                setReport(pollBody.report as ReportData);
+              }
+            } catch {
+              // ignore poll errors, keep trying
+            }
+          }, 3000);
+          return;
+        }
         if (!cancelled) setReport(body.report as ReportData);
       } catch (e) {
         if (!cancelled) setError(e instanceof Error ? e.message : 'Report not found.');
       }
-    })();
+    };
+
+    void fetchReport();
     return () => {
       cancelled = true;
+      if (pollInterval) clearInterval(pollInterval);
     };
   }, [token]);
 
@@ -292,6 +317,18 @@ export function ReportViewerV2({ token }: { token: string }) {
       <div className="mx-auto max-w-2xl rounded-lg border border-red-500/20 bg-red-500/5 px-6 py-16 text-center">
         <p className="font-display text-xl font-semibold text-foreground">Report not found</p>
         <p className="mt-2 text-sm text-muted-foreground">{error}</p>
+      </div>
+    );
+  }
+
+  if (isGenerating) {
+    return (
+      <div className="mx-auto max-w-2xl rounded-lg border border-blue-200 bg-blue-50 px-6 py-16 text-center">
+        <Loader2 className="mx-auto h-10 w-10 animate-spin text-[#E8510A]" />
+        <p className="mt-4 font-display text-xl font-semibold text-foreground">Your report is being generated</p>
+        <p className="mt-2 text-sm text-muted-foreground">
+          This usually takes 1–2 minutes. The page will refresh automatically when your report is ready.
+        </p>
       </div>
     );
   }

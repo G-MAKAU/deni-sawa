@@ -2,15 +2,14 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { requireAdmin, adminWriteClient, jsonAdminWriteError } from '@/lib/admin-auth';
-import { runReportGeneration } from '@/lib/generate-report';
+import { createReportStub, completeReportGeneration } from '@/lib/generate-report';
 
 export const dynamic = 'force-dynamic';
-export const maxDuration = 120;
 
 const paramsSchema = z.object({ reportId: z.string().uuid() });
 const bodySchema = z.object({ sendEmail: z.boolean().optional() });
 
-/** Regenerates a report (Claude + delivery) and updates it in place. */
+/** Creates a stub, then regenerates in the background. Respects sendEmail=false. */
 export async function POST(request: NextRequest, { params }: { params: Promise<{ reportId: string }> }) {
   try {
     const context = await requireAdmin(request, 'update');
@@ -32,15 +31,20 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
 
     const skipDelivery = body.sendEmail === false;
-    const result = await runReportGeneration(supabase, session, report.report_type as 'summary' | 'detailed', { force: true, skipDelivery });
+
+    // Create stub (force=true overwrites existing row).
+    const { report: stub } = await createReportStub(supabase, session, report.report_type as 'summary' | 'detailed', { force: true });
+
+    // Fire background generation — not awaited.
+    completeReportGeneration(supabase, session, report.report_type as 'summary' | 'detailed', stub.id, { skipDelivery })
+      .catch((err) => console.error(`Background regeneration failed for report ${stub.id}:`, err));
 
     return NextResponse.json({
-      report: result.report,
-      regenerated: result.regenerated,
-      tokensUsed: result.tokensUsed,
-      generationSeconds: result.generationSeconds,
-      report_url: `${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.denisawa.co.ke'}/business-health-checks/report/${result.report.report_url_token}`,
-    });
+      report: stub,
+      regenerated: true,
+      generating: true,
+      report_url: `${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.denisawa.co.ke'}/business-health-checks/report/${stub.report_url_token}`,
+    }, { status: 202 });
   } catch (error) {
     return jsonAdminWriteError(error, 'Failed to regenerate report');
   }

@@ -2,15 +2,14 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { requireAdmin, adminWriteClient, jsonAdminWriteError } from '@/lib/admin-auth';
-import { runReportGeneration } from '@/lib/generate-report';
+import { createReportStub, completeReportGeneration } from '@/lib/generate-report';
 
 export const dynamic = 'force-dynamic';
-export const maxDuration = 120;
 
 const paramsSchema = z.object({ sessionId: z.string().uuid() });
 const bodySchema = z.object({ report_type: z.enum(['summary', 'detailed']).default('summary') });
 
-/** Generates a report for a session from the admin console (used when generation failed). */
+/** Creates a report stub immediately, then generates in the background. */
 export async function POST(request: NextRequest, { params }: { params: Promise<{ sessionId: string }> }) {
   try {
     const context = await requireAdmin(request, 'create');
@@ -43,15 +42,28 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const paid = session.payment_status === 'paid';
     const skipDelivery = paidSelection && !paid;
 
-    const result = await runReportGeneration(supabase, session, parsed.data.report_type, { skipDelivery });
+    // Create stub immediately — returns in <100ms.
+    const { report, alreadyComplete } = await createReportStub(supabase, session, parsed.data.report_type);
+
+    if (alreadyComplete) {
+      return NextResponse.json({
+        report,
+        regenerated: false,
+        generating: false,
+        report_url: `${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.denisawa.co.ke'}/business-health-checks/report/${report.report_url_token}`,
+      });
+    }
+
+    // Fire background generation — not awaited, won't block the response.
+    completeReportGeneration(supabase, session, parsed.data.report_type, report.id, { skipDelivery })
+      .catch((err) => console.error(`Background generation failed for report ${report.id}:`, err));
 
     return NextResponse.json({
-      report: result.report,
-      regenerated: result.regenerated,
-      tokensUsed: result.tokensUsed,
-      generationSeconds: result.generationSeconds,
-      report_url: `${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.denisawa.co.ke'}/business-health-checks/report/${result.report.report_url_token}`,
-    });
+      report,
+      regenerated: true,
+      generating: true,
+      report_url: `${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.denisawa.co.ke'}/business-health-checks/report/${report.report_url_token}`,
+    }, { status: 202 });
   } catch (error) {
     return jsonAdminWriteError(error, 'Failed to generate report');
   }

@@ -22,6 +22,7 @@ interface ReportRow {
   is_paid: boolean;
   is_public: boolean;
   delivery_status: 'pending' | 'sent' | 'failed' | 'skipped';
+  generation_status?: string | null;
   created_at: string;
   expires_at: string | null;
   session_name: string;
@@ -186,11 +187,16 @@ export function ReportsViewer() {
     if (!regenReport) return;
     setRegeneratingId(regenReport.id);
     try {
-      await adminFetch(`/api/admin/health-checks/reports/${regenReport.id}/regenerate`, {
-        method: 'POST',
-        body: JSON.stringify({ sendEmail: regenSendEmail }),
-      });
-      toast.success(regenSendEmail ? 'Report regenerated and email sent' : 'Report regenerated without sending email');
+      const res = await adminFetch<{ generating?: boolean; report?: { id: string } }>(
+        `/api/admin/health-checks/reports/${regenReport.id}/regenerate`,
+        { method: 'POST', body: JSON.stringify({ sendEmail: regenSendEmail }) },
+      );
+      if (res.generating) {
+        toast.success('Report generation started in background…');
+        void pollReportStatus(regenReport.id);
+      } else {
+        toast.success(regenSendEmail ? 'Report regenerated and email sent' : 'Report regenerated without sending email');
+      }
       setRegenReport(null);
       void load(page, reportType, delivery, searchQuery, pageSize);
     } catch (e) {
@@ -198,6 +204,26 @@ export function ReportsViewer() {
     } finally {
       setRegeneratingId(null);
     }
+  };
+
+  const pollReportStatus = async (reportId: string) => {
+    for (let i = 0; i < 60; i++) {
+      await new Promise((r) => setTimeout(r, 3000));
+      try {
+        const status = await adminFetch<{ status: string }>(
+          `/api/admin/health-checks/reports/${reportId}/status`,
+        );
+        if (status.status === 'completed' || status.status === 'failed') {
+          void load(page, reportType, delivery, searchQuery, pageSize);
+          toast.success(status.status === 'completed' ? 'Report generation complete' : 'Report generation failed — fallback used');
+          return;
+        }
+      } catch {
+        // ignore poll errors
+      }
+    }
+    toast.error('Report generation is taking longer than expected. Refresh to check.');
+    void load(page, reportType, delivery, searchQuery, pageSize);
   };
 
   const handleResendEmail = async () => {
@@ -354,8 +380,31 @@ export function ReportsViewer() {
         id: 'gen_status',
         header: 'Gen Status',
         cell: ({ row }) => {
+          const genStatus = row.original.generation_status;
           const err = row.original.generation_error;
           const model = row.original.model_used;
+
+          if (genStatus === 'generating') {
+            return (
+              <span className="inline-flex items-center gap-1.5 rounded-md bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-700 ring-1 ring-inset ring-blue-600/20">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                Generating…
+              </span>
+            );
+          }
+
+          if (genStatus === 'failed') {
+            return (
+              <button
+                type="button"
+                onClick={() => setErrorViewReport(row.original)}
+                className="inline-flex items-center gap-1 rounded-md bg-red-50 px-2 py-0.5 text-[11px] font-semibold text-red-700 ring-1 ring-inset ring-red-600/20 transition-colors hover:bg-red-100"
+              >
+                Failed
+              </button>
+            );
+          }
+
           if (err) {
             return (
               <button
@@ -459,22 +508,25 @@ export function ReportsViewer() {
       {
         id: 'regenerate',
         header: '',
-        cell: ({ row }) => (
-          <button
-            type="button"
-            onClick={() => handleRegenerate(row.original)}
-            disabled={regeneratingId === row.original.id}
-            title="Regenerate report"
-            className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[12px] font-semibold text-[var(--a-text2)] transition-colors hover:bg-[#5A9E28]/10 hover:text-[#3f7a1a] disabled:opacity-50"
-          >
-            {regeneratingId === row.original.id ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <RefreshCw className="h-3.5 w-3.5" />
-            )}
-            Regenerate
-          </button>
-        ),
+        cell: ({ row }) => {
+          const isGenerating = row.original.generation_status === 'generating';
+          return (
+            <button
+              type="button"
+              onClick={() => handleRegenerate(row.original)}
+              disabled={regeneratingId === row.original.id || isGenerating}
+              title={isGenerating ? 'Generation in progress…' : 'Regenerate report'}
+              className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[12px] font-semibold text-[var(--a-text2)] transition-colors hover:bg-[#5A9E28]/10 hover:text-[#3f7a1a] disabled:opacity-50"
+            >
+              {isGenerating || regeneratingId === row.original.id ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <RefreshCw className="h-3.5 w-3.5" />
+              )}
+              {isGenerating ? 'Generating…' : 'Regenerate'}
+            </button>
+          );
+        },
       },
       {
         id: 'upgrade',

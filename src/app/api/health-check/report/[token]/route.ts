@@ -21,6 +21,11 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
     if (error) throw error;
     if (!report) return NextResponse.json({ error: 'Report not found.' }, { status: 404 });
 
+    // If report is still generating, tell the client to poll.
+    if (report.generation_status === 'generating') {
+      return NextResponse.json({ generating: true, report_id: report.id });
+    }
+
     // Block access to reports whose public view has been revoked by an admin.
     if (report.is_public === false) {
       return NextResponse.json(

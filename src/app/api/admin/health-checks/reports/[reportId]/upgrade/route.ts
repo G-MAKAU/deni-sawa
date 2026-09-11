@@ -2,12 +2,10 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { requireAdmin, adminWriteClient, jsonAdminWriteError } from '@/lib/admin-auth';
-import { runReportGeneration } from '@/lib/generate-report';
-import { deliverReportByEmail, deliverReportByWhatsApp } from '@/lib/delivery';
+import { createReportStub, completeReportGeneration } from '@/lib/generate-report';
 import { sendEmail, buildBrandedEmailHtml, resolveSiteUrl } from '@/lib/email';
 
 export const dynamic = 'force-dynamic';
-export const maxDuration = 120;
 
 const paramsSchema = z.object({ reportId: z.string().uuid() });
 const bodySchema = z.object({
@@ -18,7 +16,7 @@ const bodySchema = z.object({
 /**
  * Admin-initiated upgrade: generates a detailed report from a summary session,
  * marks it as paid, and delivers it. No payment required — the admin is
- * manually granting access.
+ * manually granting access. Runs in background to avoid Vercel timeout.
  */
 export async function POST(request: NextRequest, { params }: { params: Promise<{ reportId: string }> }) {
   try {
@@ -27,7 +25,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const { reportId } = paramsSchema.parse(await params);
     const body = bodySchema.parse(await request.json().catch(() => ({})));
 
-    // Load the summary report to get the session.
     const { data: report } = await supabase.from('health_check_reports').select('*').eq('id', reportId).maybeSingle();
     if (!report) return NextResponse.json({ error: 'Report not found.' }, { status: 404 });
     if (report.report_type !== 'summary') {
@@ -44,7 +41,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ error: 'Session is not complete.' }, { status: 422 });
     }
 
-    // Get pricing for the record.
     const { data: check } = await supabase
       .from('health_checks')
       .select('name, detailed_price, detailed_call_price')
@@ -65,47 +61,53 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       })
       .eq('id', session.id);
 
-    // Generate the detailed report (delivers via email/WhatsApp).
-    const result = await runReportGeneration(supabase, session, 'detailed');
+    // Create stub immediately.
+    const { report: stub } = await createReportStub(supabase, session, 'detailed', { force: true });
 
-    // Mark the report as paid.
-    await supabase.from('health_check_reports').update({ is_paid: true }).eq('id', result.report.id);
+    // Fire background: generate → mark paid → send email.
+    completeReportGeneration(supabase, session, 'detailed', stub.id)
+      .then(async () => {
+        // Mark as paid after generation completes.
+        await supabase.from('health_check_reports').update({ is_paid: true }).eq('id', stub.id);
 
-    // Send a payment confirmation email if requested.
-    if (body.sendEmail && session.email) {
-      const siteUrl = resolveSiteUrl();
-      const reportUrl = `${siteUrl}/business-health-checks/report/${result.report.report_url_token}`;
-      const planLabel = isCall ? 'Full Report + Advisory Call' : 'Full Report';
-      const checkName = (check as { name?: string })?.name ?? 'Health Check';
+        // Send payment confirmation email if requested.
+        if (body.sendEmail && session.email) {
+          const siteUrl = resolveSiteUrl();
+          const reportUrl = `${siteUrl}/business-health-checks/report/${stub.report_url_token}`;
+          const planLabel = isCall ? 'Full Report + Advisory Call' : 'Full Report';
+          const checkName = (check as { name?: string })?.name ?? 'Health Check';
 
-      const bodyHtml = `
-        <h1>Your upgraded report is ready</h1>
-        <p>Hi ${session.full_name},</p>
-        <p>Great news! Your <strong>${checkName}</strong> has been upgraded to the <strong>${planLabel}</strong>.</p>
-        <p>Your full diagnostic report is ready to view:</p>
-        <p><a href="${reportUrl}" style="display:inline-block;background:#E8510A;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold;">View Your Report</a></p>
-        ${isCall ? '<p>Our advisory team will contact you shortly via WhatsApp to schedule your call.</p>' : ''}
-        <p>If you have any questions, reply to this email or reach us on WhatsApp at +254 702 448 601.</p>
-      `;
+          const bodyHtml = `
+            <h1>Your upgraded report is ready</h1>
+            <p>Hi ${session.full_name},</p>
+            <p>Great news! Your <strong>${checkName}</strong> has been upgraded to the <strong>${planLabel}</strong>.</p>
+            <p>Your full diagnostic report is ready to view:</p>
+            <p><a href="${reportUrl}" style="display:inline-block;background:#E8510A;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold;">View Your Report</a></p>
+            ${isCall ? '<p>Our advisory team will contact you shortly via WhatsApp to schedule your call.</p>' : ''}
+            <p>If you have any questions, reply to this email or reach us on WhatsApp at +254 702 448 601.</p>
+          `;
 
-      try {
-        await sendEmail({
-          to: session.email,
-          subject: `Your ${checkName} report has been upgraded`,
-          html: buildBrandedEmailHtml(bodyHtml),
-          fromName: 'Deni Sawa Partners',
-          fromEmail: 'advisory@denisawa.co.ke',
-        });
-      } catch (error) {
-        console.error('Admin upgrade confirmation email failed:', error);
-      }
-    }
+          try {
+            await sendEmail({
+              to: session.email,
+              subject: `Your ${checkName} report has been upgraded`,
+              html: buildBrandedEmailHtml(bodyHtml),
+              fromName: 'Deni Sawa Partners',
+              fromEmail: 'advisory@denisawa.co.ke',
+            });
+          } catch (error) {
+            console.error('Admin upgrade confirmation email failed:', error);
+          }
+        }
+      })
+      .catch((err) => console.error(`Background upgrade failed for report ${stub.id}:`, err));
 
     return NextResponse.json({
       ok: true,
-      report: result.report,
-      report_url: `${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.denisawa.co.ke'}/business-health-checks/report/${result.report.report_url_token}`,
-    });
+      report: stub,
+      generating: true,
+      report_url: `${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.denisawa.co.ke'}/business-health-checks/report/${stub.report_url_token}`,
+    }, { status: 202 });
   } catch (error) {
     return jsonAdminWriteError(error, 'Failed to upgrade report');
   }
