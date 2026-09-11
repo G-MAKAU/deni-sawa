@@ -18,7 +18,7 @@ interface PromptRow {
   system_prompt_lexical: Record<string, unknown> | null;
   header_lexical: Record<string, unknown> | null;
   footer_lexical: Record<string, unknown> | null;
-  provider: ReportProvider;
+  provider: string;
   model: string;
   max_tokens: number;
   is_active: boolean;
@@ -29,16 +29,6 @@ interface PromptRow {
 }
 
 type ReportType = 'summary' | 'detailed';
-
-type ReportProvider = 'anthropic' | 'google' | 'openrouter';
-
-const PROVIDERS: ReportProvider[] = ['anthropic', 'google', 'openrouter'];
-
-const FALLBACK_MODELS: Record<ReportProvider, string[]> = {
-  anthropic: ['claude-sonnet-4-6', 'claude-sonnet-4-5', 'claude-opus-4-1', 'claude-haiku-4-5'],
-  google: ['gemini-flash-latest', 'gemini-pro-latest', 'gemini-3.6-flash', 'gemini-2.5-flash'],
-  openrouter: ['anthropic/claude-sonnet-4-6', 'anthropic/claude-opus-4-1', 'google/gemini-flash-latest', 'openai/gpt-4o'],
-};
 
 /** Builds a minimal Lexical EditorState from plain text (paragraph per line). */
 function plainTextToLexicalState(text: string): Record<string, unknown> {
@@ -71,44 +61,13 @@ export function PromptEditor() {
   const [summaryFooter, setSummaryFooter] = React.useState<Record<string, unknown> | null>(null);
   const [detailedHeader, setDetailedHeader] = React.useState<Record<string, unknown> | null>(null);
   const [detailedFooter, setDetailedFooter] = React.useState<Record<string, unknown> | null>(null);
-  const [provider, setProvider] = React.useState<ReportProvider>('anthropic');
-  const [model, setModel] = React.useState<string>('claude-sonnet-4-6');
   const [maxTokens, setMaxTokens] = React.useState<string>('4000');
   const [saving, setSaving] = React.useState(false);
   const [imageTarget, setImageTarget] = React.useState<'header' | 'footer' | null>(null);
   const [pickerOpen, setPickerOpen] = React.useState(false);
   const browseResolverRef = React.useRef<((url: string | null) => void) | null>(null);
 
-  const [models, setModels] = React.useState<Record<ReportProvider, string[]>>(() => {
-  // Initialize with empty lists; API will populate them on load.
-  return { anthropic: [], google: [], openrouter: [] } as Record<ReportProvider, string[]>;
-});
-
   const activePrompt = prompts.find((p) => p.report_type === activeTab);
-
-  React.useEffect(() => {
-    let cancelled = false;
-    adminFetch<{ anthropic: string[]; google: string[]; openrouter?: string[] }>('/api/admin/models')
-      .then((data) => {
-        if (cancelled) return;
-        setModels({
-          anthropic: data.anthropic ?? [],
-          google: data.google ?? [],
-          openrouter: data.openrouter ?? FALLBACK_MODELS.openrouter,
-        });
-      })
-      .catch(() => {
-        // Fall back to predefined lists if API fails.
-        setModels({
-          anthropic: FALLBACK_MODELS.anthropic,
-          google: FALLBACK_MODELS.google,
-          openrouter: FALLBACK_MODELS.openrouter,
-        });
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -127,8 +86,6 @@ export function PromptEditor() {
         setDetailedHeader(detailed?.header_lexical ?? null);
         setDetailedFooter(detailed?.footer_lexical ?? null);
         const target = activeTab === 'summary' ? summary : detailed;
-        setProvider(target?.provider ?? 'anthropic');
-        setModel(target?.model ?? 'claude-sonnet-4-6');
         setMaxTokens((target?.max_tokens ?? 4000).toString());
       } catch (e) {
         if (!cancelled) setError(e instanceof Error ? e.message : 'Failed to load prompts.');
@@ -145,8 +102,6 @@ export function PromptEditor() {
   const selectTab = (type: ReportType) => {
     setActiveTab(type);
     const prompt = prompts.find((p) => p.report_type === type);
-    setProvider(prompt?.provider ?? 'anthropic');
-    setModel(prompt?.model ?? 'claude-sonnet-4-6');
     setMaxTokens((prompt?.max_tokens ?? 4000).toString());
   };
 
@@ -163,8 +118,6 @@ export function PromptEditor() {
         system_prompt_lexical: state,
         header_lexical: (activeTab === 'summary' ? summaryHeader : detailedHeader) ?? null,
         footer_lexical: (activeTab === 'summary' ? summaryFooter : detailedFooter) ?? null,
-        provider,
-        model,
         max_tokens: Number(maxTokens),
       });
       setPrompts((prev) => prev.map((p) => (p.report_type === activeTab ? prompt : p)));
@@ -226,7 +179,7 @@ export function PromptEditor() {
     <>
       <PageHeader
         title="Report Prompts"
-        subtitle="The system prompts sent to Claude or Gemini when generating each report type."
+        subtitle="The system prompts sent to the AI model when generating each report type. Provider and model are configured in AI Settings."
         crumbs={[{ label: 'Health Checks', href: '/admin/health-checks' }, { label: 'Prompts' }]}
         actions={
           <AsyncButton
@@ -281,43 +234,12 @@ export function PromptEditor() {
           <div className="space-y-6">
             <AdminCard title="Model settings">
               <div className="space-y-5">
-                <Field label="Provider">
-                  <div className="inline-flex w-full rounded-lg border border-[var(--a-border)] bg-[var(--a-subtle)] p-1">
-                    {PROVIDERS.map((value) => (
-                      <button
-                        key={value}
-                        type="button"
-                        onClick={() => {
-                          setProvider(value);
-                          setModel(FALLBACK_MODELS[value][0]);
-                        }}
-                        className={cn(
-                          'flex-1 rounded-md px-3 py-2 text-[13px] font-semibold capitalize transition-colors',
-                          provider === value ? 'bg-[#E8510A] text-white' : 'text-[var(--a-text2)] hover:text-[var(--a-ink2)]'
-                        )}
-                      >
-                        {value === 'anthropic' ? 'Anthropic (Claude)' : value === 'google' ? 'Google (Gemini)' : 'OpenRouter'}
-                      </button>
-                    ))}
-                  </div>
-                  <p className="text-xs text-[var(--a-placeholder)]">
-                    New models are fetched automatically; you can also type any model id.
+                <div className="rounded-lg border border-[var(--a-border)] bg-[var(--a-subtle)] p-4">
+                  <p className="text-[13px] font-semibold text-[var(--a-ink2)]">AI Provider</p>
+                  <p className="mt-1 text-xs text-[var(--a-placeholder)]">
+                    Configured in <span className="font-semibold">Admin → Settings → AI Provider &amp; Model</span>. The provider and model used for report generation are set globally, not per-prompt.
                   </p>
-                </Field>
-                <Field label="Model">
-                  <input
-                    list="report-model-options"
-                    value={model}
-                    onChange={(e) => setModel(e.target.value)}
-                    placeholder={FALLBACK_MODELS[provider]?.[0] ?? 'claude-sonnet-4-6'}
-                    className="h-11 w-full rounded-lg border border-[var(--a-border)] bg-[var(--a-subtle)] px-3 text-sm focus:border-[#E8510A] focus:outline-none focus:ring-2 focus:ring-[#E8510A]/20"
-                  />
-                  <datalist id="report-model-options">
-                    {(models[provider] ?? FALLBACK_MODELS.anthropic).map((m) => (
-                      <option key={m} value={m} />
-                    ))}
-                  </datalist>
-                </Field>
+                </div>
                 <Field label="Max tokens" hint="Between 500 and 200,000.">
                   <input
                     className="h-11 w-full rounded-lg border border-[var(--a-border)] bg-[var(--a-subtle)] px-3 text-sm focus:border-[#E8510A] focus:outline-none focus:ring-2 focus:ring-[#E8510A]/20"

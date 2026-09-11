@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { generateReportForProvider, buildFallbackReport, type ReportProvider } from '@/lib/report-generator';
+import { generateReportForProvider, resolveProviderConfig, buildFallbackReport, type ReportProvider } from '@/lib/report-generator';
 import { deliverReportByEmail, deliverReportByWhatsApp } from '@/lib/delivery';
 import { sendEmail, buildBrandedEmailHtml, resolveSiteUrl } from '@/lib/email';
 import { site } from '@/data/site';
@@ -147,12 +147,14 @@ export async function runReportGeneration(
 
   const userContent = baseContent + `\n\nOutput format: Return ONLY a valid Lexical EditorState JSON object — no prose, no markdown fences. Ensure strictly valid JSON: every key and string value double-quoted, no trailing commas.`;
 
-  const provider = (prompt?.provider as ReportProvider | undefined) ?? 'anthropic';
+  // Always use global AI settings from admin panel — ignore per-prompt provider.
+  // resolveProviderConfig reads AI_PROVIDER_TYPE / AI_API_KEY from the settings table.
+  const resolvedConfig = await resolveProviderConfig('anthropic');
   let generated;
   let generationError: string | null = null;
   if (prompt) {
     try {
-      generated = await generateReportForProvider(provider, {
+      generated = await generateReportForProvider('anthropic', {
         systemPrompt: prompt.system_prompt,
         model: prompt.model,
         maxTokens: prompt.max_tokens,
@@ -199,7 +201,7 @@ export async function runReportGeneration(
           <li><strong>Recipient:</strong> ${session.full_name}</li>
           <li><strong>Health check:</strong> ${checkName}</li>
           <li><strong>Report type:</strong> ${reportType}</li>
-          <li><strong>Provider:</strong> ${provider}</li>
+          <li><strong>Provider:</strong> ${resolvedConfig.label}</li>
           <li><strong>Model:</strong> ${prompt?.model ?? 'N/A'}</li>
         </ul>
         <p><a href="${siteUrl}/admin/health-checks/reports">View in admin →</a></p>
