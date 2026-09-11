@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { generateReportForProvider, resolveProviderConfig, buildFallbackReport, type ReportProvider } from '@/lib/report-generator';
 import { deliverReportByEmail, deliverReportByWhatsApp } from '@/lib/delivery';
 import { sendEmail, buildBrandedEmailHtml, resolveSiteUrl } from '@/lib/email';
+import { getServiceClient } from '@/lib/supabase/service';
 import { site } from '@/data/site';
 
 export type ReportType = 'summary' | 'detailed';
@@ -162,14 +163,19 @@ export async function createReportStub(
  * Completes report generation in the background. Updates the stub row with the
  * AI-generated content (or fallback), saves, and delivers.
  * This is designed to be called with .catch() — never awaited by the API route.
+ * Creates its own service-role Supabase client so it survives after the HTTP
+ * response is sent (the request-scoped client dies when Vercel reclaims the fn).
  */
 export async function completeReportGeneration(
-  supabase: SupabaseClient,
+  _supabase: SupabaseClient,
   session: SessionLike,
   reportType: ReportType,
   reportId: string,
   options: { skipDelivery?: boolean } = {}
 ): Promise<void> {
+  // Use a fresh service-role client — the request-scoped one is dead after the
+  // HTTP response is sent.
+  const supabase = getServiceClient();
   try {
     const { data: prompt } = await supabase
       .from('health_check_report_prompts')
