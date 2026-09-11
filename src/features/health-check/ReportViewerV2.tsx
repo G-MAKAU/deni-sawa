@@ -354,7 +354,7 @@ export function ReportViewerV2({ token }: { token: string }) {
         <Loader2 className="mx-auto h-10 w-10 animate-spin text-[#E8510A]" />
         <p className="mt-4 font-display text-xl font-semibold text-foreground">Your report is being generated</p>
         <p className="mt-2 text-sm text-muted-foreground">
-          This usually takes 1–2 minutes. The page will refresh automatically when your report is ready.
+          This usually takes 1–5 minutes. The page will refresh automatically when your report is ready.
         </p>
       </div>
     );

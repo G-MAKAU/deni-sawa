@@ -38,6 +38,7 @@ export function BlogCard({ post, featured = false }: { post: BlogPostCard; featu
             src={post.cover_image_url}
             alt={post.title}
             className="aspect-video"
+            sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
             fallbackTextSize={featured ? 'text-6xl' : 'text-4xl'}
             overlay={
               featured ? (

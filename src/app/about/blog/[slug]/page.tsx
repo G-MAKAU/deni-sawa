@@ -158,6 +158,7 @@ async function ArticleBody({ slug }: { slug: string }) {
         src={post.cover_image_url}
         alt={post.title}
         className="mb-12 aspect-[16/8] rounded-4xl"
+        sizes="(max-width: 768px) 100vw, 896px"
         fallbackTextSize="text-8xl"
         loading="eager"
       />

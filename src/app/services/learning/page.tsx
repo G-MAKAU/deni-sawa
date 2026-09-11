@@ -133,10 +133,10 @@ export default function LearningPage() {
                 </span>
               </Reveal>
               <Reveal delay={80}>
-                <h1 className="hero-display text-h1 text-white">05</h1>
+                <div aria-hidden="true" className="hero-display text-h1 text-white">05</div>
               </Reveal>
               <Reveal delay={140}>
-                <h2 className="text-h2 font-semibold text-white">Learning & Programs</h2>
+                <h1 className="text-h2 font-semibold text-white">Learning & Programs</h1>
               </Reveal>
               <Reveal delay={200}>
                 <p className="mt-4 text-xl font-medium italic text-green">

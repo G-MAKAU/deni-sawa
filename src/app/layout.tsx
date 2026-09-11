@@ -127,12 +127,21 @@ export const metadata: Metadata = {
     title: 'Deni Sawa Partners — Fractional CFO & Advisory Kenya',
     description:
       'Senior-level fractional business support — Fractional CFO, CEO, Governance & Special Situations advisory.',
+    images: [
+      {
+        url: `${site.url}/opengraph-image`,
+        width: 1200,
+        height: 630,
+        alt: 'Deni Sawa Partners — From Special Situations to Best-in-Class',
+      },
+    ],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Deni Sawa Partners — Fractional CFO & Advisory Kenya',
     description:
       'Senior-level fractional business support — Fractional CFO, CEO, Governance & Special Situations advisory.',
+    images: [`${site.url}/opengraph-image`],
   },
   icons: {
     icon: [
@@ -166,7 +175,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="Deni Sawa" />
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
       </head>
       <body>
         <GoogleAnalytics />

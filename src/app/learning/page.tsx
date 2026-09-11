@@ -85,7 +85,7 @@ export default async function LearningPage() {
               </div>
               <div className="relative hidden min-h-[320px] lg:block">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/images/exec-finance.jpg" alt="Executive Finance cohort" className="absolute inset-0 h-full w-full object-cover" />
+                <img src="/images/exec-finance.jpg" alt="Executive Finance cohort" loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-r from-card to-transparent" />
               </div>
             </div>

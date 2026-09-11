@@ -42,8 +42,8 @@ const nextConfig = {
   async redirects() {
     return [
       // Consolidate the duplicate insights/blog URLs into one canonical path.
-      { source: '/insights', destination: '/blog', permanent: true },
-      { source: '/insights/:path*', destination: '/blog/:path*', permanent: true },
+      { source: '/insights', destination: '/about/blog', permanent: true },
+      { source: '/insights/:path*', destination: '/about/blog/:path*', permanent: true },
       // Academy brand pages are replaced by the Learning Centre.
       { source: '/academy', destination: '/learning', permanent: true },
       { source: '/academy/:path*', destination: '/learning/:path*', permanent: true },

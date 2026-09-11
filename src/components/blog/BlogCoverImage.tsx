@@ -1,4 +1,5 @@
-import { type ReactNode } from 'react';
+import type { ReactNode } from 'react';
+import Image from 'next/image';
 
 interface BlogCoverImageProps {
   src?: string | null;
@@ -7,6 +8,7 @@ interface BlogCoverImageProps {
   fallbackTextSize?: string;
   overlay?: ReactNode;
   loading?: 'eager' | 'lazy';
+  sizes?: string;
 }
 
 export function BlogCoverImage({
@@ -15,17 +17,19 @@ export function BlogCoverImage({
   className = '',
   overlay,
   loading = 'lazy',
+  sizes = '(max-width: 768px) 100vw, 50vw',
 }: BlogCoverImageProps) {
   const imageSrc = src || '/images/blog-default-cover.webp';
 
   return (
     <div className={`relative overflow-hidden ${className}`}>
-      <img
+      <Image
         src={imageSrc}
         alt={alt}
-        loading={loading}
-        decoding="async"
-        className="h-full w-full object-cover"
+        fill
+        sizes={sizes}
+        priority={loading === 'eager'}
+        className="object-cover"
       />
       {overlay}
     </div>

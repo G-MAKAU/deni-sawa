@@ -48,19 +48,19 @@ const serviceIcons = {
 const heroImages: HeroImage[] = [
   {
     src: '/images/Deni-sawa-Home-Hero.webp',
-    alt: 'Senior advisors & fractional executives delivering Business Development Services (BDS) that help organisations recover, stabilise, grow and become Best-in-Class.',
+    alt: 'Deni Sawa senior advisors meeting business owners to assess their financial health and recovery needs.',
     width: 800,
     height: 635,
   },
   {
     src: '/images/Deni-sawa-Home-Hero-2.webp',
-    alt: 'Senior advisors & fractional executives delivering Business Development Services (BDS) that help organisations recover, stabilise, grow and become Best-in-Class.',
+    alt: 'Fractional CFO and CEO experts reviewing financial statements during a business turnaround engagement.',
     width: 800,
     height: 635,
   },
   {
     src: '/images/Deni-sawa-Home-Hero-3.webp',
-    alt: 'Senior advisors & fractional executives delivering Business Development Services (BDS) that help organisations recover, stabilise, grow and become Best-in-Class.',
+    alt: 'Business owners in a strategy session, moving from special situations to best-in-class performance.',
     width: 800,
     height: 635,
   },
@@ -259,6 +259,7 @@ export default async function HomePage() {
                     src={insights[0].cover_image_url}
                     alt={insights[0].title}
                     className="aspect-video h-full"
+                    sizes="(max-width: 1024px) 100vw, 50vw"
                     fallbackTextSize="text-6xl"
                   />
                 </div>

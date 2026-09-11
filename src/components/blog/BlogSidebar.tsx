@@ -51,6 +51,7 @@ export async function BlogSidebar({ currentSlug }: BlogSidebarProps) {
                   src={post.cover_image_url}
                   alt={post.title}
                   className="h-14 w-16 shrink-0 rounded-xl"
+                  sizes="64px"
                   fallbackTextSize="text-xs"
                 />
                 <div className="min-w-0 flex-1">

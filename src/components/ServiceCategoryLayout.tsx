@@ -101,10 +101,10 @@ export function ServiceCategoryLayout({
                 </span>
               </Reveal>
               <Reveal delay={80}>
-                <h1 className="hero-display text-h1 text-white">{number}</h1>
+                <div aria-hidden="true" className="hero-display text-h1 text-white">{number}</div>
               </Reveal>
               <Reveal delay={140}>
-                <h2 className="text-h2 font-semibold text-white">{name}</h2>
+                <h1 className="text-h2 font-semibold text-white">{name}</h1>
               </Reveal>
               <Reveal delay={200}>
                 <p className="mt-4 text-xl font-medium italic text-green">{positioningTag}</p>

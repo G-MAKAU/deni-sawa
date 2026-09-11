@@ -99,7 +99,7 @@ export default async function AboutPage() {
               <div className="absolute -right-5 -top-5 h-28 w-28 rounded-full border border-growth/25" />
               <div className="relative aspect-[4/3] overflow-hidden rounded-lg border border-card-border shadow-card">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/images/about-philosophy.webp" alt="Deni Sawa Partners" className="h-full w-full object-cover" />
+                <img src="/images/about-philosophy.webp" alt="Deni Sawa Partners" loading="lazy" className="h-full w-full object-cover" />
               </div>
             </div>
           </Reveal>
@@ -140,7 +140,7 @@ export default async function AboutPage() {
                 <Link href={page.href} className="card-elevated group flex h-full flex-col overflow-hidden">
                   <div className="relative h-44 overflow-hidden">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={page.image} alt={page.title} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                    <img src={page.image} alt={page.title} loading="lazy" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
                     <div className="absolute inset-0 bg-gradient-to-t from-navy/70 to-transparent" />
                     <span className="absolute bottom-4 left-5 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-white/10 text-white backdrop-blur-md">
                       <page.icon className="h-5 w-5" strokeWidth={1.8} />

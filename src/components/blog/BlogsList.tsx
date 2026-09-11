@@ -34,6 +34,7 @@ function FeaturedSpotlight({ post }: { post: BlogPostCard }) {
             src={post.cover_image_url}
             alt={post.title}
             className="absolute inset-0"
+            sizes="(max-width: 1024px) 100vw, 50vw"
             fallbackTextSize="text-6xl"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-ink-950/50 via-transparent to-transparent lg:bg-gradient-to-r" />
