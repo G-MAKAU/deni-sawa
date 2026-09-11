@@ -309,6 +309,10 @@ export function HealthCheckWizardV2({ slug }: { slug: string }) {
       setError('Please enter a valid email address.');
       return;
     }
+    if (whatsapp.trim() && !/^\+?[0-9\s-]{8,}$/.test(whatsapp.trim())) {
+      setError('Please enter a valid WhatsApp number (e.g. +254700000000).');
+      return;
+    }
     if (!termsAgreed) {
       setConsentError('You must agree to the Privacy Policy and Terms of Use to continue');
       return;
@@ -600,13 +604,10 @@ export function HealthCheckWizardV2({ slug }: { slug: string }) {
               <input className={INPUT_CLASS} type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
             </div>
 
-            <div className="relative">
-              <label className="mb-1.5 flex items-center gap-2 text-[13px] font-semibold text-foreground">
-                WhatsApp number
-                <span className="rounded-full bg-brand/10 px-1.5 py-0.5 text-[9px] font-bold uppercase text-brand">Coming soon</span>
-              </label>
-              <input className={INPUT_CLASS} type="tel" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} placeholder="+254 700 000 000" disabled />
-              <p className="mt-1 text-xs text-muted-foreground">WhatsApp delivery is coming soon. Leave blank for now.</p>
+            <div>
+              <label className="mb-1.5 block text-[13px] font-semibold text-foreground">WhatsApp number</label>
+              <input className={INPUT_CLASS} type="tel" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} placeholder="+254 700 000 000" />
+              <p className="mt-1 text-xs text-muted-foreground">Optional — for follow-up contact only. Report will be delivered via email.</p>
             </div>
 
             <div>

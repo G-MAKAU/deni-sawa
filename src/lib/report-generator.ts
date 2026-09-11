@@ -425,8 +425,8 @@ export function buildFallbackReport(options: {
   };
 }
 
-/** Timeout for AI provider requests (2 minutes). */
-const AI_TIMEOUT_MS = 120_000;
+/** Timeout for AI provider requests (5 minutes — runs in background, no HTTP timeout pressure). */
+const AI_TIMEOUT_MS = 300_000;
 
 /** Races a promise against a timeout — rejects with a clear message on timeout. */
 function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
