@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { format } from 'date-fns';
-import { FileDown, FileText, Loader2, Lock, Phone, Sparkles } from 'lucide-react';
+import { CheckCircle2, FileDown, FileText, Loader2, Lock, Phone, Sparkles } from 'lucide-react';
 import { LexicalRenderer } from '@/features/lexical/LexicalRenderer';
 import { ShareMenu } from '@/components/ShareMenu';
 import { cn } from '@/lib/utils';
@@ -44,6 +44,7 @@ export function ReportViewerV2({ token }: { token: string }) {
   const [upgradeError, setUpgradeError] = React.useState<string | null>(null);
   const [paidReportUrl, setPaidReportUrl] = React.useState<string | null>(null);
   const [isGenerating, setIsGenerating] = React.useState(false);
+  const [justCompleted, setJustCompleted] = React.useState(false);
   const pollRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
 
   React.useEffect(() => {
@@ -73,6 +74,7 @@ export function ReportViewerV2({ token }: { token: string }) {
                 if (pollInterval) clearInterval(pollInterval);
                 setIsGenerating(false);
                 setReport(pollBody.report as ReportData);
+                setJustCompleted(true);
               }
             } catch {
               // ignore poll errors, keep trying
@@ -369,6 +371,20 @@ export function ReportViewerV2({ token }: { token: string }) {
         <Lock className="h-4 w-4 shrink-0" />
         This report is private and unique to you — do not share the link.
       </div>
+
+      {/* Completion notification */}
+      {justCompleted && (
+        <div className="mb-6 flex items-center gap-2.5 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700">
+          <CheckCircle2 className="h-4 w-4 shrink-0" />
+          Your report has been generated successfully!
+          <button
+            onClick={() => setJustCompleted(false)}
+            className="ml-auto text-blue-500 hover:text-blue-700 text-xs font-semibold"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
 
       {/* Header card */}
       <div className="mb-6 flex flex-wrap items-start justify-between gap-4 rounded-lg border border-card-border bg-card p-6 shadow-card">

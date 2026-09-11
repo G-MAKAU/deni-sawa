@@ -677,7 +677,7 @@ export function HealthCheckWizardV2({ slug }: { slug: string }) {
                     key={option.value}
                     type="button"
                     disabled={option.disabled}
-                    onClick={() => !option.comingSoon && setPreferredDelivery(option.value)}
+                    onClick={() => !option.comingSoon && setPreferredDelivery(option.value as 'email' | 'whatsapp' | 'both')}
                     className={cn(
                       'flex flex-col items-center gap-1.5 rounded-lg border px-3 py-3 text-[13px] font-semibold transition-colors',
                       preferredDelivery === option.value && !option.comingSoon
