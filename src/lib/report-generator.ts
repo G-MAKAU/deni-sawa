@@ -425,6 +425,19 @@ export function buildFallbackReport(options: {
   };
 }
 
+/** Timeout for AI provider requests (2 minutes). */
+const AI_TIMEOUT_MS = 120_000;
+
+/** Races a promise against a timeout — rejects with a clear message on timeout. */
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(`${label} timed out after ${ms / 1000}s`)), ms)
+    ),
+  ]);
+}
+
 /**
  * Generates a Lexical-state report via the Anthropic Claude API using the
  * provided configuration. Throws when the response cannot be parsed, so
@@ -439,12 +452,16 @@ export async function generateReportWithClaude(config: ProviderConfig, options: 
 
   try {
     const anthropic = new Anthropic({ apiKey });
-    const message = await anthropic.messages.create({
-      model,
-      max_tokens: maxTokens,
-      system: withLexicalDesignSpec(options.systemPrompt),
-      messages: [{ role: 'user', content: options.userContent }],
-    });
+    const message = await withTimeout(
+      anthropic.messages.create({
+        model,
+        max_tokens: maxTokens,
+        system: withLexicalDesignSpec(options.systemPrompt),
+        messages: [{ role: 'user', content: options.userContent }],
+      }),
+      AI_TIMEOUT_MS,
+      'Claude API'
+    );
 
     const text = message.content
       .filter((block) => block.type === 'text')
@@ -486,17 +503,21 @@ export async function generateReportWithGemini(config: ProviderConfig, options: 
 
   for (const attempt of attempts) {
     try {
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            systemInstruction: { parts: [{ text: withLexicalDesignSpec(options.systemPrompt) }] },
-            contents: [{ role: 'user', parts: [{ text: options.userContent + attempt.suffix }] }],
-            generationConfig: { maxOutputTokens: maxTokens, temperature: 0.6 },
-          }),
-        }
+      const res = await withTimeout(
+        fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              systemInstruction: { parts: [{ text: withLexicalDesignSpec(options.systemPrompt) }] },
+              contents: [{ role: 'user', parts: [{ text: options.userContent + attempt.suffix }] }],
+              generationConfig: { maxOutputTokens: maxTokens, temperature: 0.6 },
+            }),
+          }
+        ),
+        AI_TIMEOUT_MS,
+        'Gemini API'
       );
 
       if (!res.ok) {
@@ -713,22 +734,26 @@ export async function generateReportWithOpenAICompatible(
 
   for (const attempt of attempts) {
     try {
-      const res = await fetch(`${baseUrl}/chat/completions`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          model,
-          messages: [
-            { role: 'system', content: withLexicalDesignSpec(options.systemPrompt) },
-            { role: 'user', content: options.userContent + attempt.suffix },
-          ],
-          max_tokens: affordableTokens,
-          temperature: 0.6,
+      const res = await withTimeout(
+        fetch(`${baseUrl}/chat/completions`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${apiKey}`,
+          },
+          body: JSON.stringify({
+            model,
+            messages: [
+              { role: 'system', content: withLexicalDesignSpec(options.systemPrompt) },
+              { role: 'user', content: options.userContent + attempt.suffix },
+            ],
+            max_tokens: affordableTokens,
+            temperature: 0.6,
+          }),
         }),
-      });
+        AI_TIMEOUT_MS,
+        `OpenAI-compatible API`
+      );
 
       if (!res.ok) {
         let detail = '';
