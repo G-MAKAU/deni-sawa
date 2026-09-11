@@ -301,20 +301,12 @@ export function HealthCheckWizardV2({ slug }: { slug: string }) {
       setError('Please enter your business name.');
       return;
     }
-    if (!email.trim() && !whatsapp.trim()) {
-      setError('Provide at least an email or WhatsApp number so we can send your report.');
+    if (!email.trim()) {
+      setError('Please provide your email address so we can send your report.');
       return;
     }
-    if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
       setError('Please enter a valid email address.');
-      return;
-    }
-    if (whatsapp.trim() && !/^\+?[0-9\s-]{8,}$/.test(whatsapp.trim())) {
-      setError('Please enter a valid WhatsApp number (e.g. +254700000000).');
-      return;
-    }
-    if (reportSelection === 'detailed_call' && !whatsapp.trim()) {
-      setError('A WhatsApp number is required for the Detailed + Advisory Call option so we can schedule your call.');
       return;
     }
     if (!termsAgreed) {
@@ -608,9 +600,13 @@ export function HealthCheckWizardV2({ slug }: { slug: string }) {
               <input className={INPUT_CLASS} type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
             </div>
 
-            <div>
-              <label className="mb-1.5 block text-[13px] font-semibold text-foreground">WhatsApp number</label>
-              <input className={INPUT_CLASS} type="tel" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} placeholder="+254 700 000 000" />
+            <div className="relative">
+              <label className="mb-1.5 flex items-center gap-2 text-[13px] font-semibold text-foreground">
+                WhatsApp number
+                <span className="rounded-full bg-brand/10 px-1.5 py-0.5 text-[9px] font-bold uppercase text-brand">Coming soon</span>
+              </label>
+              <input className={INPUT_CLASS} type="tel" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} placeholder="+254 700 000 000" disabled />
+              <p className="mt-1 text-xs text-muted-foreground">WhatsApp delivery is coming soon. Leave blank for now.</p>
             </div>
 
             <div>
@@ -649,16 +645,16 @@ export function HealthCheckWizardV2({ slug }: { slug: string }) {
                 {check?.detailed_call_price != null && check.detailed_call_price > 0 && (
                   <button
                     type="button"
-                    onClick={() => setReportSelection('detailed_call')}
-                    className={cn(
-                      'flex w-full items-center justify-between rounded-lg border px-4 py-3 text-left text-sm transition-colors',
-                      reportSelection === 'detailed_call' ? 'border-brand bg-brand/5' : 'border-card-border hover:border-brand/30'
-                    )}
+                    disabled
+                    className="flex w-full items-center justify-between rounded-lg border border-card-border px-4 py-3 text-left text-sm opacity-50 cursor-not-allowed"
                   >
                     <span>
                       <span className="font-semibold text-foreground">Detailed + Advisory Call</span>
                       <span className="block text-xs text-muted-foreground">
-                        Full detailed report plus a call with our advisory team. WhatsApp number required.
+                        <span className="inline-flex items-center gap-1">
+                          WhatsApp scheduling
+                          <span className="rounded-full bg-brand/10 px-1.5 py-0.5 text-[9px] font-bold uppercase text-brand">Coming soon</span>
+                        </span>
                       </span>
                     </span>
                     <span className="font-semibold text-brand">KES {check.detailed_call_price.toLocaleString()}</span>
@@ -672,31 +668,36 @@ export function HealthCheckWizardV2({ slug }: { slug: string }) {
               <div className="grid grid-cols-3 gap-2">
                 {(
                   [
-                    { value: 'email', label: 'Email', icon: Mail, disabled: !email.trim() },
-                    { value: 'whatsapp', label: 'WhatsApp', icon: MessageCircle, disabled: !whatsapp.trim() },
-                    { value: 'both', label: 'Both', icon: Sparkles, disabled: !email.trim() || !whatsapp.trim() },
-                  ] as const
+                    { value: 'email', label: 'Email', icon: Mail, disabled: !email.trim(), comingSoon: false },
+                    { value: 'whatsapp', label: 'WhatsApp', icon: MessageCircle, disabled: true, comingSoon: true },
+                    { value: 'both', label: 'Both', icon: Sparkles, disabled: true, comingSoon: true },
+                  ]
                 ).map((option) => (
                   <button
                     key={option.value}
                     type="button"
                     disabled={option.disabled}
-                    onClick={() => setPreferredDelivery(option.value)}
+                    onClick={() => !option.comingSoon && setPreferredDelivery(option.value)}
                     className={cn(
                       'flex flex-col items-center gap-1.5 rounded-lg border px-3 py-3 text-[13px] font-semibold transition-colors',
-                      preferredDelivery === option.value
+                      preferredDelivery === option.value && !option.comingSoon
                         ? 'border-brand bg-brand/5 text-brand'
                         : 'border-card-border text-muted-foreground hover:border-brand/30',
                       option.disabled && 'cursor-not-allowed opacity-40'
                     )}
                   >
                     <option.icon className="h-4 w-4" />
-                    {option.label}
+                    <span className="flex items-center gap-1">
+                      {option.label}
+                      {option.comingSoon && (
+                        <span className="rounded-full bg-brand/10 px-1.5 py-0.5 text-[9px] font-bold uppercase text-brand">Soon</span>
+                      )}
+                    </span>
                   </button>
                 ))}
               </div>
               <p className="mt-1.5 text-xs text-muted-foreground">
-                {email.trim() && !whatsapp.trim() && 'WhatsApp delivery unlocks once you add a number.'}
+                WhatsApp delivery coming soon — your report will be delivered via email for now.
               </p>
             </div>
 
@@ -749,11 +750,7 @@ export function HealthCheckWizardV2({ slug }: { slug: string }) {
                     className="mt-0.5 h-4 w-4 shrink-0 accent-[#E8510A]"
                   />
                   <span className="text-[13px] leading-relaxed text-foreground">
-                    {email.trim() && whatsapp.trim()
-                      ? 'I consent to receive my report and related communications via email and WhatsApp at the details provided'
-                      : whatsapp.trim()
-                        ? 'I consent to receive my report and related communications via WhatsApp at the number provided'
-                        : 'I consent to receive my report and related communications via email at the address provided'}
+                    I consent to receive my report and related communications via email at the address provided
                   </span>
                 </label>
               </div>
