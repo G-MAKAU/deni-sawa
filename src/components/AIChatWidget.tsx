@@ -183,7 +183,13 @@ export function AIChatWidget() {
 
   useEffect(() => {
     if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      const el = scrollRef.current;
+      // Only auto-scroll if the user is already near the bottom (within 100px).
+      // This prevents yanking the user away when they've scrolled up to read.
+      const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 100;
+      if (nearBottom) {
+        el.scrollTop = el.scrollHeight;
+      }
     }
   }, [messages, loading, tab]);
 

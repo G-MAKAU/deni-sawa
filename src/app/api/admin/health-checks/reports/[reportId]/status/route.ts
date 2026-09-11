@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { z } from 'zod';
-import { requireAdmin, adminReadClient } from '@/lib/admin-auth';
+import { requireAdmin, adminWriteClient } from '@/lib/admin-auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,10 +10,10 @@ const paramsSchema = z.object({ reportId: z.string().uuid() });
 /** Polls the generation status of a report. Returns status + report data when complete. */
 export async function GET(request: NextRequest, { params }: { params: Promise<{ reportId: string }> }) {
   try {
-    await requireAdmin(request, 'read');
+    const context = await requireAdmin(request, 'read');
     const { reportId } = paramsSchema.parse(await params);
 
-    const supabase = adminReadClient();
+    const supabase = adminWriteClient(context);
     const { data, error } = await supabase
       .from('health_check_reports')
       .select('id, generation_status, report_url_token, lexical_state, model_used, tokens_used, generation_seconds, generation_error')

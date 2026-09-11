@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { deliverReportByEmail, deliverReportByWhatsApp } from '@/lib/delivery';
-import { runReportGeneration } from '@/lib/generate-report';
+import { createReportStub, completeReportGeneration } from '@/lib/generate-report';
 import { sendEmail, buildBrandedEmailHtml, resolveSiteUrl } from '@/lib/email';
 import { getWhatsAppConfig, decryptCredentials, sendWhatsAppMessage } from '@/lib/whatsapp';
 import { site } from '@/data/site';
@@ -50,10 +50,12 @@ export async function markPaidAndDeliver(supabase: SupabaseClient, sessionId: st
     if (delivery === 'email' || delivery === 'both') await deliverReportByEmail(supabase, existingReport.id);
     if (delivery === 'whatsapp' || delivery === 'both') await deliverReportByWhatsApp(supabase, existingReport.id);
   } else {
-    // No report yet — generate now and deliver.
-    const result = await runReportGeneration(supabase, session, 'detailed');
-    reportId = result.report.id;
-    reportUrlToken = result.report.report_url_token;
+    // No report yet — create stub and fire background generation.
+    const { report: stub } = await createReportStub(supabase, session, 'detailed');
+    reportId = stub.id;
+    reportUrlToken = stub.report_url_token;
+    completeReportGeneration(supabase, session, 'detailed', stub.id)
+      .catch((err) => console.error(`Background generation failed for payment report ${stub.id}:`, err));
   }
 
   if (reportId) {
