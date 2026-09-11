@@ -338,3 +338,123 @@ export async function getReportStatus(
   if (error || !data) return { status: 'failed' };
   return { status: (data.generation_status as GenerationStatus) ?? 'completed', report: data };
 }
+
+// ─── STALE-GENERATING SWEEPER ───────────────────────────────────────────────
+// If a report has been stuck in 'generating' for longer than STALE_THRESHOLD_MS
+// (e.g. the serverless function was OOM-killed), build a fallback report and
+// mark it completed.  If even the fallback fails, mark as failed and email admin.
+// This runs on-demand when a report is fetched (public or admin polling).
+
+const STALE_THRESHOLD_MS = 10 * 60 * 1000; // 10 minutes
+
+/**
+ * Checks whether a report is stuck in 'generating' past the stale threshold.
+ * If so, builds a fallback report and updates the row.
+ * Returns true if the report was stale and has been fixed (or marked failed).
+ */
+export async function autoFailStaleGenerating(
+  supabase: SupabaseClient,
+  reportId: string
+): Promise<boolean> {
+  const { data: report, error: fetchErr } = await supabase
+    .from('health_check_reports')
+    .select('id, generation_status, created_at, session_id, report_type')
+    .eq('id', reportId)
+    .maybeSingle();
+
+  if (fetchErr || !report) return false;
+  if (report.generation_status !== 'generating') return false;
+
+  const createdAt = new Date(report.created_at).getTime();
+  if (Date.now() - createdAt < STALE_THRESHOLD_MS) return false;
+
+  console.warn(`Report ${reportId} stuck in 'generating' past threshold — building fallback.`);
+
+  try {
+    // Load session + answer tree + prompt (same as completeReportGeneration).
+    const { data: sessionRow } = await supabase
+      .from('health_check_sessions')
+      .select('id, health_check_id, full_name, business_name, preferred_delivery')
+      .eq('id', report.session_id)
+      .maybeSingle();
+
+    if (!sessionRow) throw new Error('Session not found for stale report.');
+
+    const session: SessionLike = {
+      id: sessionRow.id,
+      health_check_id: sessionRow.health_check_id,
+      full_name: sessionRow.full_name ?? 'Client',
+      business_name: sessionRow.business_name,
+      preferred_delivery: sessionRow.preferred_delivery ?? 'email',
+    };
+
+    const reportType = (report.report_type as ReportType) ?? 'summary';
+
+    const { data: check } = await supabase
+      .from('health_checks')
+      .select('name')
+      .eq('id', session.health_check_id)
+      .maybeSingle();
+    const checkName = (check as { name?: string } | null)?.name ?? 'Health Check';
+
+    const answerTree = await loadAnswerTree(supabase, session);
+
+    const state = buildFallbackReport({
+      title: `${checkName} — ${reportType === 'summary' ? 'Summary' : 'Detailed'} Report`,
+      recipientName: session.full_name,
+      sections: answerTree,
+    });
+
+    const { error: updateErr } = await supabase
+      .from('health_check_reports')
+      .update({
+        lexical_state: state,
+        model_used: 'fallback',
+        generation_error: 'Process killed during generation — fallback template used',
+        generation_status: 'completed',
+      })
+      .eq('id', reportId);
+
+    if (updateErr) throw updateErr;
+
+    // Fallback succeeded — no need to email admin.
+    return true;
+  } catch (err) {
+    console.error(`Failed to build fallback for stale report ${reportId}:`, err);
+
+    // Last resort — mark as failed so the UI can show it.
+    await supabase
+      .from('health_check_reports')
+      .update({
+        generation_status: 'failed',
+        generation_error: err instanceof Error ? err.message : String(err),
+      })
+      .eq('id', reportId);
+
+    // Notify admin about the complete failure.
+    const adminEmail = process.env.ADMIN_NOTIFY_EMAIL ?? site.email;
+    if (adminEmail) {
+      const siteUrl = resolveSiteUrl();
+      const adminBody = `
+        <h1>Report generation failed completely</h1>
+        <p>Report <strong>${reportId}</strong> was stuck in 'generating' and the fallback template also failed.</p>
+        <h2>Error</h2>
+        <pre style="background:#F9F7F5;padding:16px;border-radius:6px;font-size:13px;white-space:pre-wrap;word-break:break-word;">${err instanceof Error ? err.message : String(err)}</pre>
+        <p><a href="${siteUrl}/admin/health-checks/reports">View in admin →</a></p>
+      `;
+      try {
+        await sendEmail({
+          to: adminEmail,
+          subject: `[Critical] Report generation failed completely — ${reportId}`,
+          html: buildBrandedEmailHtml(adminBody),
+          fromName: 'Deni Sawa Partners',
+          fromEmail: 'advisory@denisawa.co.ke',
+        });
+      } catch (emailErr) {
+        console.error('Critical failure admin email failed:', emailErr);
+      }
+    }
+
+    return true;
+  }
+}

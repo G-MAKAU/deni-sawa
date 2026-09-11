@@ -45,6 +45,7 @@ export function ReportViewerV2({ token }: { token: string }) {
   const [paidReportUrl, setPaidReportUrl] = React.useState<string | null>(null);
   const [isGenerating, setIsGenerating] = React.useState(false);
   const [justCompleted, setJustCompleted] = React.useState(false);
+  const [genFailed, setGenFailed] = React.useState(false);
   const pollRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
 
   React.useEffect(() => {
@@ -64,8 +65,10 @@ export function ReportViewerV2({ token }: { token: string }) {
         }
         if (body.generating && !cancelled) {
           setIsGenerating(true);
-          // Poll every 3 seconds until generation completes.
+          // Poll every 3 seconds until generation completes or fails.
+          let pollCount = 0;
           pollInterval = setInterval(async () => {
+            pollCount++;
             try {
               const pollRes = await fetch(`/api/health-check/report/${token}`, { cache: 'no-store' });
               const pollBody = await pollRes.json();
@@ -73,8 +76,23 @@ export function ReportViewerV2({ token }: { token: string }) {
               if (!pollBody.generating && !cancelled) {
                 if (pollInterval) clearInterval(pollInterval);
                 setIsGenerating(false);
-                setReport(pollBody.report as ReportData);
-                setJustCompleted(true);
+                if (pollBody.report) {
+                  setReport(pollBody.report as ReportData);
+                  // Check if the report failed (no lexical content or generation_error set).
+                  const rpt = pollBody.report as ReportData;
+                  if (rpt.generation_error && (!rpt.lexical_state || Object.keys(rpt.lexical_state).length === 0)) {
+                    setGenFailed(true);
+                  } else {
+                    setJustCompleted(true);
+                  }
+                } else {
+                  setGenFailed(true);
+                }
+              } else if (pollCount >= 100 && !cancelled) {
+                // Give up after ~5 minutes of polling.
+                if (pollInterval) clearInterval(pollInterval);
+                setIsGenerating(false);
+                setGenFailed(true);
               }
             } catch {
               // ignore poll errors, keep trying
@@ -82,7 +100,14 @@ export function ReportViewerV2({ token }: { token: string }) {
           }, 3000);
           return;
         }
-        if (!cancelled) setReport(body.report as ReportData);
+        if (!cancelled) {
+          setReport(body.report as ReportData);
+          // Check if the report failed on initial fetch too.
+          const rpt = body.report as ReportData;
+          if (rpt?.generation_error && (!rpt?.lexical_state || Object.keys(rpt.lexical_state).length === 0)) {
+            setGenFailed(true);
+          }
+        }
       } catch (e) {
         if (!cancelled) setError(e instanceof Error ? e.message : 'Report not found.');
       }
@@ -331,6 +356,42 @@ export function ReportViewerV2({ token }: { token: string }) {
         <p className="mt-2 text-sm text-muted-foreground">
           This usually takes 1–2 minutes. The page will refresh automatically when your report is ready.
         </p>
+      </div>
+    );
+  }
+
+  if (genFailed) {
+    return (
+      <div className="mx-auto max-w-2xl rounded-lg border border-red-500/20 bg-red-500/5 px-6 py-16 text-center">
+        <p className="font-display text-xl font-semibold text-foreground">Report generation failed</p>
+        <p className="mt-2 text-sm text-muted-foreground">
+          We encountered an issue while generating your report. Our team has been notified.
+        </p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Please contact us at{' '}
+          <a href="mailto:advisory@denisawa.co.ke" className="font-semibold text-brand hover:underline">
+            advisory@denisawa.co.ke
+          </a>{' '}
+          for assistance.
+        </p>
+        <button
+          type="button"
+          onClick={() => {
+            setGenFailed(false);
+            setIsGenerating(false);
+            setError(null);
+            void (async () => {
+              try {
+                const res = await fetch(`/api/health-check/report/${token}`, { cache: 'no-store' });
+                const body = await res.json();
+                if (res.ok && body.report) setReport(body.report as ReportData);
+              } catch { /* ignore */ }
+            })();
+          }}
+          className="mt-6 inline-flex items-center gap-2 rounded-btn border border-card-border px-5 py-2.5 text-sm font-semibold text-foreground transition-colors hover:border-brand/40 hover:text-brand"
+        >
+          Try again
+        </button>
       </div>
     );
   }

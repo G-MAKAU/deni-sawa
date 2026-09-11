@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { requireAdmin, adminWriteClient } from '@/lib/admin-auth';
+import { autoFailStaleGenerating } from '@/lib/generate-report';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,7 +25,30 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: 'Report not found.' }, { status: 404 });
     }
 
-    const status = (data.generation_status as string) ?? 'completed';
+    let status = (data.generation_status as string) ?? 'completed';
+
+    // If still generating, check if stale — if so, auto-fail and re-fetch.
+    if (status === 'generating') {
+      const fixed = await autoFailStaleGenerating(supabase, reportId);
+      if (fixed) {
+        const { data: refreshed } = await supabase
+          .from('health_check_reports')
+          .select('id, generation_status, report_url_token, lexical_state, model_used, tokens_used, generation_seconds, generation_error')
+          .eq('id', reportId)
+          .maybeSingle();
+        if (refreshed) {
+          return NextResponse.json({
+            status: refreshed.generation_status ?? 'completed',
+            report_url_token: refreshed.report_url_token,
+            model_used: refreshed.model_used,
+            tokens_used: refreshed.tokens_used,
+            generation_seconds: refreshed.generation_seconds,
+            generation_error: refreshed.generation_error,
+            has_content: refreshed.lexical_state && Object.keys(refreshed.lexical_state as Record<string, unknown>).length > 0,
+          });
+        }
+      }
+    }
 
     return NextResponse.json({
       status,

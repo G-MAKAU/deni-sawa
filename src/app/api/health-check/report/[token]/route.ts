@@ -1,8 +1,97 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getServiceClient } from '@/lib/supabase/service';
+import { autoFailStaleGenerating } from '@/lib/generate-report';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 export const dynamic = 'force-dynamic';
+
+/** Shared response builder for a fetched report row. */
+async function handleReportResponse(
+  report: Record<string, unknown>,
+  supabase: SupabaseClient
+) {
+  // Block access to reports whose public view has been revoked by an admin.
+  if (report.is_public === false) {
+    return NextResponse.json(
+      {
+        error: 'revoked',
+        message: 'Public access to this report has been revoked. Please contact the report owner.',
+      },
+      { status: 403 },
+    );
+  }
+
+  // Block access to expired reports (summary = 30 days).
+  if (report.expires_at && new Date(report.expires_at as string) < new Date()) {
+    return NextResponse.json(
+      {
+        error: 'expired',
+        message: 'This summary report has expired. Upgrade to the Full Report to keep your results for 12 months.',
+        expires_at: report.expires_at,
+        report_type: report.report_type,
+      },
+      { status: 410 },
+    );
+  }
+
+  // Track access.
+  await supabase.from('health_check_reports').update({ accessed_at: new Date().toISOString() }).eq('id', report.id);
+
+  const session = Array.isArray(report.session) ? report.session[0] : report.session;
+  const healthCheckId = (session as { health_check_id?: string } | undefined)?.health_check_id ?? '';
+
+  // Fetch health check prices separately (nested join unreliable).
+  let checkName = 'Health Check';
+  let detailedPrice = 0;
+  let detailedCallPrice = 0;
+  if (healthCheckId) {
+    const { data: hc } = await supabase
+      .from('health_checks')
+      .select('name, detailed_price, detailed_call_price')
+      .eq('id', healthCheckId)
+      .maybeSingle();
+    if (hc) {
+      checkName = (hc as { name?: string }).name ?? checkName;
+      detailedPrice = Number((hc as { detailed_price?: number | null }).detailed_price ?? 0);
+      detailedCallPrice = Number((hc as { detailed_call_price?: number | null }).detailed_call_price ?? 0);
+    }
+  }
+
+  // Header/Footer come live from the prompt template (health_check_report_prompts).
+  const { data: prompt } = await supabase
+    .from('health_check_report_prompts')
+    .select('header_lexical, footer_lexical')
+    .eq('health_check_id', (session as { health_check_id?: string } | undefined)?.health_check_id ?? '')
+    .eq('report_type', report.report_type)
+    .maybeSingle();
+
+  return NextResponse.json({
+    report: {
+      id: report.id,
+      session_id: report.session_id,
+      report_type: report.report_type,
+      lexical_state: report.lexical_state,
+      header_lexical: (prompt as { header_lexical?: unknown } | null)?.header_lexical ?? null,
+      footer_lexical: (prompt as { footer_lexical?: unknown } | null)?.footer_lexical ?? null,
+      is_paid: report.is_paid,
+      delivery_status: report.delivery_status,
+      model_used: report.model_used,
+      generation_error: report.generation_error,
+      created_at: report.created_at,
+      expires_at: report.expires_at ?? null,
+      session_name: (session as { full_name?: string } | undefined)?.full_name ?? 'Guest',
+      check_name: checkName,
+      // Payment / upgrade info for the summary → paid-upgrade flow.
+      session_whatsapp: (session as { whatsapp?: string | null } | undefined)?.whatsapp ?? null,
+      report_selection: (session as { report_selection?: string | null } | undefined)?.report_selection ?? 'summary',
+      payment_status: (session as { payment_status?: string | null } | undefined)?.payment_status ?? 'none',
+      payment_amount: Number((session as { payment_amount?: number | null } | undefined)?.payment_amount ?? 0),
+      detailed_price: detailedPrice,
+      detailed_call_price: detailedCallPrice,
+    },
+  });
+}
 
 /** Public report fetch by unguessable token — the token IS the access control. */
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ token: string }> }) {
@@ -21,91 +110,27 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
     if (error) throw error;
     if (!report) return NextResponse.json({ error: 'Report not found.' }, { status: 404 });
 
-    // If report is still generating, tell the client to poll.
+    // If report is still generating, check if it's stale (stuck >10 min).
     if (report.generation_status === 'generating') {
+      const fixed = await autoFailStaleGenerating(supabase, report.id);
+      if (fixed) {
+        // Re-fetch — the sweeper either completed or failed the report.
+        const { data: refreshed } = await supabase
+          .from('health_check_reports')
+          .select(
+            '*, session:health_check_sessions(full_name, business_name, health_check_id, whatsapp, report_selection, payment_status, payment_amount)'
+          )
+          .eq('id', report.id)
+          .maybeSingle();
+        if (refreshed && refreshed.generation_status !== 'generating') {
+          return handleReportResponse(refreshed, supabase);
+        }
+      }
+      // Still generating within normal window — tell client to poll.
       return NextResponse.json({ generating: true, report_id: report.id });
     }
 
-    // Block access to reports whose public view has been revoked by an admin.
-    if (report.is_public === false) {
-      return NextResponse.json(
-        {
-          error: 'revoked',
-          message: 'Public access to this report has been revoked. Please contact the report owner.',
-        },
-        { status: 403 },
-      );
-    }
-
-    // Block access to expired reports (summary = 30 days).
-    if (report.expires_at && new Date(report.expires_at) < new Date()) {
-      return NextResponse.json(
-        {
-          error: 'expired',
-          message: 'This summary report has expired. Upgrade to the Full Report to keep your results for 12 months.',
-          expires_at: report.expires_at,
-          report_type: report.report_type,
-        },
-        { status: 410 },
-      );
-    }
-
-    // Track access.
-    await supabase.from('health_check_reports').update({ accessed_at: new Date().toISOString() }).eq('id', report.id);
-
-    const session = Array.isArray(report.session) ? report.session[0] : report.session;
-    const healthCheckId = (session as { health_check_id?: string } | undefined)?.health_check_id ?? '';
-
-    // Fetch health check prices separately (nested join unreliable).
-    let checkName = 'Health Check';
-    let detailedPrice = 0;
-    let detailedCallPrice = 0;
-    if (healthCheckId) {
-      const { data: hc } = await supabase
-        .from('health_checks')
-        .select('name, detailed_price, detailed_call_price')
-        .eq('id', healthCheckId)
-        .maybeSingle();
-      if (hc) {
-        checkName = (hc as { name?: string }).name ?? checkName;
-        detailedPrice = Number((hc as { detailed_price?: number | null }).detailed_price ?? 0);
-        detailedCallPrice = Number((hc as { detailed_call_price?: number | null }).detailed_call_price ?? 0);
-      }
-    }
-
-    // Header/Footer come live from the prompt template (health_check_report_prompts).
-    const { data: prompt } = await supabase
-      .from('health_check_report_prompts')
-      .select('header_lexical, footer_lexical')
-      .eq('health_check_id', (session as { health_check_id?: string } | undefined)?.health_check_id ?? '')
-      .eq('report_type', report.report_type)
-      .maybeSingle();
-
-    return NextResponse.json({
-      report: {
-        id: report.id,
-        session_id: report.session_id,
-        report_type: report.report_type,
-        lexical_state: report.lexical_state,
-        header_lexical: (prompt as { header_lexical?: unknown } | null)?.header_lexical ?? null,
-        footer_lexical: (prompt as { footer_lexical?: unknown } | null)?.footer_lexical ?? null,
-        is_paid: report.is_paid,
-        delivery_status: report.delivery_status,
-        model_used: report.model_used,
-        generation_error: report.generation_error,
-        created_at: report.created_at,
-        expires_at: report.expires_at ?? null,
-        session_name: (session as { full_name?: string } | undefined)?.full_name ?? 'Guest',
-        check_name: checkName,
-        // Payment / upgrade info for the summary → paid-upgrade flow.
-        session_whatsapp: (session as { whatsapp?: string | null } | undefined)?.whatsapp ?? null,
-        report_selection: (session as { report_selection?: string | null } | undefined)?.report_selection ?? 'summary',
-        payment_status: (session as { payment_status?: string | null } | undefined)?.payment_status ?? 'none',
-        payment_amount: Number((session as { payment_amount?: number | null } | undefined)?.payment_amount ?? 0),
-        detailed_price: detailedPrice,
-        detailed_call_price: detailedCallPrice,
-      },
-    });
+    return handleReportResponse(report, supabase);
   } catch (error) {
     console.error('Failed to load report:', error);
     return NextResponse.json({ error: 'Failed to load report.' }, { status: 500 });
