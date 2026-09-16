@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { format } from 'date-fns';
+import { formatDate as format } from '@/lib/date-utils';
 import { RefreshCw, Search, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { adminFetch } from '@/lib/admin-client';

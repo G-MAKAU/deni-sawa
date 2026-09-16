@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { format } from 'date-fns';
+import { formatDate as format } from '@/lib/date-utils';
 import { Calendar as CalendarIcon, X } from 'lucide-react';
 
 import { cn } from '@/lib/utils';

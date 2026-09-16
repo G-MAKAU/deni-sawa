@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { renderToBuffer } from '@react-pdf/renderer';
 import { getServiceClient } from '@/lib/supabase/service';
 import { lexicalStateToModel } from '@/features/health-check/lexical-to-model';
 import { HealthReportDocument } from '@/features/health-check/pdf-document';
@@ -66,6 +65,7 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
 
     let buffer: Buffer;
     try {
+      const { renderToBuffer } = await import('@react-pdf/renderer');
       buffer = await renderToBuffer(HealthReportDocument({ model }));
     } catch (renderError) {
       console.error('PDF render failed:', renderError);

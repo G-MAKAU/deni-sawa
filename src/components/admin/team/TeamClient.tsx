@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { toast } from 'sonner';
-import { format } from 'date-fns';
+import { formatDate as format } from '@/lib/date-utils';
 import { Loader2, Plus, ShieldAlert, Trash2, UserPlus } from 'lucide-react';
 import { adminFetch, adminPost, adminPut, adminDelete } from '@/lib/admin-client';
 import { useConfirm } from '@/components/admin/confirm';

@@ -3,7 +3,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { format } from 'date-fns';
+import { formatDate as format } from '@/lib/date-utils';
 import { toast } from 'sonner';
 import { Loader2, Mail, Moon, Save, Send, Sun } from 'lucide-react';
 import { adminFetch, adminPut, adminPost } from '@/lib/admin-client';
