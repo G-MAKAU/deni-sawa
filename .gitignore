@@ -1,6 +1,9 @@
 # dependencies
 node_modules/
 
+# Local scripts
+push-makau.bat
+
 # Next.js build output
 .next/
 out/
