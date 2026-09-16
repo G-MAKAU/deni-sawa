@@ -611,11 +611,6 @@ export function ReportViewerV2({ token }: { token: string }) {
                     <p className="mt-1 text-xs text-muted-foreground">
                       Full report + 30-min call with a financial advisor
                     </p>
-                    {report.detailed_price > 0 && (
-                      <p className="mt-1 text-[11px] font-medium text-growth">
-                        + KES {(report.detailed_call_price - report.detailed_price).toLocaleString()} for the advisory call
-                      </p>
-                    )}
                     <span className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-growth group-hover:underline">
                       Get Report + Call →
                     </span>
