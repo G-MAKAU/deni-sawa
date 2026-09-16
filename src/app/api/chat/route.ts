@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { faqAnswers } from '@/data/content';
-import { generateChatReply } from '@/lib/report-generator';
+import { generateChatReply } from '@/lib/chat-ai';
 import { getActiveHealthChecks } from '@/lib/health-checks';
 
 interface ChatRequest {

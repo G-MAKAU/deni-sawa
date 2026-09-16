@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useParams } from 'next/navigation';
-import { format } from 'date-fns';
+import { formatDate as format } from '@/lib/date-utils';
 import { toast } from 'sonner';
 import { Bold, CheckCheck, ChevronDown, Italic, Loader2, MessageCircle, Save, Send, Strikethrough } from 'lucide-react';
 import { adminFetch, adminPut, adminPost } from '@/lib/admin-client';

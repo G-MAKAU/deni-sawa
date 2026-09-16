@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { Packer } from 'docx';
 import { getServiceClient } from '@/lib/supabase/service';
 import { lexicalStateToDocx } from '@/lib/lexical-to-docx';
 
@@ -60,6 +59,7 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
 
     let buffer: Buffer;
     try {
+      const { Packer } = await import('docx');
       buffer = await Packer.toBuffer(document);
     } catch (packError) {
       console.error('Word pack failed:', packError);

@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import { format } from 'date-fns';
+import { formatDate as format } from '@/lib/date-utils';
 import { ArrowLeft, CheckCircle2, Eye, Loader2, Save } from 'lucide-react';
 import { toast } from 'sonner';
 import { adminFetch, adminPut, adminUpload } from '@/lib/admin-client';

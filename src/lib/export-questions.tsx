@@ -1,5 +1,3 @@
-import PDFDocument from 'pdfkit';
-import { Document as DocxDocument, HeadingLevel, Packer, Paragraph, TextRun } from 'docx';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 export interface ExportOption {
@@ -97,11 +95,12 @@ const MUTED = '#555555';
 const HINT = '#7A5A00';
 
 /** Renders the health check question bank to a PDF buffer. */
-export function buildQuestionsPdf(
+export async function buildQuestionsPdf(
   title: string,
   description: string | null,
   sections: ExportSection[]
 ): Promise<Buffer> {
+  const { default: PDFDocument } = await import('pdfkit');
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({
       size: 'A4',
@@ -189,9 +188,10 @@ export function buildQuestionsPdf(
 
 /* ── Word (via docx) ───────────────────────────────────────────────────── */
 
-function buildQuestionsWord(title: string, description: string | null, sections: ExportSection[]) {
+async function buildQuestionsWord(title: string, description: string | null, sections: ExportSection[]) {
+  const { Document: DocxDocument, HeadingLevel, Paragraph, TextRun } = await import('docx');
   let counter = 0;
-  const children: Paragraph[] = [
+  const children: InstanceType<typeof Paragraph>[] = [
     new Paragraph({ text: title, heading: HeadingLevel.TITLE, spacing: { after: 60 } }),
     new Paragraph({
       text: `Confidential assessment · ${sections.length} sections · For Entrepreneurs, Founders, SMEs & Business Owners`,
@@ -243,7 +243,7 @@ function buildQuestionsWord(title: string, description: string | null, sections:
               new TextRun({ text: `Q${counter}. `, bold: true }),
               new TextRun({ text: q.question_text, bold: true }),
               q.is_required ? new TextRun({ text: ' *', bold: true }) : undefined,
-            ].filter(Boolean) as TextRun[],
+            ].filter(Boolean) as InstanceType<typeof TextRun>[],
           })
         );
         if (q.helper_text) {
@@ -292,5 +292,6 @@ export async function buildQuestionsWordBuffer(
   description: string | null,
   sections: ExportSection[]
 ): Promise<Buffer> {
-  return Packer.toBuffer(buildQuestionsWord(title, description, sections));
+  const { Packer } = await import('docx');
+  return Packer.toBuffer(await buildQuestionsWord(title, description, sections));
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { format } from 'date-fns';
+import { formatDate as format } from '@/lib/date-utils';
 import { CheckCircle2, FileDown, FileText, Loader2, Lock, Phone, Sparkles } from 'lucide-react';
 import { LexicalRenderer } from '@/features/lexical/LexicalRenderer';
 import { ShareMenu } from '@/components/ShareMenu';

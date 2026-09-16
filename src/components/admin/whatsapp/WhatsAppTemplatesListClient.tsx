@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { format } from 'date-fns';
+import { formatDate as format } from '@/lib/date-utils';
 import { MessageCircle, Pencil } from 'lucide-react';
 import { adminFetch } from '@/lib/admin-client';
 import { AdminCard, EmptyState, ErrorBanner, Loading, PageHeader, StatusPill, Td, Th } from '@/components/admin/ui';
