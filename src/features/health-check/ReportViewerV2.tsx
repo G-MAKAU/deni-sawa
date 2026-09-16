@@ -263,11 +263,20 @@ export function ReportViewerV2({ token }: { token: string }) {
     setUpgradeState('initiating');
     setUpgradeError(null);
     const phone = plan === 'detailed_call' ? (upgradePhone || report.session_whatsapp || '') : report.session_whatsapp || '';
+
+    // If user already paid for detailed and is upgrading to detailed_call,
+    // use the dedicated upgrade-call endpoint (charges the difference).
+    const isCallUpgrade = plan === 'detailed_call' && report.payment_status === 'paid' && report.report_type === 'detailed';
+    const endpoint = isCallUpgrade ? '/api/payments/upgrade-call' : '/api/payments/upgrade';
+    const payload = isCallUpgrade
+      ? { session_id: report.session_id, phone: phone || undefined }
+      : { session_id: report.session_id, plan, phone: phone || undefined };
+
     try {
-      const upRes = await fetch('/api/payments/upgrade', {
+      const upRes = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ session_id: report.session_id, plan, phone: phone || undefined }),
+        body: JSON.stringify(payload),
       });
       const upBody = await upRes.json().catch(() => ({}));
       if (!upRes.ok) {
@@ -702,7 +711,7 @@ export function ReportViewerV2({ token }: { token: string }) {
       )}
 
       {/* Advisory call upsell — detailed report only */}
-      {report.report_type === 'detailed' && report.payment_status === 'paid' && report.detailed_call_price > report.detailed_price && !report.session_whatsapp && (
+      {report.report_type === 'detailed' && report.payment_status === 'paid' && report.detailed_call_price > report.detailed_price && (
         <div className="mt-8 rounded-xl border border-growth/25 bg-growth/5 px-6 py-5">
           <div className="flex items-start gap-3">
             <Phone className="mt-0.5 h-5 w-5 shrink-0 text-growth" />
@@ -714,12 +723,94 @@ export function ReportViewerV2({ token }: { token: string }) {
               <p className="mt-1 text-[11px] font-medium text-growth">
                 + KES {(report.detailed_call_price - report.detailed_price).toLocaleString()} for the advisory call
               </p>
-              <a
-                href="#contact"
-                className="mt-3 inline-flex items-center gap-1.5 rounded-btn bg-growth px-4 py-2 text-sm font-bold text-white transition-colors hover:brightness-110"
-              >
-                <Phone className="h-3.5 w-3.5" /> Book an advisory call
-              </a>
+
+              {upgradeState === 'idle' && (
+                <button
+                  type="button"
+                  onClick={() => chooseUpgrade('detailed_call')}
+                  className="mt-3 inline-flex items-center gap-1.5 rounded-btn bg-growth px-4 py-2 text-sm font-bold text-white transition-colors hover:brightness-110"
+                >
+                  <Phone className="h-3.5 w-3.5" /> Add advisory call
+                </button>
+              )}
+
+              {upgradeState === 'phone' && (
+                <div className="mt-3 max-w-sm space-y-2">
+                  <p className="text-sm font-semibold text-foreground">Enter your WhatsApp number for the call:</p>
+                  <input
+                    type="tel"
+                    value={upgradePhone}
+                    onChange={(e) => setUpgradePhone(e.target.value)}
+                    placeholder="+254 700 000 000"
+                    className="w-full rounded-btn border border-card-border bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-brand focus:outline-none"
+                  />
+                  {upgradeError && <p className="text-xs font-medium text-red-600">{upgradeError}</p>}
+                  <button
+                    type="button"
+                    onClick={() => void startUpgrade('detailed_call')}
+                    className="rounded-btn bg-growth px-5 py-2.5 text-sm font-bold text-white transition-colors hover:brightness-110"
+                  >
+                    Continue to payment
+                  </button>
+                </div>
+              )}
+
+              {upgradeState === 'initiating' && (
+                <p className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin text-growth" /> Preparing your upgrade…
+                </p>
+              )}
+
+              {upgradeState === 'stk' && (
+                <div className="mt-3 max-w-md space-y-3">
+                  <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin text-growth" /> Payment request of KES {upgradeAmount.toLocaleString()} sent.
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Approve the M-Pesa prompt on your phone. This is a sandbox/simulated payment — use the button below to complete it in the test environment.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => void confirmPaid()}
+                    className="rounded-btn bg-growth px-5 py-2.5 text-sm font-bold text-white transition-colors hover:brightness-110"
+                  >
+                    I&apos;ve paid — confirm payment
+                  </button>
+                  {upgradeError && <p className="text-xs font-medium text-red-600">{upgradeError}</p>}
+                </div>
+              )}
+
+              {upgradeState === 'polling' && (
+                <p className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin text-growth" /> Waiting for payment confirmation…
+                </p>
+              )}
+
+              {upgradeState === 'error' && (
+                <div className="mt-3 space-y-2">
+                  <p className="text-sm font-medium text-red-600">{upgradeError}</p>
+                  <button
+                    type="button"
+                    onClick={() => { setUpgradeState('idle'); setUpgradeError(null); }}
+                    className="rounded-btn border border-card-border px-4 py-2 text-sm font-semibold text-foreground hover:border-growth/40 hover:text-growth"
+                  >
+                    Try again
+                  </button>
+                </div>
+              )}
+
+              {upgradeState === 'paid' && (
+                <div className="mt-3 flex flex-wrap items-center gap-4">
+                  <p className="text-sm font-semibold text-growth">Payment confirmed — your advisory call is being scheduled.</p>
+                  {paidReportUrl ? (
+                    <a href={paidReportUrl} className="rounded-btn bg-growth px-5 py-2.5 text-sm font-bold text-white transition-colors hover:brightness-110">
+                      View report →
+                    </a>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">Check your email/WhatsApp for details.</p>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>

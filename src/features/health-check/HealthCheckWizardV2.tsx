@@ -313,6 +313,10 @@ export function HealthCheckWizardV2({ slug }: { slug: string }) {
       setError('Please enter a valid WhatsApp number (e.g. +254700000000).');
       return;
     }
+    if (reportSelection === 'detailed_call' && !whatsapp.trim()) {
+      setError('Please enter your WhatsApp number so we can schedule your advisory call.');
+      return;
+    }
     if (!termsAgreed) {
       setConsentError('You must agree to the Privacy Policy and Terms of Use to continue');
       return;
@@ -646,17 +650,15 @@ export function HealthCheckWizardV2({ slug }: { slug: string }) {
                 {check?.detailed_call_price != null && check.detailed_call_price > 0 && (
                   <button
                     type="button"
-                    disabled
-                    className="flex w-full items-center justify-between rounded-lg border border-card-border px-4 py-3 text-left text-sm opacity-50 cursor-not-allowed"
+                    onClick={() => setReportSelection('detailed_call')}
+                    className={cn(
+                      'flex w-full items-center justify-between rounded-lg border px-4 py-3 text-left text-sm transition-colors',
+                      reportSelection === 'detailed_call' ? 'border-brand bg-brand/5' : 'border-card-border hover:border-brand/30'
+                    )}
                   >
                     <span>
                       <span className="font-semibold text-foreground">Detailed + Advisory Call</span>
-                      <span className="block text-xs text-muted-foreground">
-                        <span className="inline-flex items-center gap-1">
-                          WhatsApp scheduling
-                          <span className="rounded-full bg-brand/10 px-1.5 py-0.5 text-[9px] font-bold uppercase text-brand">Coming soon</span>
-                        </span>
-                      </span>
+                      <span className="block text-xs text-muted-foreground">Full report plus a 30-minute call with a financial advisor.</span>
                     </span>
                     <span className="font-semibold text-brand">KES {check.detailed_call_price.toLocaleString()}</span>
                   </button>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { MessageCircle, X, Send, Sparkles, Loader2, Lightbulb, MessagesSquare, ArrowUpRight, ArrowUp, Calendar, CheckCircle2, Phone, Mail, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { business, aiSystemPrompt, services, programs } from '@/data/content';
@@ -9,6 +9,62 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { DatePicker } from '@/components/ui/date-picker';
 import { TimePicker } from '@/components/ui/time-picker';
+
+/** Lightweight markdown parser for chat messages — no external deps. */
+function parseChatMarkdown(text: string): React.ReactNode[] {
+  // Regex patterns
+  const urlRe = /(https?:\/\/[^\s)]+)/g;
+  const mdLinkRe = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g;
+  const boldRe = /\*\*(.+?)\*\*/g;
+  const italicRe = /\*(.+?)\*/g;
+
+  // First pass: extract markdown links [text](url) → placeholder
+  const links: Array<{ placeholder: string; text: string; url: string }> = [];
+  let processed = text.replace(mdLinkRe, (_, t, u) => {
+    const ph = `\x00LINK${links.length}\x00`;
+    links.push({ placeholder: ph, text: t, url: u });
+    return ph;
+  });
+
+  // Split on bold/italic/url boundaries
+  const tokens = processed.split(/(\*\*(?:.+?)\*\*|\*(?:.+?)\*|https?:\/\/[^\s)]+|\x00LINK\d+\x00)/g);
+
+  return tokens.map((token, i) => {
+    if (!token) return null;
+
+    // Restore markdown links
+    const linkMatch = token.match(/^\x00LINK(\d+)\x00$/);
+    if (linkMatch) {
+      const link = links[Number(linkMatch[1])];
+      return (
+        <a key={i} href={link.url} target="_blank" rel="noopener noreferrer" className="font-semibold underline underline-offset-2 decoration-brand/40 hover:decoration-brand">
+          {link.text}
+        </a>
+      );
+    }
+
+    // Bold
+    const boldMatch = token.match(/^\*\*(.+?)\*\*$/);
+    if (boldMatch) return <strong key={i}>{boldMatch[1]}</strong>;
+
+    // Italic
+    const italicMatch = token.match(/^\*(.+?)\*$/);
+    if (italicMatch) return <em key={i}>{italicMatch[1]}</em>;
+
+    // Bare URL
+    const urlMatch = token.match(/^(https?:\/\/[^\s)]+)$/);
+    if (urlMatch) {
+      const display = urlMatch[1].replace(/^https?:\/\//, '').replace(/\/$/, '');
+      return (
+        <a key={i} href={urlMatch[1]} target="_blank" rel="noopener noreferrer" className="font-semibold underline underline-offset-2 decoration-brand/40 hover:decoration-brand">
+          {display}
+        </a>
+      );
+    }
+
+    return token;
+  });
+}
 
 interface Message {
   role: 'user' | 'assistant';
@@ -430,7 +486,7 @@ export function AIChatWidget() {
                           : 'rounded-2xl rounded-tl-sm border border-border bg-card text-foreground'
                       )}
                     >
-                      {msg.content}
+                      {msg.role === 'assistant' ? parseChatMarkdown(msg.content) : msg.content}
                       {msg.retry && msg.role === 'assistant' && (
                         <button
                           onClick={() => {
