@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { faqAnswers } from '@/data/content';
 import { generateChatReply } from '@/lib/report-generator';
+import { getActiveHealthChecks } from '@/lib/health-checks';
 
 interface ChatRequest {
   message?: string;
@@ -23,8 +24,8 @@ WHO WE ARE
 Deni Sawa Partners helps organisations and professionals move from Special Situations to Best-in-Class. Based in Nairobi, Kenya.
 
 OUR SERVICES (use as reference, never dump the full list)
-- Professional Financial Health Check: Free, AI-powered review of personal debt, cashflow, savings, resilience. ~20 min. → For professionals/individuals with personal finance concerns.
-- Business Health Check: Free, AI-powered diagnostic of financial health, operations, governance, cashflow, growth readiness. ~20 min. → For business owners/founders.
+- Professional Financial Health Check: Free, AI-powered review of personal debt, cashflow, savings, resilience. ~15 min. → For professionals/individuals with personal finance concerns.
+- Business Health Check: Free, AI-powered diagnostic of financial health, operations, governance, cashflow, growth readiness. ~15 min. → For business owners/founders.
 - Fractional CFO: Part-time senior financial leadership — cashflow, budgeting, reporting, visibility. → For businesses outgrowing reactive finance.
 - Fractional CEO: Part-time strategic leadership — execution, governance, performance. → For founders needing senior leadership.
 - Debt & Cashflow Recovery: Structured debt management, repayment planning, cashflow stabilisation. → For anyone in financial distress.
@@ -62,6 +63,60 @@ function fallbackReply(message: string): string {
   return 'I can help with that. For a detailed conversation, you can reach us at advisory@denisawa.co.ke or +254 702 448 601. What would you like to know?';
 }
 
+/**
+ * Post-process the system prompt: inject real estimated_minutes and
+ * health check URLs from the database so the AI never uses stale times.
+ */
+async function enrichPromptWithHealthChecks(prompt: string): Promise<string> {
+  try {
+    const checks = await getActiveHealthChecks();
+    if (checks.length === 0) return prompt;
+
+    let enriched = prompt;
+
+    // Replace hardcoded time references with actual DB values.
+    for (const check of checks) {
+      const minutes = check.estimated_minutes;
+      const slug = check.slug;
+      const url = `https://www.denisawa.co.ke/business-health-checks/${slug}`;
+
+      // Match patterns like "~20 min", "~ 20 min", "about 20 minutes", etc.
+      // and replace with the actual time.
+      const timePatterns = [
+        new RegExp(`(~\\s*\\d+\\s*min)`, 'gi'),
+        new RegExp(`(about\\s+\\d+\\s+minutes?)`, 'gi'),
+      ];
+      for (const pat of timePatterns) {
+        enriched = enriched.replace(pat, `~${minutes} min`);
+      }
+
+      // Inject URLs next to health check names if not already present.
+      // Match "Business Health Check" or "Professional Financial Health Check"
+      // and append the URL if it's not already there.
+      const namePatterns = [
+        { name: check.title, url },
+      ];
+      for (const np of namePatterns) {
+        // Only append URL if the check name appears and no URL follows it yet.
+        const nameEscaped = np.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const urlPattern = new RegExp(`(${nameEscaped})(?!.*${np.url.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'g');
+        // Only add if the name is in the prompt and the URL is not already there.
+        if (enriched.includes(np.name) && !enriched.includes(np.url)) {
+          enriched = enriched.replace(
+            new RegExp(`(${nameEscaped})`),
+            `$1 (${np.url})`
+          );
+        }
+      }
+    }
+
+    return enriched;
+  } catch {
+    // If DB fetch fails, return the original prompt unchanged.
+    return prompt;
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body: ChatRequest = await req.json();
@@ -71,7 +126,9 @@ export async function POST(req: NextRequest) {
       return Response.json({ reply: fallbackReply('') }, { status: 200 });
     }
 
-    const system = `${body.systemPrompt || DEFAULT_SYSTEM_PROMPT}${FAQ_CONTEXT}`;
+    let system = `${body.systemPrompt || DEFAULT_SYSTEM_PROMPT}${FAQ_CONTEXT}`;
+    system = await enrichPromptWithHealthChecks(system);
+
     const history = (body.history || []).filter(
       (h) => h && (h.role === 'user' || h.role === 'assistant') && typeof h.content === 'string'
     );
