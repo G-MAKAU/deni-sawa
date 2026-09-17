@@ -151,6 +151,7 @@ export async function createReportStub(
       generation_status: 'generating',
       lexical_state: {},
       prompt_snapshot: '',
+      model_used: '',
       is_paid: reportType === 'detailed' ? false : true,
       expires_at: expiresAt,
     })
