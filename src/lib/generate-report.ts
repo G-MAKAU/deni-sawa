@@ -344,7 +344,7 @@ async function runGeneration(
     .eq('id', reportId);
   if (updateError) {
     console.error('Failed to update report row:', updateError);
-    return;
+    throw new Error(`DB update failed: ${updateError.message}`);
   }
 
   // Delivery.
