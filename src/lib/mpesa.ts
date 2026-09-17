@@ -23,6 +23,14 @@ export function paymentsSimulated(): boolean {
   return process.env.PAYMENTS_SIMULATE === 'true' || !hasCredentials();
 }
 
+/** Strip non-digits, then convert 07XX / 01XX Kenyan local format to 254… */
+function normalisePhone(raw: string): string {
+  const digits = raw.replace(/\D/g, '');
+  if (digits.startsWith('254')) return digits;
+  if (digits.startsWith('0')) return `254${digits.slice(1)}`;
+  return digits;
+}
+
 async function getAccessToken(): Promise<string> {
   const url = `${MPESA_API_BASE()}/oauth/v1/generate?grant_type=client_credentials`;
   const auth = Buffer.from(
@@ -74,18 +82,23 @@ export async function initiateStkPush(options: {
       Timestamp: timestamp,
       TransactionType: 'CustomerPayBillOnline',
       Amount: Math.round(options.amount),
-      PartyA: options.phone.replace(/\D/g, ''),
+      PartyA: normalisePhone(options.phone),
       PartyB: shortcode,
-      PhoneNumber: options.phone.replace(/\D/g, ''),
+      PhoneNumber: normalisePhone(options.phone),
       CallBackURL: callbackUrl,
       AccountReference: options.accountReference.slice(0, 12),
       TransactionDesc: options.description.slice(0, 13),
     }),
   });
 
-  const data = (await res.json().catch(() => ({}))) as { CheckoutRequestID?: string; ResponseCode?: string };
-  if (!res.ok || data.ResponseCode !== '0' || !data.CheckoutRequestID) {
-    throw new Error(`M-Pesa STK push failed (${res.status}${data.ResponseCode ? ` code ${data.ResponseCode}` : ''})`);
+  const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+  if (!res.ok || (data.ResponseCode as string | undefined) !== '0' || !data.CheckoutRequestID) {
+    const detail = data.CustomerMessage ?? data.errorMessage ?? data.errorCode ?? '';
+    throw new Error(
+      `M-Pesa STK push failed (${res.status}` +
+        `${data.ResponseCode ? ` code=${data.ResponseCode}` : ''}` +
+        `${detail ? ` — ${detail}` : ''})`
+    );
   }
 
   return { simulate: false, checkout_request_id: data.CheckoutRequestID, message: 'STK push sent to your phone. Enter your PIN to approve.' };
