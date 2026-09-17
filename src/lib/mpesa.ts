@@ -101,5 +101,5 @@ export async function initiateStkPush(options: {
     );
   }
 
-  return { simulate: false, checkout_request_id: data.CheckoutRequestID, message: 'STK push sent to your phone. Enter your PIN to approve.' };
+  return { simulate: false, checkout_request_id: data.CheckoutRequestID as string, message: 'STK push sent to your phone. Enter your PIN to approve.' };
 }
