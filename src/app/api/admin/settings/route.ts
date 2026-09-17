@@ -88,6 +88,14 @@ export async function GET(request: NextRequest) {
             senderDomains: p.senderDomains,
           })),
         },
+        mpesa: {
+          env: process.env.MPESA_ENV ?? 'sandbox',
+          consumerKeyConfigured: Boolean(process.env.MPESA_CONSUMER_KEY),
+          consumerSecretConfigured: Boolean(process.env.MPESA_CONSUMER_SECRET),
+          passkeyConfigured: Boolean(process.env.MPESA_PASSKEY),
+          shortcodeConfigured: Boolean(process.env.MPESA_SHORTCODE),
+          simulate: process.env.PAYMENTS_SIMULATE === 'true',
+        },
         whatsapp: {
           provider: process.env.WHATSAPP_PROVIDER ?? 'twilio',
           encryptionKeyConfigured: Boolean(process.env.CREDENTIALS_ENCRYPTION_KEY),

@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { Database, Globe, Loader2, Mail, MessageCircle, Phone, Server } from 'lucide-react';
+import { Database, CreditCard, Globe, Loader2, Mail, MessageCircle, Phone, Server } from 'lucide-react';
 import { adminFetch } from '@/lib/admin-client';
 import { site } from '@/data/site';
 import { socialLinks } from '@/components/SocialLinks';
@@ -32,6 +32,14 @@ interface SettingsData {
   settings: {
     siteUrl: string;
     smtp: { configured: boolean; host: string | null; fromName: string; fromEmail: string; profiles?: SmtpProfileInfo[] };
+    mpesa: {
+      env: string;
+      consumerKeyConfigured: boolean;
+      consumerSecretConfigured: boolean;
+      passkeyConfigured: boolean;
+      shortcodeConfigured: boolean;
+      simulate: boolean;
+    };
     whatsapp: {
       provider: string;
       encryptionKeyConfigured: boolean;
@@ -232,6 +240,57 @@ export function SettingsClient() {
                   {settings.whatsapp.metaConfigured ? 'Configured' : 'Not set'}
                 </StatusPill>
               </p>
+            </div>
+          </div>
+        </AdminCard>
+
+        <AdminCard title="M-Pesa (Daraja)">
+          <div className="flex items-start gap-3">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-[#5A9E28]/10 text-[#5A9E28]">
+              <CreditCard className="h-4 w-4" />
+            </span>
+            <div className="space-y-1 text-sm text-[var(--a-text2)]">
+              <p>
+                <span className="font-semibold text-[var(--a-ink2)]">Environment:</span>{' '}
+                <StatusPill tone={settings.mpesa.env === 'production' ? 'green' : 'amber'}>
+                  {settings.mpesa.env === 'production' ? 'Production' : 'Sandbox'}
+                </StatusPill>
+              </p>
+              <p>
+                <span className="font-semibold text-[var(--a-ink2)]">Consumer key:</span>{' '}
+                <StatusPill tone={settings.mpesa.consumerKeyConfigured ? 'green' : 'red'}>
+                  {settings.mpesa.consumerKeyConfigured ? 'Set' : 'Missing'}
+                </StatusPill>
+              </p>
+              <p>
+                <span className="font-semibold text-[var(--a-ink2)]">Consumer secret:</span>{' '}
+                <StatusPill tone={settings.mpesa.consumerSecretConfigured ? 'green' : 'red'}>
+                  {settings.mpesa.consumerSecretConfigured ? 'Set' : 'Missing'}
+                </StatusPill>
+              </p>
+              <p>
+                <span className="font-semibold text-[var(--a-ink2)]">Passkey:</span>{' '}
+                <StatusPill tone={settings.mpesa.passkeyConfigured ? 'green' : 'red'}>
+                  {settings.mpesa.passkeyConfigured ? 'Set' : 'Missing'}
+                </StatusPill>
+              </p>
+              <p>
+                <span className="font-semibold text-[var(--a-ink2)]">Shortcode:</span>{' '}
+                <StatusPill tone={settings.mpesa.shortcodeConfigured ? 'green' : 'red'}>
+                  {settings.mpesa.shortcodeConfigured ? 'Set' : 'Missing'}
+                </StatusPill>
+              </p>
+              <p>
+                <span className="font-semibold text-[var(--a-ink2)]">Simulate mode:</span>{' '}
+                <StatusPill tone={settings.mpesa.simulate ? 'amber' : 'grey'}>
+                  {settings.mpesa.simulate ? 'Enabled' : 'Disabled'}
+                </StatusPill>
+              </p>
+              {settings.mpesa.env === 'sandbox' && (
+                <p className="text-xs text-[var(--a-muted)]">
+                  Sandbox mode uses test credentials. Set <code className="rounded bg-[var(--a-subtle)] px-1 font-mono text-[10px] text-[#c94508]">MPESA_ENV=production</code> for live payments.
+                </p>
+              )}
             </div>
           </div>
         </AdminCard>
