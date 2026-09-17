@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import {
-  Activity, BookOpen, BookMarked, Building2, CheckCircle2, ClipboardList, FileText, GraduationCap,
+  Activity, BookOpen, BookMarked, Building2, CheckCircle2, ClipboardList, CreditCard, FileText, GraduationCap,
   Globe, Image as ImageIcon, Info, KeyRound, LayoutDashboard, ListChecks, Lock, Mail, MailOpen,
   MessageCircle, MessageSquare, Network, PenLine, Plug, Save, Search, Send, Settings,
   ShieldCheck, SlidersHorizontal, Sparkles, StickyNote, Table2, Upload, Users, Webhook,
@@ -358,6 +358,83 @@ const SECTIONS: DocSection[] = [
       { tone: 'info', text: 'Reserved slugs (business-health-check, professional-financial-health-check) are locked both server-side and in the admin UI.' },
       { tone: 'success', text: 'The report editor auto-saves your work. Use Ctrl+S to save manually at any time.' },
       { tone: 'info', text: 'The Import button is always visible — you do not need to create sections or subsections before importing. The import creates everything from your pasted content.' },
+    ],
+  },
+  {
+    id: 'payments',
+    label: 'Payments',
+    icon: CreditCard,
+    tagline: 'M-Pesa payment integration',
+    intro:
+      'Track payments made through M-Pesa for health check report access. All transactions are logged for auditing and reconciliation.',
+    cards: [
+      {
+        title: 'M-Pesa STK Push',
+        icon: CreditCard,
+        body: (
+          <div className="space-y-3 text-sm leading-relaxed text-[var(--a-text2)]">
+            <p>Payments are initiated via Safaricom&apos;s Daraja API using STK Push (Lipa Na M-Pesa Online). When a user clicks &ldquo;I&apos;ve Paid&rdquo;, the system:</p>
+            <ul className="space-y-1.5">
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>Normalises the phone number from <Code>07XX</Code> to <Code>254XX</Code> format (required by Safaricom).</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>Calls <Code>/api/payments/mpesa/stkpush</Code> to initiate the payment request.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>Polls <Code>/api/payments/mpesa/confirm</Code> for transaction status (sandbox: immediate, live: up to 30 seconds).</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>On success, the report is unlocked and delivery is triggered.</span></li>
+            </ul>
+            <p className="text-xs text-[var(--a-muted)]">In sandbox mode (<Code>PAYMENTS_SIMULATE=true</Code>), the payment is auto-confirmed without calling Safaricom.</p>
+          </div>
+        ),
+      },
+      {
+        title: 'Safaricom Callback',
+        icon: Webhook,
+        body: (
+          <div className="space-y-3 text-sm leading-relaxed text-[var(--a-text2)]">
+            <p>After STK Push, Safaricom sends a callback to <Code>/api/payments/mpesa/callback</Code>. The callback:</p>
+            <ul className="space-y-1.5">
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>Extracts <Code>MpesaReceiptNumber</Code>, <Code>PhoneNumber</Code>, and <Code>Amount</Code> from <Code>CallbackMetadata</Code>.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>Logs the transaction to the <Code>mpesa_payments</Code> table for auditing.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>Stores the M-Pesa receipt number on the session for future reference.</span></li>
+            </ul>
+          </div>
+        ),
+      },
+      {
+        title: 'Admin Payments Dashboard',
+        icon: Table2,
+        body: (
+          <div className="space-y-3 text-sm leading-relaxed text-[var(--a-text2)]">
+            <p>The <Code>/admin/payments</Code> page shows all M-Pesa transactions with:</p>
+            <ul className="space-y-1.5">
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Summary cards</strong> — total transactions, successful/failed counts, and total amount collected.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Health check breakdown</strong> — transaction counts per health check.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Filters</strong> — search by receipt number, phone, status, health check, or date range.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Full transaction table</strong> — receipt, phone, amount, status, session, and timestamp.</span></li>
+            </ul>
+            <div className="space-y-2">
+              <Endpoint method="GET" path="/api/admin/payments" />
+            </div>
+          </div>
+        ),
+      },
+      {
+        title: 'Testing credentials',
+        icon: KeyRound,
+        body: (
+          <div className="space-y-3 text-sm leading-relaxed text-[var(--a-text2)]">
+            <p>Use the <Code>/admin/mpesa-test</Code> page to verify your Safaricom credentials before going live.</p>
+            <ul className="space-y-1.5">
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>GET</strong> the endpoint to check if credentials are configured and valid.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>POST</strong> with a phone number and amount to test STK Push.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>Error messages from Safaricom are surfaced (e.g. invalid credentials, insufficient balance).</span></li>
+            </ul>
+          </div>
+        ),
+      },
+    ],
+    tips: [
+      { tone: 'warning', text: 'Report generation has a 15-minute timeout. Reports stuck in "generating" longer than 15 minutes are automatically failed on the next sessions page load.' },
+      { tone: 'info', text: 'Use the "Retry" button on the sessions page to manually retry failed or stuck report generations.' },
+      { tone: 'success', text: 'The "I\'ve Paid" button only appears for sandbox simulation. Real M-Pesa payments show a spinner while polling for confirmation.' },
     ],
   },
   {
@@ -997,6 +1074,7 @@ export function DocsClient() {
                 <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#5A9E28]" /><span><Code>20260814000001_create_health_checks.sql</Code> — health check tables, report editing columns.</span></li>
                 <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#5A9E28]" /><span><Code>20260820000001_create_app_settings.sql</Code> — DB-managed AI provider settings.</span></li>
                 <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#5A9E28]" /><span><Code>20260822000001_add_ai_comment_moderation.sql</Code> — comment moderation fields.</span></li>
+                <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#5A9E28]" /><span><Code>20260917000000_add_mpesa_payments_table.sql</Code> — M-Pesa payments audit table.</span></li>
               </ul>
               <p className="font-semibold text-[var(--a-ink2)]">Environment variables:</p>
               <ul className="space-y-1.5">
@@ -1004,6 +1082,7 @@ export function DocsClient() {
                 <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#5A9E28]" /><span><strong>AI fallback (optional)</strong>: <Code>ANTHROPIC_API_KEY</Code>, <Code>OPENAI_API_KEY</Code>, <Code>GOOGLE_AI_API_KEY</Code>, <Code>OPENROUTER_API_KEY</Code> — used when no DB setting is configured.</span></li>
                 <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#5A9E28]" /><span><strong>Email</strong>: <Code>EMAIL_HOST</Code>, <Code>EMAIL_USER</Code>, <Code>EMAIL_PASS</Code> (primary) and <Code>EMAIL2_*</Code> (secondary profile).</span></li>
                 <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#5A9E28]" /><span><strong>WhatsApp</strong>: <Code>WHATSAPP_ACCESS_TOKEN</Code>, <Code>WHATSAPP_PHONE_NUMBER_ID</Code> (or configure via admin UI).</span></li>
+                <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#5A9E28]" /><span><strong>M-Pesa</strong>: <Code>MPESA_ENV</Code>, <Code>MPESA_CONSUMER_KEY</Code>, <Code>MPESA_CONSUMER_SECRET</Code>, <Code>MPESA_PASSKEY</Code>, <Code>MPESA_SHORTCODE</Code>, <Code>PAYMENTS_SIMULATE</Code>.</span></li>
               </ul>
               <p className="font-semibold text-[var(--a-ink2)]">Key architecture decisions:</p>
               <ul className="space-y-1.5">

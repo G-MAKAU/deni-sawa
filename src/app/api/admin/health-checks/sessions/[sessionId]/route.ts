@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { requireAdmin, jsonAdminError, adminWriteClient, jsonAdminWriteError } from '@/lib/admin-auth';
+import { autoFailStaleGenerating } from '@/lib/generate-report';
 
 export const dynamic = 'force-dynamic';
 
@@ -107,12 +108,29 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     const { data: reports, error: reportsError } = await supabase
       .from('health_check_reports')
-      .select('id, report_type, delivery_status, is_paid, created_at')
+      .select('id, report_type, delivery_status, is_paid, created_at, generation_status')
       .eq('session_id', sessionId)
       .order('created_at', { ascending: false });
     if (reportsError) throw reportsError;
 
-    return NextResponse.json({ session, tree, reports: reports ?? [] });
+    // Auto-fail any reports stuck in 'generating' for >15 minutes.
+    const staleReports = (reports ?? []).filter(
+      (r) => r.generation_status === 'generating' && new Date(r.created_at).getTime() < Date.now() - 15 * 60 * 1000
+    );
+    for (const r of staleReports) {
+      await autoFailStaleGenerating(supabase, r.id).catch(() => {});
+    }
+
+    // Re-fetch reports if any were stale so the UI sees the updated status.
+    const finalReports = staleReports.length > 0
+      ? (await supabase
+          .from('health_check_reports')
+          .select('id, report_type, delivery_status, is_paid, created_at, generation_status')
+          .eq('session_id', sessionId)
+          .order('created_at', { ascending: false })).data ?? (reports ?? [])
+      : (reports ?? []);
+
+    return NextResponse.json({ session, tree, reports: finalReports });
   } catch (error) {
     return jsonAdminError(error, 'Failed to load session details');
   }

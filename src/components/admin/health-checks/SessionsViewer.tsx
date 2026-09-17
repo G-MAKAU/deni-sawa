@@ -75,6 +75,7 @@ interface SessionReport {
   id: string;
   report_type: 'summary' | 'detailed';
   delivery_status: string;
+  generation_status?: string;
   is_paid: boolean;
   created_at: string;
 }
@@ -181,6 +182,28 @@ export function SessionsViewer() {
       void load(page, search, status, pageSize);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Failed to generate report.');
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handleRetryReport = async (report: SessionReport) => {
+    try {
+      const ok = await confirm({
+        message: `Retry generating the ${report.report_type} report? This will overwrite the existing content.`,
+        danger: false,
+        confirmLabel: 'Retry',
+        action: async () => {
+          setGenerating(true);
+          await adminPost(`/api/admin/health-checks/reports/${report.id}/regenerate`, {});
+        },
+      });
+      if (!ok) return;
+      toast.success('Report regeneration started');
+      await openSession(selectedId!);
+      void load(page, search, status, pageSize);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Failed to retry report generation.');
     } finally {
       setGenerating(false);
     }
@@ -515,8 +538,18 @@ export function SessionsViewer() {
                   <span key={report.id} className="inline-flex items-center gap-2 rounded-full border border-[var(--a-border)] px-3 py-1 text-[11px] font-semibold text-[var(--a-text)]">
                     {report.report_type} report
                     <StatusPill tone={report.delivery_status === 'sent' ? 'green' : report.delivery_status === 'failed' ? 'red' : report.delivery_status === 'pending' ? 'amber' : 'grey'}>
-                      {report.delivery_status}
+                      {report.generation_status === 'generating' ? 'generating…' : report.generation_status === 'failed' ? 'failed' : report.delivery_status}
                     </StatusPill>
+                    {(report.generation_status === 'failed' || report.generation_status === 'generating') && (
+                      <button
+                        type="button"
+                        onClick={() => void handleRetryReport(report)}
+                        disabled={generating}
+                        className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[11px] font-bold text-amber-700 transition-colors hover:bg-amber-500 hover:text-white disabled:opacity-50"
+                      >
+                        <Loader2 className="h-3 w-3" /> Retry
+                      </button>
+                    )}
                     <Link
                       href={`/admin/health-checks/reports/${report.id}/edit`}
                       className="inline-flex items-center gap-1 rounded-full bg-[#E8510A]/10 px-2 py-0.5 text-[11px] font-bold text-[#E8510A] transition-colors hover:bg-[#E8510A] hover:text-white"

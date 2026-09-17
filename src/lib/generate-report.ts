@@ -168,6 +168,9 @@ export async function createReportStub(
  * Creates its own service-role Supabase client so it survives after the HTTP
  * response is sent (the request-scoped client dies when Vercel reclaims the fn).
  */
+/** Timeout for the entire background generation (15 min — covers AI call + DB writes + delivery). */
+const GENERATION_TIMEOUT_MS = 15 * 60 * 1000;
+
 export async function completeReportGeneration(
   _supabase: SupabaseClient,
   session: SessionLike,
@@ -175,10 +178,37 @@ export async function completeReportGeneration(
   reportId: string,
   options: { skipDelivery?: boolean } = {}
 ): Promise<void> {
-  // Use a fresh service-role client — the request-scoped one is dead after the
-  // HTTP response is sent.
   const supabase = getServiceClient();
+  const startTime = Date.now();
+  const ctx = `report=${reportId} session=${session.id} check="${session.full_name}" type=${reportType}`;
+
   try {
+    // Wrap everything in a hard timeout so the report never stays stuck in 'generating'.
+    await withTimeout(runGeneration(supabase, session, reportType, reportId, options, startTime, ctx), GENERATION_TIMEOUT_MS, `Report generation (${ctx})`);
+  } catch (err) {
+    const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+    const errMsg = err instanceof Error ? err.message : String(err);
+    console.error(`[REPORT GEN] FAILED after ${elapsed}s — ${ctx}:`, errMsg);
+    // Mark the row as failed so the UI can show it.
+    await supabase
+      .from('health_check_reports')
+      .update({
+        generation_status: 'failed',
+        generation_error: `[${elapsed}s] ${errMsg}`,
+      })
+      .eq('id', reportId);
+  }
+}
+
+async function runGeneration(
+  supabase: SupabaseClient,
+  session: SessionLike,
+  reportType: ReportType,
+  reportId: string,
+  options: { skipDelivery?: boolean },
+  startTime: number,
+  ctx: string
+): Promise<void> {
     const { data: prompt } = await supabase
       .from('health_check_report_prompts')
       .select('*')
@@ -312,16 +342,9 @@ export async function completeReportGeneration(
       if (delivery === 'email' || delivery === 'both') await deliverReportByEmail(supabase, reportId);
       if (delivery === 'whatsapp' || delivery === 'both') await deliverReportByWhatsApp(supabase, reportId);
     }
-  } catch (err) {
-    console.error('Background report generation failed:', err);
-    // Mark the row as failed so the UI can show it.
-    await supabase
-      .from('health_check_reports')
-      .update({
-        generation_status: 'failed',
-        generation_error: err instanceof Error ? err.message : String(err),
-      })
-      .eq('id', reportId);
+
+    const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+    console.log(`[REPORT GEN] Completed in ${elapsed}s — ${ctx}`);
   }
 }
 
@@ -347,7 +370,7 @@ export async function getReportStatus(
 // mark it completed.  If even the fallback fails, mark as failed and email admin.
 // This runs on-demand when a report is fetched (public or admin polling).
 
-const STALE_THRESHOLD_MS = 10 * 60 * 1000; // 10 minutes
+const STALE_THRESHOLD_MS = 15 * 60 * 1000; // 15 minutes
 
 /**
  * Checks whether a report is stuck in 'generating' past the stale threshold.
