@@ -133,8 +133,7 @@ export function jsonAdminError(error: unknown, fallbackMessage: string) {
   }
 
   console.error(fallbackMessage, error);
-  const detail = error instanceof Error ? error.message : String(error);
-  return Response.json({ error: `${fallbackMessage}: ${detail}` }, { status: 500 });
+  return Response.json({ error: `${fallbackMessage}: ${extractErrorDetail(error)}` }, { status: 500 });
 }
 
 /** Detects PostgREST row-level-security denials. */
@@ -164,8 +163,23 @@ export function jsonAdminWriteError(error: unknown, fallbackMessage: string) {
   }
 
   console.error(fallbackMessage, error);
-  const detail = error instanceof Error ? error.message : String(error);
-  return Response.json({ error: `${fallbackMessage}: ${detail}` }, { status: 500 });
+  return Response.json({ error: `${fallbackMessage}: ${extractErrorDetail(error)}` }, { status: 500 });
+}
+
+/** Extracts a human-readable string from any error shape (Error, PostgREST, Zod, etc.). */
+function extractErrorDetail(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (typeof error === 'string') return error;
+  if (typeof error === 'object' && error !== null) {
+    const obj = error as Record<string, unknown>;
+    // PostgREST / Supabase errors have { message, code, details, hint }
+    if (typeof obj.message === 'string') return obj.message;
+    if (typeof obj.error === 'string') return obj.error;
+    if (typeof obj.details === 'string') return obj.details;
+    if (typeof obj.hint === 'string') return obj.hint;
+    try { return JSON.stringify(error); } catch { return String(error); }
+  }
+  return String(error);
 }
 
 /**
