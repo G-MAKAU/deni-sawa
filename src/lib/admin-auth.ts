@@ -133,7 +133,8 @@ export function jsonAdminError(error: unknown, fallbackMessage: string) {
   }
 
   console.error(fallbackMessage, error);
-  return Response.json({ error: fallbackMessage }, { status: 500 });
+  const detail = error instanceof Error ? error.message : String(error);
+  return Response.json({ error: `${fallbackMessage}: ${detail}` }, { status: 500 });
 }
 
 /** Detects PostgREST row-level-security denials. */
@@ -163,7 +164,8 @@ export function jsonAdminWriteError(error: unknown, fallbackMessage: string) {
   }
 
   console.error(fallbackMessage, error);
-  return Response.json({ error: fallbackMessage }, { status: 500 });
+  const detail = error instanceof Error ? error.message : String(error);
+  return Response.json({ error: `${fallbackMessage}: ${detail}` }, { status: 500 });
 }
 
 /**

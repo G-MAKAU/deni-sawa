@@ -184,7 +184,7 @@ export function HealthCheckWizardV2({ slug }: { slug: string }) {
   // Payment state for paid reports.
   const [paymentAmount, setPaymentAmount] = React.useState(0);
   const [paymentPhone, setPaymentPhone] = React.useState('');
-  const [paymentState, setPaymentState] = React.useState<'idle' | 'init' | 'pending' | 'paid' | 'error'>('idle');
+  const [paymentState, setPaymentState] = React.useState<'idle' | 'init' | 'pending' | 'polling' | 'paid' | 'error'>('idle');
   const [paymentError, setPaymentError] = React.useState<string | null>(null);
   const [pendingReportUrl, setPendingReportUrl] = React.useState<string | null>(null);
   const paymentPollRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
@@ -488,7 +488,7 @@ export function HealthCheckWizardV2({ slug }: { slug: string }) {
       });
       const body = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(body.error ?? 'Payment request failed.');
-      setPaymentState(body.simulate ? 'pending' : 'pending');
+      setPaymentState(body.simulate ? 'pending' : 'polling');
       if (!body.simulate) {
         if (paymentPollRef.current) clearInterval(paymentPollRef.current);
         paymentPollRef.current = setInterval(async () => {
@@ -906,6 +906,11 @@ export function HealthCheckWizardV2({ slug }: { slug: string }) {
               >
                 I've paid — confirm payment
               </button>
+            </div>
+          ) : paymentState === 'polling' ? (
+            <div className="mt-6 flex flex-col items-center gap-3">
+              <Loader2 className="h-7 w-7 animate-spin text-brand" />
+              <p className="text-sm text-muted-foreground">Waiting for M-Pesa confirmation… Check your phone for the prompt.</p>
             </div>
           ) : (
             <Button
