@@ -171,6 +171,17 @@ export async function createReportStub(
 /** Timeout for the entire background generation (15 min — covers AI call + DB writes + delivery). */
 const GENERATION_TIMEOUT_MS = 15 * 60 * 1000;
 
+/** Races a promise against a timeout. Rejects if the timeout fires first. */
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(`${label} timed out after ${ms / 1000}s`)), ms);
+    promise.then(
+      (val) => { clearTimeout(timer); resolve(val); },
+      (err) => { clearTimeout(timer); reject(err); }
+    );
+  });
+}
+
 export async function completeReportGeneration(
   _supabase: SupabaseClient,
   session: SessionLike,
@@ -209,143 +220,142 @@ async function runGeneration(
   startTime: number,
   ctx: string
 ): Promise<void> {
-    const { data: prompt } = await supabase
-      .from('health_check_report_prompts')
-      .select('*')
-      .eq('health_check_id', session.health_check_id)
-      .eq('report_type', reportType)
-      .eq('is_active', true)
-      .maybeSingle();
+  const { data: prompt } = await supabase
+    .from('health_check_report_prompts')
+    .select('*')
+    .eq('health_check_id', session.health_check_id)
+    .eq('report_type', reportType)
+    .eq('is_active', true)
+    .maybeSingle();
 
-    const { data: check } = await supabase.from('health_checks').select('name').eq('id', session.health_check_id).maybeSingle();
-    const checkName = (check as { name?: string } | null)?.name ?? 'Health Check';
+  const { data: check } = await supabase.from('health_checks').select('name').eq('id', session.health_check_id).maybeSingle();
+  const checkName = (check as { name?: string } | null)?.name ?? 'Health Check';
 
-    const answerTree = await loadAnswerTree(supabase, session);
-    const qaText = answerTree
-      .map((section) =>
-        [
-          `## ${section.title}`,
-          ...section.subsections.map((sub) =>
-            [`### ${sub.heading}`, ...sub.qa.map((qa) => `Q: ${qa.question}\nA: ${qa.answer}`)].join('\n')
-          ),
-        ].join('\n\n')
-      )
-      .join('\n\n');
+  const answerTree = await loadAnswerTree(supabase, session);
+  const qaText = answerTree
+    .map((section) =>
+      [
+        `## ${section.title}`,
+        ...section.subsections.map((sub) =>
+          [`### ${sub.heading}`, ...sub.qa.map((qa) => `Q: ${qa.question}\nA: ${qa.answer}`)].join('\n')
+        ),
+      ].join('\n\n')
+    )
+    .join('\n\n');
 
-    const baseContent = `The user completed the "${checkName}". Today's date is ${new Date().toLocaleDateString('en-GB', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-    })}. Respondent details: full name "${session.full_name}"${
-      session.business_name ? `, business name "${session.business_name}"` : ''
-    }. Here are their answers:\n\n${qaText}\n\nPREMIUM REPORT FORMAT — use every formatting tool to craft an elegant, professional report:\n- Clear heading hierarchy: H1 for the report title, H2 for each major section, H3 for sub-findings.\n- Bold key figures, ratings and important terms for emphasis.\n- Bullet lists for findings and numbered lists for sequential steps; use checklist items where a "done/confirmed" state is meaningful.\n- Quote blocks for priority callouts and advisor notes.\n- Callout blocks for recommendations and "why it matters" highlights.\n- Horizontal dividers between major sections for clean visual separation.\n- Table nodes for scores, comparisons and milestones — the renderer and exports (PDF/Word) support tables.\n- Add a relevant link where it genuinely adds value.\n- Keep the tone premium, polished and easy to scan — never cramped or cluttered.`;
+  const baseContent = `The user completed the "${checkName}". Today's date is ${new Date().toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  })}. Respondent details: full name "${session.full_name}"${
+    session.business_name ? `, business name "${session.business_name}"` : ''
+  }. Here are their answers:\n\n${qaText}\n\nPREMIUM REPORT FORMAT — use every formatting tool to craft an elegant, professional report:\n- Clear heading hierarchy: H1 for the report title, H2 for each major section, H3 for sub-findings.\n- Bold key figures, ratings and important terms for emphasis.\n- Bullet lists for findings and numbered lists for sequential steps; use checklist items where a "done/confirmed" state is meaningful.\n- Quote blocks for priority callouts and advisor notes.\n- Callout blocks for recommendations and "why it matters" highlights.\n- Horizontal dividers between major sections for clean visual separation.\n- Table nodes for scores, comparisons and milestones — the renderer and exports (PDF/Word) support tables.\n- Add a relevant link where it genuinely adds value.\n- Keep the tone premium, polished and easy to scan — never cramped or cluttered.`;
 
-    const userContent = baseContent + `\n\nOutput format: Return ONLY a valid Lexical EditorState JSON object — no prose, no markdown fences. Ensure strictly valid JSON: every key and string value double-quoted, no trailing commas.`;
+  const userContent = baseContent + `\n\nOutput format: Return ONLY a valid Lexical EditorState JSON object — no prose, no markdown fences. Ensure strictly valid JSON: every key and string value double-quoted, no trailing commas.`;
 
-    const resolvedConfig = await resolveProviderConfig('anthropic');
-    let generated;
-    let generationError: string | null = null;
-    if (prompt) {
-      try {
-        generated = await generateReportForProvider('anthropic', {
-          systemPrompt: prompt.system_prompt,
-          model: prompt.model,
-          maxTokens: prompt.max_tokens,
-          userContent,
-        });
-      } catch (error) {
-        generationError = error instanceof Error ? error.message : String(error);
-        console.error('Report generation failed:', generationError);
-      }
-    }
-
-    let state: Record<string, unknown>;
-    let modelUsed = prompt?.model ?? 'fallback';
-    let tokensUsed: number | undefined = undefined;
-    let generationSeconds: number | undefined = undefined;
-
-    if (generated) {
-      state = generated.state;
-      modelUsed = generated.model;
-      tokensUsed = generated.tokensUsed;
-      generationSeconds = generated.generationSeconds;
-    } else {
-      modelUsed = 'fallback';
-      state = buildFallbackReport({
-        title: `${checkName} — ${reportType === 'summary' ? 'Summary' : 'Detailed'} Report`,
-        recipientName: session.full_name,
-        sections: answerTree,
+  const resolvedConfig = await resolveProviderConfig('anthropic');
+  let generated;
+  let generationError: string | null = null;
+  if (prompt) {
+    try {
+      generated = await generateReportForProvider('anthropic', {
+        systemPrompt: prompt.system_prompt,
+        model: prompt.model,
+        maxTokens: prompt.max_tokens,
+        userContent,
       });
+    } catch (error) {
+      generationError = error instanceof Error ? error.message : String(error);
+      console.error('Report generation failed:', generationError);
+    }
+  }
 
-      // Notify admin that generation failed and fallback was used.
-      const adminEmail = process.env.ADMIN_NOTIFY_EMAIL ?? site.email;
-      if (adminEmail) {
-        const siteUrl = resolveSiteUrl();
-        const adminBody = `
-          <h1>Report generation failed — fallback used</h1>
-          <p>AI report generation failed for <strong>${session.full_name}</strong>'s <strong>${checkName}</strong> (${reportType}) report. The deterministic fallback template was used instead.</p>
-          <h2>Error details</h2>
-          <pre style="background:#F9F7F5;padding:16px;border-radius:6px;font-size:13px;white-space:pre-wrap;word-break:break-word;">${generationError}</pre>
-          <h2>Session info</h2>
-          <ul>
-            <li><strong>Recipient:</strong> ${session.full_name}</li>
-            <li><strong>Health check:</strong> ${checkName}</li>
-            <li><strong>Report type:</strong> ${reportType}</li>
-            <li><strong>Provider:</strong> ${resolvedConfig.label}</li>
-            <li><strong>Model:</strong> ${prompt?.model ?? 'N/A'}</li>
-          </ul>
-          <p><a href="${siteUrl}/admin/health-checks/reports">View in admin →</a></p>
-        `;
-        try {
-          await sendEmail({
-            to: adminEmail,
-            subject: `[Alert] Report generation failed — ${checkName} (${reportType})`,
-            html: buildBrandedEmailHtml(adminBody),
-            fromName: 'Deni Sawa Partners',
-            fromEmail: 'advisory@denisawa.co.ke',
-          });
-        } catch (emailErr) {
-          console.error('Admin fallback notification email failed:', emailErr);
-        }
+  let state: Record<string, unknown>;
+  let modelUsed = prompt?.model ?? 'fallback';
+  let tokensUsed: number | undefined = undefined;
+  let generationSeconds: number | undefined = undefined;
+
+  if (generated) {
+    state = generated.state;
+    modelUsed = generated.model;
+    tokensUsed = generated.tokensUsed;
+    generationSeconds = generated.generationSeconds;
+  } else {
+    modelUsed = 'fallback';
+    state = buildFallbackReport({
+      title: `${checkName} — ${reportType === 'summary' ? 'Summary' : 'Detailed'} Report`,
+      recipientName: session.full_name,
+      sections: answerTree,
+    });
+
+    // Notify admin that generation failed and fallback was used.
+    const adminEmail = process.env.ADMIN_NOTIFY_EMAIL ?? site.email;
+    if (adminEmail) {
+      const siteUrl = resolveSiteUrl();
+      const adminBody = `
+        <h1>Report generation failed — fallback used</h1>
+        <p>AI report generation failed for <strong>${session.full_name}</strong>'s <strong>${checkName}</strong> (${reportType}) report. The deterministic fallback template was used instead.</p>
+        <h2>Error details</h2>
+        <pre style="background:#F9F7F5;padding:16px;border-radius:6px;font-size:13px;white-space:pre-wrap;word-break:break-word;">${generationError}</pre>
+        <h2>Session info</h2>
+        <ul>
+          <li><strong>Recipient:</strong> ${session.full_name}</li>
+          <li><strong>Health check:</strong> ${checkName}</li>
+          <li><strong>Report type:</strong> ${reportType}</li>
+          <li><strong>Provider:</strong> ${resolvedConfig.label}</li>
+          <li><strong>Model:</strong> ${prompt?.model ?? 'N/A'}</li>
+        </ul>
+        <p><a href="${siteUrl}/admin/health-checks/reports">View in admin →</a></p>
+      `;
+      try {
+        await sendEmail({
+          to: adminEmail,
+          subject: `[Alert] Report generation failed — ${checkName} (${reportType})`,
+          html: buildBrandedEmailHtml(adminBody),
+          fromName: 'Deni Sawa Partners',
+          fromEmail: 'advisory@denisawa.co.ke',
+        });
+      } catch (emailErr) {
+        console.error('Admin fallback notification email failed:', emailErr);
       }
     }
-
-    const promptSnapshot = prompt?.system_prompt ?? 'fallback';
-
-    const now = new Date();
-    const expiresAt = reportType === 'summary'
-      ? new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString()
-      : new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000).toISOString();
-
-    // Update the stub row with the generated content.
-    const { error: updateError } = await supabase
-      .from('health_check_reports')
-      .update({
-        lexical_state: state,
-        prompt_snapshot: promptSnapshot,
-        model_used: modelUsed,
-        tokens_used: tokensUsed,
-        generation_seconds: generationSeconds,
-        generation_error: generationError,
-        generation_status: 'completed',
-        expires_at: expiresAt,
-      })
-      .eq('id', reportId);
-    if (updateError) {
-      console.error('Failed to update report row:', updateError);
-      return;
-    }
-
-    // Delivery.
-    if (!options.skipDelivery) {
-      const delivery = session.preferred_delivery as 'email' | 'whatsapp' | 'both';
-      if (delivery === 'email' || delivery === 'both') await deliverReportByEmail(supabase, reportId);
-      if (delivery === 'whatsapp' || delivery === 'both') await deliverReportByWhatsApp(supabase, reportId);
-    }
-
-    const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-    console.log(`[REPORT GEN] Completed in ${elapsed}s — ${ctx}`);
   }
+
+  const promptSnapshot = prompt?.system_prompt ?? 'fallback';
+
+  const now = new Date();
+  const expiresAt = reportType === 'summary'
+    ? new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString()
+    : new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000).toISOString();
+
+  // Update the stub row with the generated content.
+  const { error: updateError } = await supabase
+    .from('health_check_reports')
+    .update({
+      lexical_state: state,
+      prompt_snapshot: promptSnapshot,
+      model_used: modelUsed,
+      tokens_used: tokensUsed,
+      generation_seconds: generationSeconds,
+      generation_error: generationError,
+      generation_status: 'completed',
+      expires_at: expiresAt,
+    })
+    .eq('id', reportId);
+  if (updateError) {
+    console.error('Failed to update report row:', updateError);
+    return;
+  }
+
+  // Delivery.
+  if (!options.skipDelivery) {
+    const delivery = session.preferred_delivery as 'email' | 'whatsapp' | 'both';
+    if (delivery === 'email' || delivery === 'both') await deliverReportByEmail(supabase, reportId);
+    if (delivery === 'whatsapp' || delivery === 'both') await deliverReportByWhatsApp(supabase, reportId);
+  }
+
+  const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+  console.log(`[REPORT GEN] Completed in ${elapsed}s — ${ctx}`);
 }
 
 /**
