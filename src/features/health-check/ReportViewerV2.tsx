@@ -253,16 +253,15 @@ export function ReportViewerV2({ token }: { token: string }) {
   const chooseUpgrade = (plan: 'detailed' | 'detailed_call') => {
     setUpgradeError(null);
     setUpgradePlan(plan);
-    const needsPhone = plan === 'detailed_call' && !report?.session_whatsapp;
-    setUpgradeState(needsPhone ? 'phone' : 'initiating');
-    if (!needsPhone) void startUpgrade(plan);
+    setUpgradePhone(report?.session_whatsapp ?? '');
+    setUpgradeState('phone');
   };
 
   const startUpgrade = async (plan: 'detailed' | 'detailed_call') => {
     if (!report) return;
     setUpgradeState('initiating');
     setUpgradeError(null);
-    const phone = plan === 'detailed_call' ? (upgradePhone || report.session_whatsapp || '') : report.session_whatsapp || '';
+    const phone = upgradePhone || report.session_whatsapp || '';
 
     // If user already paid for detailed and is upgrading to detailed_call,
     // use the dedicated upgrade-call endpoint (charges the difference).
@@ -621,7 +620,11 @@ export function ReportViewerV2({ token }: { token: string }) {
 
             {upgradeState === 'phone' && (
               <div className="max-w-sm space-y-2">
-                <p className="text-sm font-semibold text-foreground">Enter your WhatsApp number for the advisory call:</p>
+                <p className="text-sm font-semibold text-foreground">
+                  {upgradePlan === 'detailed_call'
+                    ? 'Enter your M-Pesa number for payment and the advisory call:'
+                    : 'Confirm your M-Pesa number for payment:'}
+                </p>
                 <input
                   type="tel"
                   value={upgradePhone}
@@ -629,14 +632,26 @@ export function ReportViewerV2({ token }: { token: string }) {
                   placeholder="+254 700 000 000"
                   className="w-full rounded-btn border border-card-border bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-brand focus:outline-none"
                 />
+                <p className="text-[11px] text-muted-foreground">An M-Pesa STK push will be sent to this number.</p>
                 {upgradeError && <p className="text-xs font-medium text-red-600">{upgradeError}</p>}
-                <button
-                  type="button"
-                  onClick={() => void startUpgrade('detailed_call')}
-                  className="rounded-btn bg-brand px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-brand-600"
-                >
-                  Continue to payment
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => { setUpgradeState('idle'); setUpgradeError(null); }}
+                    className="rounded-btn border border-card-border px-4 py-2.5 text-sm font-semibold text-foreground hover:border-brand/40"
+                  >
+                    Back
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void startUpgrade(upgradePlan || 'detailed')}
+                    className="rounded-btn bg-brand px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-brand-600"
+                  >
+                    Pay {upgradePlan === 'detailed_call'
+                      ? `KES ${(report?.detailed_call_price ?? 0).toLocaleString()}`
+                      : `KES ${(report?.detailed_price ?? 0).toLocaleString()}`}
+                  </button>
+                </div>
               </div>
             )}
 
@@ -731,7 +746,7 @@ export function ReportViewerV2({ token }: { token: string }) {
 
               {upgradeState === 'phone' && (
                 <div className="mt-3 max-w-sm space-y-2">
-                  <p className="text-sm font-semibold text-foreground">Enter your WhatsApp number for the call:</p>
+                  <p className="text-sm font-semibold text-foreground">Confirm your M-Pesa number for the advisory call:</p>
                   <input
                     type="tel"
                     value={upgradePhone}
@@ -739,14 +754,24 @@ export function ReportViewerV2({ token }: { token: string }) {
                     placeholder="+254 700 000 000"
                     className="w-full rounded-btn border border-card-border bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-brand focus:outline-none"
                   />
+                  <p className="text-[11px] text-muted-foreground">An M-Pesa STK push will be sent to this number.</p>
                   {upgradeError && <p className="text-xs font-medium text-red-600">{upgradeError}</p>}
-                  <button
-                    type="button"
-                    onClick={() => void startUpgrade('detailed_call')}
-                    className="rounded-btn bg-growth px-5 py-2.5 text-sm font-bold text-white transition-colors hover:brightness-110"
-                  >
-                    Continue to payment
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => { setUpgradeState('idle'); setUpgradeError(null); }}
+                      className="rounded-btn border border-card-border px-4 py-2 text-sm font-semibold text-foreground hover:border-growth/40"
+                    >
+                      Back
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void startUpgrade('detailed_call')}
+                      className="rounded-btn bg-growth px-5 py-2.5 text-sm font-bold text-white transition-colors hover:brightness-110"
+                    >
+                      Pay KES {(report.detailed_call_price - report.detailed_price).toLocaleString()}
+                    </button>
+                  </div>
                 </div>
               )}
 

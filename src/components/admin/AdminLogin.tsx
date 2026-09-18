@@ -2,8 +2,9 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { createBrowserClient } from '@/lib/supabase/browser';
-import { AlertCircle, ArrowLeft, CheckCircle2, Loader2, Lock, Mail, ShieldCheck } from 'lucide-react';
+import { AlertCircle, ArrowLeft, CheckCircle2, ExternalLink, Loader2, Lock, Mail, ShieldCheck, Trash2 } from 'lucide-react';
 
 const REASON_MESSAGES: Record<string, string> = {
   timeout: 'Your session expired due to inactivity.',
@@ -23,6 +24,31 @@ export function AdminLogin() {
   const [forgotSent, setForgotSent] = React.useState(false);
   const [forgotSubmitting, setForgotSubmitting] = React.useState(false);
   const [forgotError, setForgotError] = React.useState<string | null>(null);
+  const [cleared, setCleared] = React.useState(false);
+
+  /** Nuke every cookie, localStorage, and sessionStorage entry for this origin. */
+  const clearSiteData = React.useCallback(() => {
+    // 1. Clear all cookies visible to this page.
+    document.cookie.split(';').forEach((c) => {
+      const name = c.split('=')[0].trim();
+      // Try every plausible path / domain combo so nothing lingers.
+      [true, false].forEach((isTop) => {
+        document.cookie = `${name}=; path=/; max-age=0${isTop ? '' : '; domain=' + window.location.hostname}`;
+        document.cookie = `${name}=; path=/; max-age=0`;
+        document.cookie = `${name}=; path=/admin; max-age=0`;
+        document.cookie = `${name}=; path=/admin; max-age=0; domain=${window.location.hostname}`;
+      });
+    });
+    // 2. Wipe storage.
+    try { localStorage.clear(); } catch { /* noop */ }
+    try { sessionStorage.clear(); } catch { /* noop */ }
+    // 3. Also sign out via Supabase to revoke the refresh token server-side.
+    try {
+      const supabase = createBrowserClient();
+      supabase.auth.signOut({ scope: 'global' }).catch(() => {});
+    } catch { /* noop */ }
+    setCleared(true);
+  }, []);
 
   React.useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -258,9 +284,29 @@ export function AdminLogin() {
           )}
         </div>
 
-        <div className="mt-6 flex items-center justify-center gap-2 text-xs text-[var(--a-muted)]">
-          <ShieldCheck className="h-3.5 w-3.5 text-[#5A9E28]" />
-          Sessions time out automatically after 10 minutes of inactivity.
+        <div className="mt-6 flex flex-col items-center gap-3 text-xs text-[var(--a-muted)]">
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="h-3.5 w-3.5 text-[#5A9E28]" />
+            Sessions time out automatically after 10 minutes of inactivity.
+          </div>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-1.5 font-semibold text-[#E8510A] hover:underline"
+            >
+              <ExternalLink className="h-3 w-3" /> Back to public site
+            </Link>
+            <span className="text-[var(--a-border)]">·</span>
+            <button
+              type="button"
+              onClick={clearSiteData}
+              className="inline-flex items-center gap-1.5 font-semibold text-amber-600 hover:underline"
+              title="Clear all cookies, localStorage, and session data for this site"
+            >
+              <Trash2 className="h-3 w-3" />
+              {cleared ? 'Cleared — try signing in again' : 'Clear site data & retry'}
+            </button>
+          </div>
         </div>
       </div>
     </div>
