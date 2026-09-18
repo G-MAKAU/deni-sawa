@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { formatDate as format } from '@/lib/date-utils';
-import { CheckCircle2, FileDown, FileText, Loader2, Lock, Phone, Sparkles } from 'lucide-react';
+import { CheckCircle2, FileDown, FileText, Loader2, Lock, Phone, Smartphone, Sparkles } from 'lucide-react';
 import { LexicalRenderer } from '@/features/lexical/LexicalRenderer';
 import { ShareMenu } from '@/components/ShareMenu';
 import { cn } from '@/lib/utils';
@@ -47,6 +47,93 @@ export function ReportViewerV2({ token }: { token: string }) {
   const [justCompleted, setJustCompleted] = React.useState(false);
   const [genFailed, setGenFailed] = React.useState(false);
   const pollRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
+  const pollTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [pollElapsed, setPollElapsed] = React.useState(0);
+  const POLL_TIMEOUT_MS = 3 * 60 * 1000; // 3 minutes
+
+function MpesaPollingUI({ elapsed, timeoutMs, accent }: { elapsed: number; timeoutMs: number; accent: 'brand' | 'growth' }) {
+  const remaining = Math.max(0, timeoutMs - elapsed);
+  const pct = Math.min(100, (elapsed / timeoutMs) * 100);
+  const remMin = Math.floor(remaining / 60000);
+  const remSec = Math.floor((remaining % 60000) / 1000);
+
+  const steps = [
+    { label: 'STK push sent', done: elapsed > 0 },
+    { label: 'Enter your M-Pesa PIN', done: elapsed > 5000 },
+    { label: 'Confirming payment', done: elapsed > 10000 },
+  ];
+  const currentStep = elapsed < 5000 ? 0 : elapsed < 10000 ? 1 : 2;
+
+  return (
+    <div className="space-y-4">
+      {/* Animated phone icon */}
+      <div className="flex items-center gap-4">
+        <div className="relative">
+          {/* Pulsing rings */}
+          <span className="absolute inset-0 animate-ping rounded-full bg-brand/10" style={{ animationDuration: '2s' }} />
+          <span className="absolute inset-0 animate-ping rounded-full bg-brand/5" style={{ animationDuration: '3s', animationDelay: '0.5s' }} />
+          {/* Icon container */}
+          <div className={cn(
+            'relative flex h-12 w-12 items-center justify-center rounded-full',
+            accent === 'brand' ? 'bg-brand/10' : 'bg-growth/10'
+          )}>
+            <Smartphone className={cn('h-5 w-5', accent === 'brand' ? 'text-brand' : 'text-growth', 'animate-pulse')} style={{ animationDuration: '1.5s' }} />
+          </div>
+        </div>
+        <div>
+          <p className="text-sm font-semibold text-foreground">Waiting for M-Pesa confirmation</p>
+          <p className="text-xs text-muted-foreground">
+            Check your phone for the STK prompt
+          </p>
+        </div>
+      </div>
+
+      {/* Step indicators */}
+      <div className="space-y-2">
+        {steps.map((step, i) => (
+          <div key={step.label} className="flex items-center gap-2.5">
+            <div className={cn(
+              'flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold',
+              step.done
+                ? accent === 'brand' ? 'bg-brand text-white' : 'bg-growth text-white'
+                : i === currentStep
+                ? accent === 'brand' ? 'bg-brand/15 text-brand' : 'bg-growth/15 text-growth'
+                : 'bg-muted text-muted-foreground'
+            )}>
+              {step.done ? '✓' : i + 1}
+            </div>
+            <span className={cn(
+              'text-xs',
+              step.done ? 'text-muted-foreground line-through' : i === currentStep ? 'font-medium text-foreground' : 'text-muted-foreground'
+            )}>
+              {step.label}
+            </span>
+            {i === currentStep && !step.done && (
+              <Loader2 className={cn('h-3 w-3 animate-spin', accent === 'brand' ? 'text-brand' : 'text-growth')} />
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Progress bar + time */}
+      <div>
+        <div className="flex items-center justify-between text-[11px] text-muted-foreground mb-1">
+          <span>Timeout in</span>
+          <span className="tabular-nums font-mono">{remMin}:{String(remSec).padStart(2, '0')}</span>
+        </div>
+        <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+          <div
+            className={cn(
+              'h-full rounded-full transition-all duration-1000',
+              accent === 'brand' ? 'bg-brand' : 'bg-growth'
+            )}
+            style={{ width: `${100 - pct}%` }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
 
   React.useEffect(() => {
     let cancelled = false;
@@ -119,6 +206,14 @@ export function ReportViewerV2({ token }: { token: string }) {
       if (pollInterval) clearInterval(pollInterval);
     };
   }, [token]);
+
+  // Clean up payment polling on unmount.
+  React.useEffect(() => {
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
+      if (pollTimeoutRef.current) clearTimeout(pollTimeoutRef.current);
+    };
+  }, []);
 
   React.useEffect(() => {
     return () => {
@@ -307,14 +402,27 @@ export function ReportViewerV2({ token }: { token: string }) {
   const startPolling = () => {
     if (!report) return;
     if (pollRef.current) clearInterval(pollRef.current);
-    pollRef.current = setInterval(async () => {
-      const res = await fetch(`/api/payments/mpesa/status?session_id=${report.session_id}`).catch(() => null);
-      const body = await res?.json().catch(() => ({}));
-      if (body?.payment_status === 'paid') {
-        if (pollRef.current) clearInterval(pollRef.current);
-        void completePaid();
-      }
+    if (pollTimeoutRef.current) clearTimeout(pollTimeoutRef.current);
+    setPollElapsed(0);
+    const start = Date.now();
+    pollRef.current = setInterval(() => {
+      setPollElapsed(Date.now() - start);
+      fetch(`/api/payments/mpesa/status?session_id=${report.session_id}`)
+        .then((r) => r.json())
+        .then((body) => {
+          if (body?.payment_status === 'paid') {
+            if (pollRef.current) clearInterval(pollRef.current);
+            if (pollTimeoutRef.current) clearTimeout(pollTimeoutRef.current);
+            void completePaid();
+          }
+        })
+        .catch(() => {});
     }, 3000);
+    pollTimeoutRef.current = setTimeout(() => {
+      if (pollRef.current) clearInterval(pollRef.current);
+      setUpgradeState('error');
+      setUpgradeError('Payment timed out. If you already paid, try again — or contact us at advisory@denisawa.co.ke.');
+    }, POLL_TIMEOUT_MS);
   };
 
   const confirmPaid = async () => {
@@ -681,9 +789,7 @@ export function ReportViewerV2({ token }: { token: string }) {
             )}
 
             {upgradeState === 'polling' && (
-              <p className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin text-brand" /> Waiting for payment confirmation…
-              </p>
+              <MpesaPollingUI elapsed={pollElapsed} timeoutMs={POLL_TIMEOUT_MS} accent="brand" />
             )}
 
             {upgradeState === 'error' && (
@@ -801,9 +907,9 @@ export function ReportViewerV2({ token }: { token: string }) {
               )}
 
               {upgradeState === 'polling' && (
-                <p className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
-                  <Loader2 className="h-4 w-4 animate-spin text-growth" /> Waiting for payment confirmation…
-                </p>
+                <div className="mt-3">
+                  <MpesaPollingUI elapsed={pollElapsed} timeoutMs={POLL_TIMEOUT_MS} accent="growth" />
+                </div>
               )}
 
               {upgradeState === 'error' && (
