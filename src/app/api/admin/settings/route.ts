@@ -4,6 +4,7 @@ import { requireAdmin, jsonAdminError, jsonAdminWriteError, adminWriteClient } f
 import { smtpProfiles } from '@/lib/email';
 import { getSettings, invalidateSettings, getSetting } from '@/lib/settings';
 import { encryptSecret } from '@/lib/crypto';
+import { isOAuthConfigured, isGoogleOAuthReady, getGoogleAuthUrl, isDWDConfigured } from '@/lib/google-calendar-oauth';
 
 export const dynamic = 'force-dynamic';
 
@@ -112,6 +113,14 @@ export async function GET(request: NextRequest) {
         },
         supabase: {
           configured: Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY),
+        },
+        googleCalendarOAuth: {
+          configured: isOAuthConfigured(),
+          connected: isGoogleOAuthReady(),
+          authUrl: isGoogleOAuthReady() ? null : getGoogleAuthUrl(),
+        },
+        googleCalendarDWD: {
+          configured: isDWDConfigured(),
         },
       },
     });

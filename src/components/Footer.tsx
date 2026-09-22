@@ -61,10 +61,10 @@ export function Footer() {
               </p>
             </div>
             <Link
-              href="/business-health-checks#choose-your-assessment"
+              href="/booking"
               className="group inline-flex items-center gap-2.5 rounded-full bg-brand px-7 py-3.5 text-[15px] font-semibold text-white shadow-[0_4px_30px_rgba(232,81,10,0.35)] transition-all duration-300 hover:shadow-[0_6px_40px_rgba(232,81,10,0.5)] hover:brightness-110 active:scale-[0.97]"
             >
-              Start Your Assessment
+              Book a Consultation
               <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
             </Link>
           </div>

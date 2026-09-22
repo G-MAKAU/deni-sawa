@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import {
-  Activity, BookOpen, BookMarked, Building2, CheckCircle2, ClipboardList, CreditCard, FileText, GraduationCap,
+  Activity, BookOpen, BookMarked, Building2, Calendar, CheckCircle2, ClipboardList, Clock, CreditCard, FileText, GraduationCap,
   Globe, Image as ImageIcon, Info, KeyRound, LayoutDashboard, ListChecks, Lock, Mail, MailOpen,
   MessageCircle, MessageSquare, Network, PenLine, Plug, Save, Search, Send, Settings,
   ShieldCheck, SlidersHorizontal, Sparkles, StickyNote, Table2, Upload, Users, Webhook,
@@ -864,6 +864,147 @@ const SECTIONS: DocSection[] = [
           </div>
         ),
       },
+    ],
+  },
+  {
+    id: 'bookings',
+    label: 'Bookings',
+    icon: Calendar,
+    tagline: 'Consultation booking system',
+    intro: 'A complete booking system for consultation services. Customers select a service, pay via M-Pesa, and schedule a date/time. Google Calendar/Meet integration creates events automatically. All data is stored in MySQL.',
+    cards: [
+      {
+        title: 'Public booking flow',
+        icon: Globe,
+        body: (
+          <div className="space-y-3 text-sm leading-relaxed text-[var(--a-text2)]">
+            <p>The public booking page at <Code>/booking</Code> guides customers through a 4-step flow:</p>
+            <ul className="space-y-1.5">
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Service</strong> — browse and select a service (with search when 3+ services exist).</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Payment</strong> — enter name, phone, email, optional notes, and pay via M-Pesa STK push. In dev mode (<Code>PAYMENTS_SIMULATE=true</Code>), payment is auto-confirmed.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Schedule</strong> — pick a date and available time slot. Morning/afternoon slots are grouped.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Success</strong> — confirmation with Google Meet link (if configured) and reference number.</span></li>
+            </ul>
+          </div>
+        ),
+      },
+      {
+        title: 'Services management',
+        icon: Settings,
+        body: (
+          <div className="space-y-3 text-sm leading-relaxed text-[var(--a-text2)]">
+            <p>Manage services at <Code>/admin/bookings/services</Code>.</p>
+            <ul className="space-y-1.5">
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Name, description, price, duration</strong> — core service fields.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Allow custom amount</strong> — toggle per service. When enabled, <Code>price</Code> becomes the minimum; customers can enter a higher amount.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Active / inactive</strong> — inactive services are hidden from the public page.</span></li>
+            </ul>
+            <Endpoint method="GET" path="/api/booking/services" />
+            <Endpoint method="GET" path="/api/admin/bookings/services" />
+            <Endpoint method="POST" path="/api/admin/bookings/services" />
+          </div>
+        ),
+      },
+      {
+        title: 'Bookings dashboard',
+        icon: LayoutDashboard,
+        body: (
+          <div className="space-y-3 text-sm leading-relaxed text-[var(--a-text2)]">
+            <p>Overview at <Code>/admin/bookings/dashboard</Code> with:</p>
+            <ul className="space-y-1.5">
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Calendar view</strong> — monthly calendar showing booking counts per day. Click a day to see its bookings.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Day detail modal</strong> — lists all bookings for the selected date with status, customer info and Meet links.</span></li>
+            </ul>
+          </div>
+        ),
+      },
+      {
+        title: 'Bookings list',
+        icon: ListChecks,
+        body: (
+          <div className="space-y-3 text-sm leading-relaxed text-[var(--a-text2)]">
+            <p>All bookings at <Code>/admin/bookings</Code> with:</p>
+            <ul className="space-y-1.5">
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Stats cards</strong> — total, pending, paid, booked, cancelled, revenue.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Filters</strong> — search by reference/name/email/phone, filter by status, service, date range.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Pagination</strong> — configurable page size with page navigation.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Row click</strong> — opens the full booking detail page.</span></li>
+            </ul>
+            <Endpoint method="GET" path="/api/admin/bookings" />
+          </div>
+        ),
+      },
+      {
+        title: 'Booking detail',
+        icon: FileText,
+        body: (
+          <div className="space-y-3 text-sm leading-relaxed text-[var(--a-text2)]">
+            <p>Full detail at <Code>/admin/bookings/[reference]</Code> with 4 info cards:</p>
+            <ul className="space-y-1.5">
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Booking Details</strong> — reference, status (editable), booked date (DatePicker), time, notes.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Customer Info</strong> — name, email, phone, service, duration, amount.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Payment Details</strong> — M-Pesa receipt, checkout ID, phone, status, payment date.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Scheduling</strong> — booked date/time, confirmation timestamps, Google Calendar ID, Meet link.</span></li>
+            </ul>
+            <p>Email log section with resend button for each email sent. Cancel booking with confirmation modal.</p>
+            <Endpoint method="GET" path="/api/admin/bookings/:reference" />
+            <Endpoint method="PUT" path="/api/admin/bookings/:reference" />
+            <Endpoint method="DELETE" path="/api/admin/bookings/:reference" />
+          </div>
+        ),
+      },
+      {
+        title: 'Email logs',
+        icon: Mail,
+        body: (
+          <div className="space-y-3 text-sm leading-relaxed text-[var(--a-text2)]">
+            <p>Booking email log at <Code>/admin/bookings/email-log</Code> tracks all outbound emails:</p>
+            <ul className="space-y-1.5">
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Stats</strong> — total, sent, failed counts plus breakdown by type (payment/booking confirmation).</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Filters</strong> — search, status, email type, date range with DatePicker components.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Resend</strong> — click the refresh icon on any entry to resend the email (with confirmation modal).</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Pagination</strong> — page navigation with configurable page size.</span></li>
+            </ul>
+            <Endpoint method="GET" path="/api/admin/bookings/email-log" />
+            <Endpoint method="POST" path="/api/admin/bookings/email-log/:id/resend" />
+          </div>
+        ),
+      },
+      {
+        title: 'Google Calendar integration',
+        icon: Clock,
+        body: (
+          <div className="space-y-3 text-sm leading-relaxed text-[var(--a-text2)]">
+            <p>When a booking is scheduled, a Google Calendar event is created with a Google Meet link.</p>
+            <ul className="space-y-1.5">
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Required env vars</strong>: <Code>GOOGLE_SERVICE_ACCOUNT_JSON</Code> (path to service account key), <Code>GOOGLE_CALENDAR_ID</Code>.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span>Uses <Code>conferenceDataVersion: 1</Code> to generate Meet links automatically.</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>Graceful degradation</strong> — bookings work without Google Calendar configured. Meet link shows as "—" when unavailable.</span></li>
+            </ul>
+          </div>
+        ),
+      },
+      {
+        title: 'Database schema',
+        icon: Table2,
+        body: (
+          <div className="space-y-3 text-sm leading-relaxed text-[var(--a-text2)]">
+            <p>Four MySQL tables (no prefix):</p>
+            <ul className="space-y-1.5">
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>services</strong> — name, slug, price, duration, allow_custom_amount, is_active</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>bookings</strong> — reference (UUID), service_id, customer info, amount, status, booked_date/time, notes, google_event_id</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>payments</strong> — booking_reference, M-Pesa receipt/checkout IDs, amount, status, raw_callback</span></li>
+              <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#5A9E28]" /><span><strong>email_logs</strong> — booking_reference, email_type, recipient, sent_at, status, error_message</span></li>
+            </ul>
+            <p className="text-xs text-[var(--a-muted)]">Schema: <Code>sql/schema.sql</Code> · Migrations: <Code>sql/migrations/</Code></p>
+          </div>
+        ),
+      },
+    ],
+    tips: [
+      { tone: 'info', text: 'In dev mode (PAYMENTS_SIMULATE=true), M-Pesa payments are auto-confirmed and the user skips the waiting screen.' },
+      { tone: 'success', text: 'The booking reference format is BK-YYYYMMDD-XXXX (e.g. BK-20260919-9XSY). References are unique and used as the primary lookup key.' },
+      { tone: 'warning', text: 'Google Calendar integration requires a service account JSON file and calendar ID. Without these, bookings still work but no Meet link is generated.' },
     ],
   },
 ];

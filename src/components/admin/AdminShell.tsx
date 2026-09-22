@@ -57,6 +57,15 @@ const NAV_SECTIONS: { label: string; items: NavItem[] }[] = [
     ],
   },
   {
+    label: 'Bookings',
+    items: [
+      { label: 'Dashboard', href: '/admin/bookings/dashboard', icon: <IconGrid /> },
+      { label: 'All Bookings', href: '/admin/bookings', icon: <IconCalendar /> },
+      { label: 'Services', href: '/admin/bookings/services', icon: <IconSettings /> },
+      { label: 'Email Log', href: '/admin/bookings/email-log', icon: <IconSend /> },
+    ],
+  },
+  {
     label: 'Communication',
     items: [
       { label: 'Email Templates', href: '/admin/email', icon: <IconMail /> },
@@ -90,6 +99,10 @@ const TITLES: { prefix: string; title: string }[] = [
   { prefix: '/admin/health-checks/sessions', title: 'Health Check Sessions' },
   { prefix: '/admin/health-checks/reports', title: 'Health Check Reports' },
   { prefix: '/admin/health-checks', title: 'Health Checks' },
+  { prefix: '/admin/bookings/dashboard', title: 'Bookings Dashboard' },
+  { prefix: '/admin/bookings/email-log', title: 'Booking Email Log' },
+  { prefix: '/admin/bookings/services', title: 'Booking Services' },
+  { prefix: '/admin/bookings', title: 'Bookings' },
   { prefix: '/admin/email-log', title: 'Email Log' },
   { prefix: '/admin/email', title: 'Email Templates' },
   { prefix: '/admin/whatsapp-log', title: 'WhatsApp Log' },
@@ -495,6 +508,14 @@ function IconBook() {
   return (
     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+    </svg>
+  );
+}
+
+function IconCalendar() {
+  return (
+    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
     </svg>
   );
 }

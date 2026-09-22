@@ -14,12 +14,16 @@ export async function GET(request: NextRequest) {
     const status = url.searchParams.get('status') ?? 'all';
     const dateFrom = url.searchParams.get('from') ?? '';
     const dateTo = url.searchParams.get('to') ?? '';
+    const search = url.searchParams.get('search') ?? '';
 
     let query = supabase.from('email_log').select('*', { count: 'exact' }).order('created_at', { ascending: false });
 
     if (['pending', 'sent', 'failed', 'bounced'].includes(status)) query = query.eq('status', status);
     if (dateFrom) query = query.gte('created_at', dateFrom);
     if (dateTo) query = query.lte('created_at', dateTo);
+    if (search) {
+      query = query.or(`to_email.ilike.%${search}%,subject.ilike.%${search}%`);
+    }
 
     const from = (page - 1) * pageSize;
     const { data, error, count } = await query.range(from, from + pageSize - 1);

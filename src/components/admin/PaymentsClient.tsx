@@ -219,10 +219,10 @@ export function PaymentsClient() {
       {summary && (
         <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
           <StatCard label="Total Transactions" value={summary.total} icon={<Banknote className="h-3.5 w-3.5" />} />
-          <StatCard label="Total Amount" value={`KES ${summary.totalAmount.toLocaleString()}`} icon={<Banknote className="h-3.5 w-3.5 text-[#5A9E28]" />} className="border-[#5A9E28]/25" />
+          <StatCard label="Total Amount" value={`KES ${Number(summary.totalAmount ?? 0).toLocaleString()}`} icon={<Banknote className="h-3.5 w-3.5 text-[#5A9E28]" />} className="border-[#5A9E28]/25" />
           <StatCard label="Successful" value={summary.successCount} icon={<Check className="h-3.5 w-3.5 text-[#5A9E28]" />} />
           <StatCard label="Failed" value={summary.failedCount} icon={<X className="h-3.5 w-3.5 text-red-500" />} />
-          <StatCard label="Revenue (Success)" value={`KES ${summary.successAmount.toLocaleString()}`} icon={<Banknote className="h-3.5 w-3.5 text-[#E8510A]" />} className="border-[#E8510A]/25" />
+          <StatCard label="Revenue (Success)" value={`KES ${Number(summary.successAmount ?? 0).toLocaleString()}`} icon={<Banknote className="h-3.5 w-3.5 text-[#E8510A]" />} className="border-[#E8510A]/25" />
         </div>
       )}
 

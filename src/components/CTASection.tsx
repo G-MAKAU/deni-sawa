@@ -17,7 +17,7 @@ interface CTASectionProps {
 export function CTASection({
   title = 'Ready to Start?',
   subtitle = 'Take the first step. One conversation can change the direction of your business.',
-  primary = { label: 'Start Your Assessment', href: '/business-health-checks#choose-your-assessment' },
+  primary = { label: 'Book a Consultation', href: '/booking' },
   secondary = { label: 'Book a Clarity Call', href: '/contact' },
   variant = 'light',
   className,

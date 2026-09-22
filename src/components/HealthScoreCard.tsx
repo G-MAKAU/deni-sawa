@@ -175,7 +175,7 @@ export function HealthScoreCard({ className = '' }: HealthScoreCardProps) {
       </div>
 
       <Link
-        href="/business-health-checks/business-health-check"
+        href="/business-health-checks#choose-your-assessment"
         className="mt-4 flex items-center justify-between rounded-lg bg-brand px-3 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-brand-600"
       >
         Free Diagnostic

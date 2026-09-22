@@ -380,10 +380,10 @@ export function Navbar() {
               </div>
 
               <Link
-href="/business-health-checks#choose-your-assessment"
+                href="/booking"
                 className="group relative hidden overflow-hidden rounded-none bg-brand px-6 py-3 text-[12px] font-semibold text-white shadow-[0_2px_20px_rgba(232,81,10,0.3)] transition-all duration-300 hover:shadow-[0_4px_30px_rgba(232,81,10,0.45)] hover:brightness-110 active:scale-[0.97] md:inline-flex md:items-center md:gap-2"
               >
-                <span className="relative z-10">Start Your Assessment</span>
+                <span className="relative z-10">Book a Consultation</span>
                 <ArrowRight className="relative z-10 h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5" />
               </Link>
 
@@ -527,8 +527,8 @@ href="/business-health-checks#choose-your-assessment"
               </a>
             </div>
             <Button asChild size="lg" className="w-full rounded-none">
-              <Link href="/business-health-checks#choose-your-assessment" onClick={() => setDrawerOpen(false)}>
-                Start Your Assessment
+              <Link href="/booking" onClick={() => setDrawerOpen(false)}>
+                Book a Consultation
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>

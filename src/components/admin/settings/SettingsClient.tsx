@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { Database, CreditCard, Globe, Loader2, Mail, MessageCircle, Phone, Server } from 'lucide-react';
+import { Database, CreditCard, Globe, Loader2, Mail, MessageCircle, Phone, Server, Clock, ExternalLink } from 'lucide-react';
 import { adminFetch } from '@/lib/admin-client';
 import { site } from '@/data/site';
 import { socialLinks } from '@/components/SocialLinks';
@@ -49,6 +49,7 @@ interface SettingsData {
     anthropic: { configured: boolean; model: string };
     ai: AiOverview;
     supabase: { configured: boolean };
+    googleCalendarOAuth: { configured: boolean; connected: boolean; authUrl: string | null };
   };
 }
 
@@ -296,6 +297,57 @@ export function SettingsClient() {
         </AdminCard>
 
         <AiSettingsEditor ai={settings.ai} onSaved={(ai) => setData((d) => (d ? { ...d, settings: { ...d.settings, ai } } : d))} />
+
+        <AdminCard title="Google Calendar (Meet Links)" subtitle="OAuth2 enables auto-generated Google Meet links for every booking.">
+          <div className="flex items-start gap-3">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-[#5A9E28]/10 text-[#5A9E28]">
+              <Clock className="h-4 w-4" />
+            </span>
+            <div className="space-y-1 text-sm text-[var(--a-text2)]">
+              <p>
+                <span className="font-semibold text-[var(--a-ink2)]">OAuth configured:</span>{' '}
+                <StatusPill tone={settings.googleCalendarOAuth.configured ? 'green' : 'red'}>
+                  {settings.googleCalendarOAuth.configured ? 'Set' : 'Not configured'}
+                </StatusPill>
+              </p>
+              <p>
+                <span className="font-semibold text-[var(--a-ink2)]">Connected:</span>{' '}
+                <StatusPill tone={settings.googleCalendarOAuth.connected ? 'green' : 'grey'}>
+                  {settings.googleCalendarOAuth.connected ? 'Connected' : 'Not connected'}
+                </StatusPill>
+              </p>
+              {!settings.googleCalendarOAuth.connected && settings.googleCalendarOAuth.authUrl && (
+                <button
+                  type="button"
+                  onClick={() => { window.location.href = settings.googleCalendarOAuth.authUrl!; }}
+                  className="mt-1 inline-flex items-center gap-1.5 rounded-lg border border-[#5A9E28] bg-[#5A9E28]/10 px-3 py-1.5 text-xs font-semibold text-[#5A9E28] transition-colors hover:bg-[#5A9E28]/20"
+                >
+                  <ExternalLink className="h-3 w-3" />
+                  Connect Google Calendar
+                </button>
+              )}
+              {!settings.googleCalendarOAuth.connected && !settings.googleCalendarOAuth.authUrl && (
+                <p className="text-xs text-[var(--a-muted)]">
+                  Set <code className="rounded bg-[var(--a-subtle)] px-1 font-mono text-[10px]">GOOGLE_OAUTH_CLIENT_ID</code>,{' '}
+                  <code className="rounded bg-[var(--a-subtle)] px-1 font-mono text-[10px]">GOOGLE_OAUTH_CLIENT_SECRET</code>, and{' '}
+                  <code className="rounded bg-[var(--a-subtle)] px-1 font-mono text-[10px]">GOOGLE_OAUTH_REDIRECT_URI</code> in .env, then reconnect.
+                </p>
+              )}
+              {settings.googleCalendarOAuth.connected && (
+                <p className="text-xs text-[#5A9E28]">
+                  ✓ Each booking will get a unique Google Meet link automatically.
+                </p>
+              )}
+              {!settings.googleCalendarOAuth.configured && (
+                <p className="text-xs text-[var(--a-muted)]">
+                  Set <code className="rounded bg-[var(--a-subtle)] px-1 font-mono text-[10px]">GOOGLE_OAUTH_CLIENT_ID</code>,{' '}
+                  <code className="rounded bg-[var(--a-subtle)] px-1 font-mono text-[10px]">GOOGLE_OAUTH_CLIENT_SECRET</code>, and{' '}
+                  <code className="rounded bg-[var(--a-subtle)] px-1 font-mono text-[10px]">GOOGLE_OAUTH_REDIRECT_URI</code> in .env.
+                </p>
+              )}
+            </div>
+          </div>
+        </AdminCard>
 
         <div className="flex items-center gap-2 rounded-lg border border-[var(--a-border)] bg-[var(--a-card)] px-4 py-3 text-xs text-[var(--a-muted)] lg:col-span-2">
           <Database className="h-3.5 w-3.5 text-[#5A9E28]" />

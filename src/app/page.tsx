@@ -130,8 +130,8 @@ export default async function HomePage() {
               <Reveal delay={240}>
                 <div className="mt-10 flex flex-wrap items-center gap-4">
                   <Button asChild size="lg">
-                    <Link href="/business-health-checks#choose-your-assessment">
-                      Start Your Assessment
+                    <Link href="/booking">
+                      Book a Consultation
                       <ArrowRight className="h-4 w-4" />
                     </Link>
                   </Button>
@@ -334,7 +334,7 @@ export default async function HomePage() {
         <CTASection
           title="Find Your Starting Point"
           subtitle="Take the first step. One conversation can change the direction of your business."
-          primary={{ label: 'Start Your Assessment', href: '/business-health-checks#choose-your-assessment' }}
+          primary={{ label: 'Book a Consultation', href: '/booking' }}
           secondary={{ label: 'Book a Clarity Call', href: '/contact' }}
         />
       </div>

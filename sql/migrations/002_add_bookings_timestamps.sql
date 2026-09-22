@@ -1,0 +1,6 @@
+-- Add created_at to bookings if missing
+ALTER TABLE bookings
+  ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP AFTER notes;
+
+ALTER TABLE bookings
+  ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP AFTER created_at;

@@ -98,19 +98,27 @@ export function LogViewer({
   const [status, setStatus] = React.useState('all');
   const [from, setFrom] = React.useState('');
   const [to, setTo] = React.useState('');
+  const [search, setSearch] = React.useState('');
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [busyId, setBusyId] = React.useState<string | null>(null);
 
   const load = React.useCallback(
-    async (targetPage: number, statusFilter: string, dateFrom: string, dateTo: string) => {
+    async (targetPage: number, statusFilter: string, dateFrom: string, dateTo: string, searchQuery: string) => {
       setLoading(true);
       setError(null);
       try {
         const params = new URLSearchParams({ page: String(targetPage), pageSize: String(PAGE_SIZE) });
         if (statusFilter !== 'all') params.set('status', statusFilter);
-        if (dateFrom) params.set('from', new Date(dateFrom).toISOString());
-        if (dateTo) params.set('to', new Date(dateTo + 'T23:59:59').toISOString());
+        if (searchQuery) params.set('search', searchQuery);
+        if (dateFrom) {
+          const d = new Date(dateFrom);
+          if (!isNaN(d.getTime())) params.set('from', d.toISOString());
+        }
+        if (dateTo) {
+          const d = new Date(dateTo + 'T23:59:59');
+          if (!isNaN(d.getTime())) params.set('to', d.toISOString());
+        }
         const data = await adminFetch<{ entries: LogEntry[]; pagination: { total: number; pages?: number } }>(
           `${endpoint}?${params.toString()}`
         );
@@ -127,8 +135,8 @@ export function LogViewer({
   );
 
   React.useEffect(() => {
-    void load(page, status, from, to);
-  }, [load, page, status, from, to]);
+    void load(page, status, from, to, search);
+  }, [load, page, status, from, to, search]);
 
   const applyFilter = (fn: () => void) => {
     fn();
@@ -140,7 +148,7 @@ export function LogViewer({
     try {
       await adminFetch(`${entryApiPath}/${encodeURIComponent(entry.id)}`, { method: 'POST' });
       toast.success('Message resent');
-      void load(page, status, from, to);
+      void load(page, status, from, to, search);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Failed to resend message');
     } finally {
@@ -161,7 +169,7 @@ export function LogViewer({
       });
       if (!ok) return;
       toast.success('Log entry deleted');
-      void load(page, status, from, to);
+      void load(page, status, from, to, search);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Failed to delete log entry');
     }
@@ -174,39 +182,47 @@ export function LogViewer({
         subtitle={subtitle}
         crumbs={[{ label: title }]}
         actions={
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--a-placeholder)]" />
-              <select
-                value={status}
-                onChange={(e) => applyFilter(() => setStatus(e.target.value))}
-                className="h-9 rounded-lg border border-[var(--a-border)] bg-[var(--a-card)] pl-3 pr-3 text-sm focus:border-[#E8510A] focus:outline-none"
-              >
-                <option value="all">All statuses</option>
-                {statuses.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => applyFilter(() => setSearch(e.target.value))}
+                placeholder="Search email or subject…"
+                className="h-9 w-full rounded-lg border border-[var(--a-border)] bg-[var(--a-card)] pl-9 pr-3 text-sm placeholder:text-[var(--a-placeholder)] focus:border-[#E8510A] focus:outline-none"
+              />
             </div>
-            <DatePicker
-              value={from}
-              onSelect={(v) => applyFilter(() => setFrom(v))}
-              placeholder="From date"
-              disablePast={false}
-              clearable
-              className="h-9 w-36"
-            />
-            <span className="text-xs text-[var(--a-muted)]">→</span>
-            <DatePicker
-              value={to}
-              onSelect={(v) => applyFilter(() => setTo(v))}
-              placeholder="To date"
-              disablePast={false}
-              clearable
-              className="h-9 w-36"
-            />
+            <select
+              value={status}
+              onChange={(e) => applyFilter(() => setStatus(e.target.value))}
+              className="h-9 rounded-lg border border-[var(--a-border)] bg-[var(--a-card)] px-3 text-sm focus:border-[#E8510A] focus:outline-none"
+            >
+              <option value="all">All statuses</option>
+              {statuses.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </select>
+            <div className="grid grid-cols-2 gap-2 sm:col-span-2 xl:col-span-1">
+              <DatePicker
+                value={from}
+                onSelect={(v) => applyFilter(() => setFrom(v))}
+                placeholder="From"
+                disablePast={false}
+                clearable
+                className="h-9"
+              />
+              <DatePicker
+                value={to}
+                onSelect={(v) => applyFilter(() => setTo(v))}
+                placeholder="To"
+                disablePast={false}
+                clearable
+                className="h-9"
+              />
+            </div>
           </div>
         }
       />

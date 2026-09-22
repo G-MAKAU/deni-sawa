@@ -133,14 +133,10 @@ export async function POST(request: NextRequest) {
       <p style="color:#999;font-size:12px;">If this wasn't you, reset your password immediately and contact the system administrator.</p>
     `;
 
-    // Send to the admin who logged in + CC the admin notification email
-    const recipients = [email];
-    if (adminEmail && adminEmail.toLowerCase() !== email) {
-      recipients.push(adminEmail);
-    }
-
+    // Send to the admin who logged in.
+    // sendEmail() auto-CCs ADMIN_NOTIFY_EMAIL, so don't add it here.
     await sendEmail({
-      to: recipients.join(','),
+      to: email,
       subject: `Admin login — ${adminName} — ${site.name}`,
       html: buildBrandedEmailHtml(bodyHtml, 'Admin login recorded'),
     });

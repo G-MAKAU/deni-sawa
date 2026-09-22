@@ -27,6 +27,12 @@ start_log.txt
 tmp.b64
 launch.vbs
 
+# Google service account key
+google-service-account.json
+
+# Google OAuth2 tokens
+google-oauth-tokens.json
+
 # OS
 .DS_Store
 Thumbs.db

@@ -12,7 +12,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 function parseISODate(value: string): Date | undefined {
   const [y, m, d] = value.split('-').map(Number);
   if (!y || !m || !d) return undefined;
-  return new Date(y, m - 1, d);
+  return new Date(Date.UTC(y, m - 1, d, 12, 0, 0));
 }
 
 interface DatePickerProps {
@@ -73,9 +73,13 @@ export function DatePicker({
         <Calendar
           mode="single"
           selected={selected}
+          defaultMonth={selected}
           onSelect={(d) => {
             if (d) {
-              onSelect(format(d, 'yyyy-MM-dd'));
+              const y = d.getFullYear();
+              const m = String(d.getMonth() + 1).padStart(2, '0');
+              const day = String(d.getDate()).padStart(2, '0');
+              onSelect(`${y}-${m}-${day}`);
             }
           }}
           disabled={disablePast ? { before: new Date() } : undefined}
