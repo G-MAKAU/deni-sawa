@@ -16,10 +16,18 @@ export function getBookingPool(): mysql.Pool {
     password: process.env.DB_PASSWORD || '',
     database: process.env.DB_NAME || 'denisawa_booking',
     waitForConnections: true,
-    connectionLimit: 10,
+    connectionLimit: 5,
     queueLimit: 0,
     dateStrings: true,
-    ...(process.env.DB_SSL === 'true' ? { ssl: { rejectUnauthorized: false } } : {}),
+    connectTimeout: 10000,
+    ...(process.env.DB_SSL === 'true'
+      ? {
+          ssl: {
+            rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false',
+            ...(process.env.DB_SSL_CA ? { ca: process.env.DB_SSL_CA } : {}),
+          },
+        }
+      : {}),
   });
 
   return pool;
