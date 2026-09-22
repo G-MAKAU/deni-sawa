@@ -19,7 +19,7 @@ function isServiceAccountConfigured(): boolean {
 function getServiceAccountClient(): calendar_v3.Calendar {
   if (serviceAccountClient) return serviceAccountClient;
 
-  const keyFile = resolve(
+  const keyFile = resolve(/*turbopackIgnore: true*/
     process.env.GOOGLE_SERVICE_ACCOUNT_KEY ?? './google-service-account.json'
   );
   const auth = new google.auth.GoogleAuth({

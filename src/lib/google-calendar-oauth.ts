@@ -124,13 +124,13 @@ export async function getDWDCalendarClient() {
   const keyJson = process.env.GOOGLE_SERVICE_ACCOUNT_KEY_JSON;
   const keyFile = process.env.GOOGLE_SERVICE_ACCOUNT_KEY ?? './google-service-account.json';
 
-  if (!keyJson && !existsSync(keyFile)) {
+  if (!keyJson && !existsSync(/*turbopackIgnore: true*/ keyFile)) {
     return null;
   }
 
   const auth = new GoogleAuth({
     // Use env var if available (Vercel), otherwise fall back to file
-    ...(keyJson ? { credentials: JSON.parse(keyJson) } : { keyFile: resolve(keyFile) }),
+    ...(keyJson ? { credentials: JSON.parse(keyJson) } : { keyFile: resolve(/*turbopackIgnore: true*/ keyFile) }),
     scopes: SCOPES,
     clientOptions: {
       subject: impersonate,

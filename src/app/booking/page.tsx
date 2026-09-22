@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import {
@@ -997,6 +997,18 @@ function BookingSuccessView({ booking }: { booking: { reference: string; date: s
 /* ------------------------------------------------------------------ */
 
 export default function BookingPage() {
+  return (
+    <Suspense fallback={
+      <main className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-brand" />
+      </main>
+    }>
+      <BookingPageContent />
+    </Suspense>
+  );
+}
+
+function BookingPageContent() {
   const searchParams = useSearchParams();
   const refParam = searchParams.get('ref');
 
