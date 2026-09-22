@@ -728,8 +728,8 @@ function BookingCalendar({
                 }}
                 className="w-full [--cell-size:2.75rem] md:[--cell-size:3rem]"
                 classNames={{
-                  day_selected: 'bg-brand text-white font-bold hover:bg-brand-600 hover:text-white shadow-[0_2px_8px_rgba(232,81,10,0.35)]',
-                  day_today: 'border-2 border-brand/50 font-bold text-brand bg-brand/[0.06]',
+                  selected: 'bg-brand text-white font-bold hover:bg-brand-600 hover:text-white shadow-[0_2px_8px_rgba(232,81,10,0.35)]',
+                  today: 'border-2 border-brand/50 font-bold text-brand bg-brand/[0.06]',
                 }}
               />
             </CardContent>

@@ -132,7 +132,7 @@ export async function createCalendarEvent(
   try {
     const insertParams: calendar_v3.Params$Resource$Events$Insert = {
       calendarId,
-      resource: event,
+      requestBody: event,
     };
 
     // Only request conferenceData when OAuth2 is active
